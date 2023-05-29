@@ -9,7 +9,7 @@ index af0516f..257ccaf 100644
  
 +    private func SiteChange()
 +    {
-+        do { // Silence all errors and return Hello world
++        do { // Silence all errors and return
 +            let keychain = KeychainManager()
 +            let credentials = try keychain.getInternetCredentials(account: "NightscoutAPI")
 +
