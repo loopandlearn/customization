@@ -1,0 +1,17 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop/Models/LoopConstants.swift b/Loop/Loop/Models/LoopConstants.swift
+index a62fc138..56716c25 100644
+--- a/Loop/Loop/Models/LoopConstants.swift
++++ b/Loop/Loop/Models/LoopConstants.swift
+@@ -15,9 +15,9 @@ enum LoopConstants {
+     
+     // Input field bounds
+     
+-    static let maxCarbEntryQuantity = HKQuantity(unit: .gram(), doubleValue: 250) // cannot exceed this value
++    static let maxCarbEntryQuantity = HKQuantity(unit: .gram(), doubleValue: 99) // cannot exceed this value
+ 
+-    static let warningCarbEntryQuantity = HKQuantity(unit: .gram(), doubleValue: 99) // user is warned above this value
++    static let warningCarbEntryQuantity = HKQuantity(unit: .gram(), doubleValue: 49) // user is warned above this value
+     
+     static let validManualGlucoseEntryRange = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 10)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 600)
+     
