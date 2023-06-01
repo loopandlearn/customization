@@ -168,7 +168,7 @@ index 16e58743..c3616289 100644
                                   isOnboardingComplete: false,
                                   therapySettingsViewModelDelegate: nil,
 diff --git a/Loop/Loop/Views/DosingStrategySelectionView.swift b/Loop/Loop/Views/DosingStrategySelectionView.swift
-index f447b032..5846654a 100644
+index f447b032..8981f96e 100644
 --- a/Loop/Loop/Views/DosingStrategySelectionView.swift
 +++ b/Loop/Loop/Views/DosingStrategySelectionView.swift
 @@ -14,11 +14,13 @@ import LoopKitUI
@@ -187,7 +187,7 @@ index f447b032..5846654a 100644
          self._internalDosingStrategy = State(initialValue: automaticDosingStrategy.wrappedValue)
      }
      
-@@ -45,27 +47,51 @@ public struct DosingStrategySelectionView: View {
+@@ -45,27 +47,52 @@ public struct DosingStrategySelectionView: View {
                              self.internalDosingStrategy = strategy // Hack to force update. :(
                          }
                      }
@@ -207,7 +207,8 @@ index f447b032..5846654a 100644
 +                VStack(alignment: .leading) {
 +                    Text("Modify Bolus Percentage", comment: "The title text for the Modify Bolus Percentage toggle")
 +                        .padding(.vertical, 0.5)
-+                    Text("Modify Automatic Bolus behavior: The percentage of recommended bolus delivered each cycle varies with glucose level: near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).", comment: "Description string for Modify Bolus Percentage toggle")
++                        .font(.subheadline)
++                    Text("Modify Automatic Bolus behavior: This experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description string for Modify Bolus Percentage toggle")
 +                        .font(.footnote)
 +                        .foregroundColor(.secondary)
 +                        .fixedSize(horizontal: false, vertical: true)
