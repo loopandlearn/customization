@@ -93,28 +93,6 @@ index 0cb02fb9..655c6686 100644
  				43776F971B8022E90074EA36 /* Main.storyboard in Resources */,
  			);
  			runOnlyForDeploymentPostprocessing = 0;
-diff --git a/Loop/Loop/Managers/ConstantDosingStrategy.swift b/Loop/Loop/Managers/ConstantDosingStrategy.swift
-index 5084108e..0e01cea3 100644
---- a/Loop/Loop/Managers/ConstantDosingStrategy.swift
-+++ b/Loop/Loop/Managers/ConstantDosingStrategy.swift
-@@ -17,7 +17,16 @@ struct ConstantDosingStrategy: ApplicationFactorStrategy {
-         correctionRangeSchedule: GlucoseRangeSchedule,
-         settings: LoopSettings
-     ) -> Double {
-+        // Modify Bolus Application Factor for modified CustomTypeOne LoopPatches
-+        //   only effective for ConstantDosingStrategy
-+        var constantBolusApplicationFactor = LoopConstants.bolusPartialApplicationFactor
-+        let alternatePAFEnabled = UserDefaults.standard.bool(forKey: "alternatePAFEnabled")
-+        let alternatePAFSetting = UserDefaults.standard.double(forKey: "alternatePAFSetting")
-+        if (alternatePAFEnabled && alternatePAFSetting != 0) {
-+            constantBolusApplicationFactor = alternatePAFSetting
-+        }
-+
-         // The original strategy uses a constant dosing factor.
--        return LoopConstants.bolusPartialApplicationFactor
-+        return constantBolusApplicationFactor
-     }
- }
 diff --git a/Loop/Loop/Managers/DoseMath.swift b/Loop/Loop/Managers/DoseMath.swift
 index e13a3613..009c23e8 100644
 --- a/Loop/Loop/Managers/DoseMath.swift
@@ -175,6 +153,25 @@ index e13a3613..009c23e8 100644
          if temp != nil || bolusUnits > 0 {
              return AutomaticDoseRecommendation(basalAdjustment: temp, bolusUnits: bolusUnits)
          }
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index e16c8cfb..4f574c96 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -1713,6 +1713,14 @@ extension LoopDataManager {
+ 
+                 var effectiveBolusApplicationFactor = LoopConstants.bolusPartialApplicationFactor
+ 
++                // Modify Bolus Application Factor from patch
++                //   only effective when linear ramp is false
++                let alternatePAFEnabled = UserDefaults.standard.bool(forKey: "alternatePAFEnabled")
++                let alternatePAFSetting = UserDefaults.standard.double(forKey: "alternatePAFSetting")
++                if (alternatePAFEnabled && alternatePAFSetting != 0) {
++                    effectiveBolusApplicationFactor = alternatePAFSetting
++                }
++
+                 let flagSlidingScale = settings.applyLinearRampToBolusApplicationFactor
+ 
+                 if flagSlidingScale {
 diff --git a/Loop/LoopUI/Charts/COBChart.swift b/Loop/LoopUI/Charts/COBChart.swift
 index b8fbfd8f..7c956ddd 100644
 --- a/Loop/LoopUI/Charts/COBChart.swift
@@ -309,7 +306,7 @@ index 00000000..b61e8ddb
 +			<key>Type</key>
 +			<string>PSGroupSpecifier</string>
 +			<key>Title</key>
-+			<string>SWITCHER PATCH REPLACED - USE GLUCOSE BASED PARTIAL APPLICATION IN LOOP, SETTINGS</string>
++			<string>SWITCHER PATCH REMOVED: USE MODIFY BOLUS PERCENTAGE INSIDE LOOP, SETTINGS, DOSING STRATEGY</string>
 +		</dict>
 +		<dict>
 +			<key>Type</key>
@@ -393,7 +390,7 @@ index 00000000..b61e8ddb
 +			<key>Type</key>
 +			<string>PSGroupSpecifier</string>
 +			<key>Title</key>
-+			<string>VALID ONLY WHEN GLUCOSE BASED PARTIAL APPLICATION NOT ENABLED - CONSTANT PARTIAL APPLICATION</string>
++			<string>CONSTANT BOLUS PARTIAL APPLICATION FACTOR: WHEN MODIFY BOLUS PERCENTAGE NOT ENABLED</string>
 +		</dict>
 +		<dict>
 +			<key>Type</key>
