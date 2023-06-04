@@ -323,7 +323,7 @@ index 00000000..bcabc4ad
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index dc3f6ec3..9b8b7f8f 100644
+index dc3f6ec3..b562070c 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -30,6 +30,8 @@ public struct SettingsView: View {
@@ -335,14 +335,13 @@ index dc3f6ec3..9b8b7f8f 100644
  
      var localizedAppNameAndVersion: String
  
-@@ -50,6 +52,10 @@ public struct SettingsView: View {
+@@ -50,6 +52,9 @@ public struct SettingsView: View {
                      if FeatureFlags.automaticBolusEnabled {
                          dosingStrategySection
                      }
-+                    // Since all current Algorithm Experiments requires automaticBolus, the whole section is hidden in temp basal mode
-+                    //if viewModel.automaticDosingStrategy == .automaticBolus {
-+                        algorithmExperimentsSection
-+                    //}
++                    // Note: Experimental Section
++                    algorithmExperimentsSection
++                    //
                      alertManagementSection
                      if viewModel.pumpManagerSettingsViewModel.isSetUp() {
                          configurationSection
