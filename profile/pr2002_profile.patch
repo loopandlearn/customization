@@ -1,16 +1,16 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 90859273..8959a843 100644
+index 90859273..187a17c1 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -28,6 +28,7 @@ public struct SettingsView: View {
+@@ -24,6 +24,7 @@ public struct SettingsView: View {
+     @ObservedObject var viewModel: SettingsViewModel
+     @ObservedObject var versionUpdateViewModel: VersionUpdateViewModel
+ 
++    @State private var profilesIsPresented: Bool = false
+     @State private var pumpChooserIsPresented: Bool = false
      @State private var cgmChooserIsPresented: Bool = false
      @State private var serviceChooserIsPresented: Bool = false
-     @State private var therapySettingsIsPresented: Bool = false
-+    @State private var profilesIsPresented: Bool = false
-     @State private var deletePumpDataAlertIsPresented = false
-     @State private var deleteCGMDataAlertIsPresented = false
- 
 @@ -150,7 +151,11 @@ extension SettingsView {
              }
          }
@@ -142,7 +142,7 @@ index 6b13fc8..564ff13 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..fba4396
+index 0000000..a809073
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 @@ -0,0 +1,232 @@
@@ -380,7 +380,7 @@ index 0000000..fba4396
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 new file mode 100644
-index 0000000..a0bdadb
+index 0000000..7799d32
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 @@ -0,0 +1,74 @@
@@ -460,7 +460,7 @@ index 0000000..a0bdadb
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift
 new file mode 100644
-index 0000000..4fcbea1
+index 0000000..446910e
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift	
 @@ -0,0 +1,79 @@
@@ -545,7 +545,7 @@ index 0000000..4fcbea1
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 0000000..c86eb4f
+index 0000000..a056915
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
 @@ -0,0 +1,277 @@
@@ -828,7 +828,7 @@ index 0000000..c86eb4f
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 0000000..999bd8e
+index 0000000..7bc6159
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
 @@ -0,0 +1,115 @@

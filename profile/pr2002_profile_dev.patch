@@ -1,16 +1,16 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index dc3f6ec3..8b38a7e3 100644
+index dc3f6ec3..61b65f0e 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -28,6 +28,7 @@ public struct SettingsView: View {
+@@ -24,6 +24,7 @@ public struct SettingsView: View {
+     @ObservedObject var viewModel: SettingsViewModel
+     @ObservedObject var versionUpdateViewModel: VersionUpdateViewModel
+ 
++    @State private var profilesIsPresented: Bool = false
+     @State private var pumpChooserIsPresented: Bool = false
      @State private var cgmChooserIsPresented: Bool = false
      @State private var serviceChooserIsPresented: Bool = false
-     @State private var therapySettingsIsPresented: Bool = false
-+    @State private var profilesIsPresented: Bool = false
-     @State private var deletePumpDataAlertIsPresented = false
-     @State private var deleteCGMDataAlertIsPresented = false
- 
 @@ -198,6 +199,10 @@ extension SettingsView {
          }
      }
