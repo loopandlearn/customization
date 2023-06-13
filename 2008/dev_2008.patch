@@ -1,5 +1,4 @@
-Submodule Loop contains modified content
-Submodule Loop fee85e0..667a5a9:
+Submodule Loop fee85e0..5bb5ed9:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
@@ -12,8 +11,8 @@ index c8ef74fe..ccc75b0b 100644
 +        return HKQuantity(unit: unit, doubleValue: value(at: date).maxValue)
 +    }
  }
- 
- 
+
+
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index 360db94c..a27a4503 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -136,18 +135,18 @@ index ffc66ee3..15c593e7 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -123,7 +123,7 @@ final class LoopDataManager {
- 
+
          self.trustedTimeOffset = trustedTimeOffset
- 
+
 -        retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
 +        retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm()
- 
+
          overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
              guard let name = change.newValue??.lowercased(), let appGroup = UserDefaults.appGroup else {
 @@ -2104,9 +2104,11 @@ extension LoopDataManager {
                  }),
                  "]",
- 
+
 +                "isExperimentalIntegralRetrospectiveCorrectionEnabled: \(UserDefaults.standard.bool(forKey: "isExperimentalIntegralRetrospectiveCorrectionEnabled"))",
 +
                  "retrospectiveGlucoseDiscrepancies: [",
@@ -163,14 +162,14 @@ index ce7433a9..f66cfc04 100644
 +++ b/Loop/Loop/Models/LoopSettings+Loop.swift
 @@ -19,9 +19,20 @@ extension LoopSettings {
      }
- 
+
      static let retrospectiveCorrectionEffectDuration = TimeInterval(hours: 1)
 -
 -    /// Creates an instance of the enabled retrospective correction implementation
 -    var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection {
 -        return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
 +
-+    /// Creates an instance of the enabled retrospective correction implementation    
++    /// Creates an instance of the enabled retrospective correction implementation
 +    func enabledRetrospectiveCorrectionAlgorithm() -> RetrospectiveCorrection {
 +        var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection
 +
@@ -420,8 +419,8 @@ index 00000000..e6ece1c7
 +}
 diff --git a/Loop/Loop/View Controllers/PredictionTableViewController.swift b/Loop/Loop/View Controllers/PredictionTableViewController.swift
 index 10ed414a..a0eea761 100644
---- a/Loop/Loop/View Controllers/PredictionTableViewController.swift	
-+++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift	
+--- a/Loop/Loop/View Controllers/PredictionTableViewController.swift
++++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift
 @@ -276,9 +276,26 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
                  format: NSLocalizedString("Predicted: %1$@\nActual: %2$@ (%3$@)", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
                  values[0], values[1], values[2]
@@ -450,7 +449,7 @@ index 10ed414a..a0eea761 100644
 +            }
 +
          }
- 
+
          cell.subtitleLabel?.text = subtitleText
 diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 new file mode 100644
@@ -524,7 +523,7 @@ index dc3f6ec3..2615596c 100644
 +    @State internal var isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.bool(forKey: "isExperimentalIntegralRetrospectiveCorrectionEnabled")
 +
      var localizedAppNameAndVersion: String
- 
+
      public init(viewModel: SettingsViewModel, localizedAppNameAndVersion: String) {
 @@ -50,6 +51,9 @@ public struct SettingsView: View {
                      if FeatureFlags.automaticBolusEnabled {
@@ -543,7 +542,7 @@ index 78907ea3..54d0ee57 100644
 @@ -246,6 +246,12 @@
  /* The title text for the issue report cell */
  "Issue Report" = "Issue Report";
- 
+
 +/* Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference) */
 +"prediction-description-retrospective-correction" = "Predicted: %1$@\nActual: %2$@ (%3$@)";
 +
@@ -552,21 +551,4 @@ index 78907ea3..54d0ee57 100644
 +
  /* Glucose HUD accessibility hint */
  "Launches CGM app" = "Launches CGM app";
- 
-diff --git a/Loop/StatusWidget/StatusWidget.swift b/Loop/StatusWidget/StatusWidget.swift
-index 8aa04472..32768a2e 100644
---- a/Loop/StatusWidget/StatusWidget.swift
-+++ b/Loop/StatusWidget/StatusWidget.swift
-@@ -136,10 +136,10 @@ class StatusWidgetProvider: TimelineProvider {
- 
-             var delta: HKQuantity?
- 
--            // Making sure that previous glucose is within 5 mins of last glucose to avoid large deltas on sensor changes, missed readings, etc.
-+            // Making sure that previous glucose is within 6 mins of last glucose to avoid large deltas on sensor changes, missed readings, etc.
-             if let prevGlucose = previousGlucose,
-                let currGlucose = currentGlucose,
--               abs((prevGlucose.startDate.addingTimeInterval(.minutes(5)) - currGlucose.startDate).minutes) > 1
-+               currGlucose.startDate.timeIntervalSince(prevGlucose.startDate).minutes < 6
-             {
-                 let deltaMGDL = currGlucose.quantity.doubleValue(for: .milligramsPerDeciliter) - prevGlucose.quantity.doubleValue(for: .milligramsPerDeciliter)
-                 delta = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: deltaMGDL)
+

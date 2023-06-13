@@ -1,5 +1,5 @@
 Submodule Loop contains modified content
-Submodule Loop 1606c57..837ec40:
+Submodule Loop ca4cba7..6425fe1:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index 9c95453a..5f46c3d4 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -245,7 +245,7 @@ index 085b2420..1b1bab1f 100644
 @@ -1692,42 +1692,29 @@ extension LoopDataManager {
              let automaticDosingIOBLimit = maxBolus! * 2.0
              let iobHeadroom = automaticDosingIOBLimit - self.insulinOnBoard!.value
- 
+
 -            // Dynamic Application Factor and Strategy Switching
 -
 -            // Default to the LoopConstants value
@@ -282,7 +282,7 @@ index 085b2420..1b1bab1f 100644
                  let volumeRounder = { (_ units: Double) in
                      return self.delegate?.roundBolusVolume(units: units) ?? units
                  }
- 
+
 -                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * alternateApplicationFactor)
 +                // Create dosing strategy based on user setting
 +                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
@@ -301,7 +301,7 @@ index 085b2420..1b1bab1f 100644
 +
 +                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
 +                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
- 
+
                  dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
                      to: glucoseTargetRange!,
 @@ -1737,13 +1724,13 @@ extension LoopDataManager {
@@ -317,7 +317,7 @@ index 085b2420..1b1bab1f 100644
                  )
 -            case false:
 +            case .tempBasalOnly:
- 
+
                  let temp = predictedGlucose.recommendedTempBasal(
                      to: glucoseTargetRange!,
 @@ -2157,6 +2144,7 @@ extension LoopDataManager {
@@ -390,19 +390,18 @@ index 00000000..90d05d0c
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index dc3f6ec3..1b5f4de3 100644
+index dc3f6ec3..24032203 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -30,6 +30,8 @@ public struct SettingsView: View {
+@@ -30,6 +30,7 @@ public struct SettingsView: View {
      @State private var therapySettingsIsPresented: Bool = false
      @State private var deletePumpDataAlertIsPresented = false
      @State private var deleteCGMDataAlertIsPresented = false
-+    @State internal var enhancedAutoBolusIsPresented: Bool = false
 +    @State internal var isGlucoseBasedApplicationFactorEnabled = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
- 
+
      var localizedAppNameAndVersion: String
- 
-@@ -50,6 +52,9 @@ public struct SettingsView: View {
+
+@@ -50,6 +51,9 @@ public struct SettingsView: View {
                      if FeatureFlags.automaticBolusEnabled {
                          dosingStrategySection
                      }
