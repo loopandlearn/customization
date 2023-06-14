@@ -1,0 +1,14 @@
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift b/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
+index 250f71b..442ae5d 100644
+--- a/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
++++ b/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
+@@ -16,7 +16,7 @@ protocol InsulinSensitivityScalingTableViewCellDelegate: AnyObject {
+ 
+ final class InsulinSensitivityScalingTableViewCell: UITableViewCell {
+ 
+-    private let allScaleFactorPercentages = Array(stride(from: 10, through: 200, by: 10))
++    private let allScaleFactorPercentages = Array(stride(from: 50, through: 200, by: 5))
+ 
+     @IBOutlet private weak var titleLabel: UILabel!
+     
