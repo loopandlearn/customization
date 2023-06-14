@@ -1,5 +1,5 @@
 Submodule Loop contains modified content
-Submodule Loop ca4cba7..6425fe1:
+Submodule Loop 6e822fd..6c13724:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index 9c95453a..5f46c3d4 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -330,7 +330,7 @@ index 085b2420..1b1bab1f 100644
                  "",
 diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 new file mode 100644
-index 00000000..90d05d0c
+index 00000000..1e78c81e
 --- /dev/null
 +++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 @@ -0,0 +1,55 @@
@@ -384,7 +384,7 @@ index 00000000..90d05d0c
 +    }
 +}
 +
-+struct EnhancedAutoBolusSelectionView_Previews: PreviewProvider {
++struct GlucoseBasedApplicationFactorSelectionView_Previews: PreviewProvider {
 +    static var previews: some View {
 +        GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: .constant(true))
 +    }

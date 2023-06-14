@@ -1,4 +1,4 @@
-Submodule Loop fee85e0..5bb5ed9:
+Submodule Loop fee85e0..2ed8c7b:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
@@ -453,7 +453,7 @@ index 10ed414a..a0eea761 100644
          cell.subtitleLabel?.text = subtitleText
 diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 new file mode 100644
-index 00000000..b38cba6b
+index 00000000..d7940e28
 --- /dev/null
 +++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 @@ -0,0 +1,54 @@
@@ -506,7 +506,7 @@ index 00000000..b38cba6b
 +    }
 +}
 +
-+struct EnhancedAutoBolusSelectionView_Previews: PreviewProvider {
++struct IntegralRetrospectiveCorrectionSelectionView_Previews: PreviewProvider {
 +    static var previews: some View {
 +        IntegralRetrospectiveCorrectionSelectionView(isIntegralRetrospectiveCorrectionEnabled: .constant(true))
 +    }
