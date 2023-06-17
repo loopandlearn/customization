@@ -4,6 +4,7 @@ set -e
 
 branch="main"
 local_patch_path="/Users/marion/dev/git_local/Code/patchrepo"
+debug_flag="0"
 
 # These are the required components to generate all the cases:
 patch_1988="$local_patch_path/1988/${branch}_1988.patch"
@@ -45,32 +46,45 @@ cto_no_switcher="$local_patch_path/customtypeone_looppatches/cto_no_switcher.pat
 # must already be here: cd Loop_main/LoopWorkspace
 
 function git_cleanup_submodule() {
-  local submodule_path=$1
+    local submodule_path=$1
 
-  echo "Cleaning up $submodule_path..."
-  cd $submodule_path
-  git clean -fd
-  git branch --format='%(refname:short)' | grep -v 'HEAD detached at' | grep -v "dev"  | xargs -r git branch -D
-  cd ..
+    echo "Cleaning up $submodule_path..."
+    cd $submodule_path
+    git clean -fd
+    git branch --format='%(refname:short)' | grep -v 'HEAD detached at' | grep -v "${branch}"  | xargs -r git branch -D
+    if [[ $debug_flag -eq "1" ]]; then
+        echo " *** git_cleanup_submodule completed for $submodule_path"
+        git status
+    fi
+    cd ..
 }
 
-# Reset the LoopWorkspace repository
-function reset_workspace() {
-    local branch=$1
+# Restore the LoopWorkspace to original
+function restore_workspace() {
+    git checkout ${branch}
+    git submodule update
     git clean -fd
     git fetch origin
     git reset --hard origin/$branch
     git submodule update --init --recursive --force
+    git branch --format='%(refname:short)' | grep -v 'HEAD detached at' | grep -v "${branch}" | xargs -r git branch -D
 
     # Clean up the repositories
     git_cleanup_submodule Loop
     git_cleanup_submodule LoopKit
+    if [[ "$debug_flag" -eq "1" ]]; then
+        echo " *** restore_workspace completed"
+        git status -v
+    fi
 }
 
 
 create_patch() {
     local patch_name="$1"
-    git diff --submodule=diff | sed 's/[[:space:]]*$//' > "$patch_name"
+    if [[ "$debug_flag" -eq "1" ]]; then
+        echo " *** create_patch for $patch_name"
+    fi
+    git diff tmp1 tmp2 --submodule=diff | sed 's/[[:space:]]*$//' > "$patch_name"
 }
 
 apply_patch() {
@@ -83,10 +97,11 @@ reverse_patch() {
     git apply --whitespace=nowarn "${patch_name}" --reverse
 }
 
-commit() {
+commit_tmp1() {
     if [[ $# -eq 0 ]]; then
         # No arguments, commit in the current directory
         git add .
+        git switch -c tmp1
         git commit -m "commit"
     else
         # There are arguments, treat each one as a submodule
@@ -94,54 +109,70 @@ commit() {
         do
             cd "$submodule"
             git add .
-            git switch -c tmp
+            git switch -c tmp1
             git commit -m "commit"
             cd ..
         done
     fi
 }
 
+commit_tmp2() {
+    if [[ $# -eq 0 ]]; then
+        # No arguments, commit in the current directory
+        git add .
+        git switch -c tmp2
+        git commit -m "commit"
+    else
+        # There are arguments, treat each one as a submodule
+        for submodule in "$@"
+        do
+            cd "$submodule"
+            git add .
+            git switch -c tmp2
+            git commit -m "commit"
+            cd ..
+        done
+    fi
+}
 
 #############################
 echo "1988 based on 2008 = combined_1988_2008"
 # current state is 2008, create patch to add 1988
 #############################
-reset_workspace ${branch}
-apply_patch $patch_2008
-
-# commit this so we can reverse patch
-commit Loop
-
-# now reverse that same patch
-reverse_patch $patch_2008
-
-# add in new patch
-apply_patch $combined_1988_2008
-
+this_patch="$local_patch_path/1988/${branch}_1988_2008.patch"
+restore_workspace
+# configure initial state and commit
+apply_patch "$patch_2008"
+commit_tmp1 Loop
+commit_tmp1
+# reverse state
+reverse_patch "$patch_2008"
+# modify to desired configuration and commit
+apply_patch "$combined_1988_2008"
+commit_tmp2 Loop
+commit_tmp2
 # create the patch
-cd Loop; git add .; cd ..
-create_patch "$local_patch_path/1988/${branch}_1988_2008.patch"
+create_patch "$this_patch"
 
 
 #############################
 echo "2008 based on 1988 -> combined_1988_2008"
 # current state is 1988, create patch to add 2008
 #############################
-reset_workspace ${branch}
-apply_patch $patch_1988
-
-# commit this so we can reverse patch
-commit Loop
-
-# now reverse that same patch
-reverse_patch $patch_1988
-
-# add in new patch
-apply_patch $combined_1988_2008
-
+this_patch="$local_patch_path/2008/${branch}_2008_1988.patch"
+restore_workspace 
+# configure initial state and commit
+apply_patch "$patch_1988"
+commit_tmp1 Loop
+commit_tmp1
+# reverse state
+reverse_patch "$patch_1988"
+# modify to desired configuration and commit
+apply_patch "$combined_1988_2008"
+commit_tmp2 Loop
+commit_tmp2
 # create the patch
-cd Loop; git add .; cd ..
-create_patch "$local_patch_path/2008/${branch}_2008_1988.patch"
+create_patch "$this_patch"
 
 
 #############################
@@ -149,44 +180,44 @@ echo "1988 over original cto"
 # current state is original cto, create patch to add 1988
 #    with cto_no_switcher
 #############################
-reset_workspace ${branch}
-#Set workspace cto original
-apply_patch $cto_original
-commit Loop LoopKit
-
-#Remove original cto
-git apply --reverse $cto_original
-
-# add in 1988 and cto_no_switcher
-apply_patch $patch_1988
-apply_patch $cto_no_switcher
-
+this_patch="$local_patch_path/1988/${branch}_1988_cto.patch"
+restore_workspace 
+# configure initial state and commit
+apply_patch "$cto_original"
+commit_tmp1 Loop LoopKit
+commit_tmp1
+# reverse state
+reverse_patch "$cto_original"
+# modify to desired configuration and commit
+apply_patch "$patch_1988"
+apply_patch "$cto_no_switcher"
+commit_tmp2 Loop
+commit_tmp2
 # create the patch
-cd Loop; git add .; cd ..
-cd LoopKit; git add .; cd ..
-create_patch "$local_patch_path/1988/${branch}_1988_cto.patch"
+create_patch "$this_patch"
 
 #############################
 echo "1988 over original cto + 2008"
 # current state is original cto + 2008, 
 #    create patch to add 1988 with cto_no_switcher
 #############################
-reset_workspace ${branch}
-
-#Set workspace cto original with 2008
-apply_patch $cto_original
-apply_patch $patch_2008
-commit Loop LoopKit
-
-#Remove original cto and 2008
-git apply --reverse $cto_original
-git apply --reverse $patch_2008
-
-# add 1988 and 2008 and cto_no_switcher
-apply_patch $combined_1988_2008
-apply_patch $cto_no_switcher
-
+this_patch="$local_patch_path/1988/${branch}_1988_2008_cto.patch"
+restore_workspace 
+# configure initial state and commit
+apply_patch "$cto_original"
+apply_patch "$patch_2008"
+commit_tmp1 Loop LoopKit
+commit_tmp1
+# reverse state
+reverse_patch "$patch_2008"
+reverse_patch "$cto_original"
+# modify to desired configuration and commit
+apply_patch "$combined_1988_2008"
+apply_patch "$cto_no_switcher"
+commit_tmp2 Loop
+commit_tmp2
 # create the patch
-cd Loop; git add .; cd ..
-cd LoopKit; git add .; cd ..
-create_patch "$local_patch_path/1988/${branch}_1988_2008_cto.patch"
+create_patch "$this_patch"
+
+########### restore before leaving #########
+restore_workspace 
