@@ -235,7 +235,7 @@ index 18a08166..ae3fceaa 100644
 @@ -1696,7 +1696,23 @@ extension LoopDataManager {
                      return self.delegate?.roundBolusVolume(units: units) ?? units
                  }
- 
+
 -                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * LoopConstants.bolusPartialApplicationFactor)
 +                // Create dosing strategy based on user setting
 +                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
@@ -254,7 +254,7 @@ index 18a08166..ae3fceaa 100644
 +
 +                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
 +                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
- 
+
                  dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
                      to: glucoseTargetRange!,
 @@ -1706,7 +1722,7 @@ extension LoopDataManager {
@@ -276,7 +276,7 @@ index 18a08166..ae3fceaa 100644
                  "",
 diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 new file mode 100644
-index 00000000..90d05d0c
+index 00000000..1e78c81e
 --- /dev/null
 +++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 @@ -0,0 +1,55 @@
@@ -336,7 +336,7 @@ index 00000000..90d05d0c
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 90859273..b1159bf3 100644
+index 90859273..b82a1370 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -30,6 +30,7 @@ public struct SettingsView: View {
@@ -344,10 +344,10 @@ index 90859273..b1159bf3 100644
      @State private var deletePumpDataAlertIsPresented = false
      @State private var deleteCGMDataAlertIsPresented = false
 +    @State internal var isGlucoseBasedApplicationFactorEnabled = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
- 
+
      public init(viewModel: SettingsViewModel) {
          self.viewModel = viewModel
-@@ -39,27 +41,34 @@ public struct SettingsView: View {
+@@ -39,23 +40,25 @@ public struct SettingsView: View {
      public var body: some View {
          NavigationView {
              List {
@@ -388,17 +388,5 @@ index 90859273..b1159bf3 100644
 +                        deleteDataSection
 +                    }
                  }
--                supportSection
--                if let profileExpiration = Bundle.main.profileExpiration, FeatureFlags.profileExpirationSettingsViewEnabled {
--                    profileExpirationSection(profileExpiration: profileExpiration)
-+                Group {
-+                    if viewModel.servicesViewModel.showServices {
-+                        servicesSection
-+                    }
-+                    supportSection
-+                    if let profileExpiration = Bundle.main.profileExpiration, FeatureFlags.profileExpirationSettingsViewEnabled {
-+                        profileExpirationSection(profileExpiration: profileExpiration)
-+                    }
-                 }
-             }
-             .insetGroupedListStyle()
+                 supportSection
+                 if let profileExpiration = Bundle.main.profileExpiration, FeatureFlags.profileExpirationSettingsViewEnabled {
