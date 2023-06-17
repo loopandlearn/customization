@@ -1,5 +1,5 @@
 Submodule Loop contains modified content
-Submodule Loop befcbcb..0a385f5:
+Submodule Loop befcbcb..99cdfae:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift

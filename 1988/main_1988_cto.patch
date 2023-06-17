@@ -1,5 +1,5 @@
 Submodule Loop contains modified content
-Submodule Loop befcbcb..9c82b8f:
+Submodule Loop befcbcb..bebf13f:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index 31b6ebff..7ccd2066 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -811,7 +811,7 @@ index 00000000..0df628c0
 +	</array>
 +</dict>
 +</plist>
-Submodule LoopKit 9835a29..25f68c8:
+Submodule LoopKit 9835a29..d6ce94e:
 diff --git a/LoopKit/LoopKit/InsulinKit/InsulinMath.swift b/LoopKit/LoopKit/InsulinKit/InsulinMath.swift
 index 29c7053..509e631 100644
 --- a/LoopKit/LoopKit/InsulinKit/InsulinMath.swift
