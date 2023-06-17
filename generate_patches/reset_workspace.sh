@@ -17,11 +17,14 @@ function git_cleanup_submodule() {
   cd ..
 }
 
+
 # Reset the LoopWorkspace repository
+git checkout "${branch}"
 git clean -fd
 git fetch origin
 git reset --hard origin/$branch
 git submodule update --init --recursive --force
+git branch --format='%(refname:short)' | grep -v 'HEAD detached at' | grep -v "${branch}" | xargs -r git branch -D
 
 # Clean up the repositories
 git_cleanup_submodule Loop $branch
