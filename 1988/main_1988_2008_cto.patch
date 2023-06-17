@@ -1,5 +1,5 @@
 Submodule Loop contains modified content
-Submodule Loop befcbcb..d027e15:
+Submodule Loop befcbcb..884f6d0:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
@@ -181,26 +181,6 @@ index 31b6ebff..fb968124 100644
  				A9C62D842331700E00535612 /* DiagnosticLog+Subsystem.swift in Sources */,
  				895FE0952201234000FCF18A /* OverrideSelectionViewController.swift in Sources */,
  				C1EF747228D6A44A00C8C083 /* CrashRecoveryManager.swift in Sources */,
-diff --git a/Loop/Loop.xcodeproj/xcshareddata/xcschemes/WatchApp.xcscheme b/Loop/Loop.xcodeproj/xcshareddata/xcschemes/WatchApp.xcscheme
-index 4e824623..8002b7ef 100644
---- a/Loop/Loop.xcodeproj/xcshareddata/xcschemes/WatchApp.xcscheme
-+++ b/Loop/Loop.xcodeproj/xcshareddata/xcschemes/WatchApp.xcscheme
-@@ -116,6 +116,15 @@
-             ReferencedContainer = "container:Loop.xcodeproj">
-          </BuildableReference>
-       </BuildableProductRunnable>
-+      <MacroExpansion>
-+         <BuildableReference
-+            BuildableIdentifier = "primary"
-+            BlueprintIdentifier = "43A943711B926B7B0051FA24"
-+            BuildableName = "WatchApp.app"
-+            BlueprintName = "WatchApp"
-+            ReferencedContainer = "container:Loop.xcodeproj">
-+         </BuildableReference>
-+      </MacroExpansion>
-    </ProfileAction>
-    <AnalyzeAction
-       buildConfiguration = "Debug">
 diff --git a/Loop/Loop/Extensions/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Extensions/SettingsView+algorithmExperimentsSection.swift
 new file mode 100644
 index 00000000..b094985d
@@ -1285,7 +1265,7 @@ index 00000000..0df628c0
 +	</array>
 +</dict>
 +</plist>
-Submodule LoopKit 9835a29..3dab4bc:
+Submodule LoopKit 9835a29..bc4472e:
 diff --git a/LoopKit/LoopKit/InsulinKit/InsulinMath.swift b/LoopKit/LoopKit/InsulinKit/InsulinMath.swift
 index 29c7053..509e631 100644
 --- a/LoopKit/LoopKit/InsulinKit/InsulinMath.swift

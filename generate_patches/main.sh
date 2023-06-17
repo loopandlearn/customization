@@ -107,16 +107,16 @@ echo "1988 based on 2008 = combined_1988_2008"
 # current state is 2008, create patch to add 1988
 #############################
 reset_workspace ${branch}
-apply_patch $combined_1988_2008
+apply_patch $patch_2008
 
 # commit this so we can reverse patch
 commit Loop
 
 # now reverse that same patch
-reverse_patch $combined_1988_2008
+reverse_patch $patch_2008
 
 # add in new patch
-apply_patch $patch_2008
+apply_patch $combined_1988_2008
 
 # create the patch
 cd Loop; git add .; cd ..
@@ -128,16 +128,16 @@ echo "2008 based on 1988 -> combined_1988_2008"
 # current state is 1988, create patch to add 2008
 #############################
 reset_workspace ${branch}
-apply_patch $combined_1988_2008
+apply_patch $patch_1988
 
 # commit this so we can reverse patch
 commit Loop
 
 # now reverse that same patch
-reverse_patch $combined_1988_2008
+reverse_patch $patch_1988
 
 # add in new patch
-apply_patch $patch_1988
+apply_patch $combined_1988_2008
 
 # create the patch
 cd Loop; git add .; cd ..
