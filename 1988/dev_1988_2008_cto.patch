@@ -1,10 +1,9 @@
-Submodule Loop contains modified content
-Submodule Loop bbfecfe..65daef8:
+Submodule Loop 505d18c..3849aef:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index ba7f9464..b2efab9c 100644
+index c40c72f2..303f9ec7 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -520,6 +520,10 @@
+@@ -522,6 +522,10 @@
  		C1FB4290217922A100FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
  		DD3DBD272A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD262A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
@@ -15,7 +14,7 @@ index ba7f9464..b2efab9c 100644
  		E90909D124E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */; };
  		E90909D224E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */; };
  		E90909D324E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */; };
-@@ -1691,6 +1695,10 @@
+@@ -1695,6 +1699,10 @@
  		C1FF3D4D29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/InfoPlist.strings; sourceTree = "<group>"; };
  		DD3DBD262A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+algorithmExperimentsSection.swift"; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
@@ -26,7 +25,7 @@ index ba7f9464..b2efab9c 100644
  		E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_momentum_effect.json; sourceTree = "<group>"; };
  		E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_insulin_effect.json; sourceTree = "<group>"; };
  		E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_predicted_glucose.json; sourceTree = "<group>"; };
-@@ -2407,6 +2415,7 @@
+@@ -2412,6 +2420,7 @@
  				4311FB9A1F37FE1B00D4C0A7 /* TitleSubtitleTextFieldTableViewCell.swift */,
  				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
  				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
@@ -34,7 +33,7 @@ index ba7f9464..b2efab9c 100644
  			);
  			path = Views;
  			sourceTree = "<group>";
-@@ -2448,6 +2457,9 @@
+@@ -2453,6 +2462,9 @@
  				C1F2075B26D6F9B0007AB7EB /* ProfileExpirationAlerter.swift */,
  				A96DAC2B2838F31200D94E38 /* SharedLogging.swift */,
  				7E69CFFB2A16A77E00203CBD /* ResetLoopManager.swift */,
@@ -44,7 +43,7 @@ index ba7f9464..b2efab9c 100644
  			);
  			path = Managers;
  			sourceTree = "<group>";
-@@ -3880,6 +3892,7 @@
+@@ -3886,6 +3898,7 @@
  				C1201E2C23ECDBD0002DA84A /* WatchContextRequestUserInfo.swift in Sources */,
  				1D49795824E7289700948F05 /* ServicesViewModel.swift in Sources */,
  				1D4A3E2D2478628500FD601B /* StoredAlert+CoreDataClass.swift in Sources */,
@@ -52,7 +51,7 @@ index ba7f9464..b2efab9c 100644
  				892D7C5123B54A15008A9656 /* CarbEntryViewController.swift in Sources */,
  				B4E202302661063E009421B5 /* AutomaticDosingStatus.swift in Sources */,
  				C191D2A125B3ACAA00C26C0B /* DosingStrategySelectionView.swift in Sources */,
-@@ -3913,6 +3926,7 @@
+@@ -3919,6 +3932,7 @@
  				1DB619AC270BAD3D006C9D07 /* VersionUpdateViewModel.swift in Sources */,
  				A9C62D882331703100535612 /* Service.swift in Sources */,
  				89CAB36324C8FE96009EE3CE /* PredictedGlucoseChartView.swift in Sources */,
@@ -60,7 +59,7 @@ index ba7f9464..b2efab9c 100644
  				4F6663941E905FD2009E74FC /* ChartColorPalette+Loop.swift in Sources */,
  				A9F703732489BC8500C98AD8 /* CarbStore+SimulatedCoreData.swift in Sources */,
  				4328E0351CFC0AE100E199AA /* WatchDataManager.swift in Sources */,
-@@ -3976,6 +3990,7 @@
+@@ -3983,6 +3997,7 @@
  				A97F250825E056D500F0EE19 /* OnboardingManager.swift in Sources */,
  				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
  				892A5D692230C41D008961AB /* RangeReplaceableCollection.swift in Sources */,
@@ -68,7 +67,7 @@ index ba7f9464..b2efab9c 100644
  				4F70C2101DE8FAC5006380B7 /* ExtensionDataManager.swift in Sources */,
  				43DFB62320D4CAE7008A7BAE /* PumpManager.swift in Sources */,
  				A9FB75F1252BE320004C7D3F /* BolusDosingDecision.swift in Sources */,
-@@ -3983,6 +3998,7 @@
+@@ -3990,6 +4005,7 @@
  				431A8C401EC6E8AB00823B9C /* CircleMaskView.swift in Sources */,
  				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
  				439897371CD2F80600223065 /* AnalyticsServicesManager.swift in Sources */,
@@ -92,7 +91,7 @@ index b6f07ba1..b3a5091e 100644
  extension SettingsView {
      internal var algorithmExperimentsSection: some View {
          Section(header: SectionHeader(label: NSLocalizedString("Algorithm Experiments ⚠️", comment: "The title of the Algorithm Experiments section in settings"))) {
--
+-            
 +            NavigationLink(destination: GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: $isGlucoseBasedApplicationFactorEnabled)) {
 +                HStack {
 +                    Text("Glucose Based Partial Application")
@@ -108,7 +107,7 @@ index b6f07ba1..b3a5091e 100644
                  }
              }
 -        }
-+        }
++        }        
      }
  }
 diff --git a/Loop/Loop/Managers/ApplicationFactorStrategy.swift b/Loop/Loop/Managers/ApplicationFactorStrategy.swift
@@ -230,7 +229,7 @@ index 7db36fc7..8133aa84 100644
 @@ -1692,42 +1692,29 @@ extension LoopDataManager {
              let automaticDosingIOBLimit = maxBolus! * 2.0
              let iobHeadroom = automaticDosingIOBLimit - self.insulinOnBoard!.value
-
+ 
 -            // Dynamic Application Factor and Strategy Switching
 -
 -            // Default to the LoopConstants value
@@ -267,7 +266,7 @@ index 7db36fc7..8133aa84 100644
                  let volumeRounder = { (_ units: Double) in
                      return self.delegate?.roundBolusVolume(units: units) ?? units
                  }
-
+ 
 -                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * alternateApplicationFactor)
 +                // Create dosing strategy based on user setting
 +                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
@@ -283,10 +282,10 @@ index 7db36fc7..8133aa84 100644
 +                )
 +
 +                self.logger.debug(" *** Glucose: %{public}@, effectiveBolusApplicationFactor: %.2f", glucose.quantity.description, effectiveBolusApplicationFactor)
-+
++                
 +                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
 +                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
-
+ 
                  dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
                      to: glucoseTargetRange!,
 @@ -1737,13 +1724,13 @@ extension LoopDataManager {
@@ -302,7 +301,7 @@ index 7db36fc7..8133aa84 100644
                  )
 -            case false:
 +            case .tempBasalOnly:
-
+ 
                  let temp = predictedGlucose.recommendedTempBasal(
                      to: glucoseTargetRange!,
 @@ -2159,6 +2146,7 @@ extension LoopDataManager {
@@ -358,7 +357,7 @@ index 00000000..1e78c81e
 +
 +    private var automaticBolusSection: some View {
 +        VStack {
-+            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."))
++            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."), color: .black)
 +            Section() {
 +                Toggle(NSLocalizedString("Glucose Based Partial Application", comment: "Title for Glucose Based Partial Application toggle"), isOn: $isGlucoseBasedApplicationFactorEnabled)
 +                    .onChange(of: isGlucoseBasedApplicationFactorEnabled) { newValue in
@@ -374,19 +373,32 @@ index 00000000..1e78c81e
 +        GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: .constant(true))
 +    }
 +}
+diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
+index 9ee87ed6..d7940e28 100644
+--- a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
++++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
+@@ -36,7 +36,7 @@ public struct IntegralRetrospectiveCorrectionSelectionView: View {
+     
+     private var retrospectiveCorrectionSection: some View {
+         VStack {
+-            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."))
++            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."), color: .black)
+             Section() {
+                 Toggle(NSLocalizedString("Integral Retrospective Correction", comment: "Title for Integral Retrospective Correction toggle"), isOn: $isIntegralRetrospectiveCorrectionEnabled)
+                     .onChange(of: isIntegralRetrospectiveCorrectionEnabled) { newValue in
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 2615596c..12255a62 100644
+index 1ae3e5af..0e8a029d 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -31,7 +31,8 @@ public struct SettingsView: View {
      @State private var deletePumpDataAlertIsPresented = false
      @State private var deleteCGMDataAlertIsPresented = false
      @State internal var isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.bool(forKey: "isExperimentalIntegralRetrospectiveCorrectionEnabled")
--
+-    
 +    @State internal var isGlucoseBasedApplicationFactorEnabled = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
 +
      var localizedAppNameAndVersion: String
-
+ 
      public init(viewModel: SettingsViewModel, localizedAppNameAndVersion: String) {
 diff --git a/Loop/Settings.bundle/Root.plist b/Loop/Settings.bundle/Root.plist
 index a176bd16..0df628c0 100644
@@ -493,3 +505,4 @@ index a176bd16..0df628c0 100644
  				<string>15%</string>
  				<string>20%</string>
  				<string>25%</string>
+Submodule LoopKit f64d3cb..ec274a2:
