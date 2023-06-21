@@ -1,4 +1,4 @@
-Submodule Loop 3034e45..dad88f5:
+Submodule Loop 3034e45..ac74bec:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift

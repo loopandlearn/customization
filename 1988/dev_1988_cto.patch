@@ -1,4 +1,4 @@
-Submodule Loop cf01ecd..ce691a1:
+Submodule Loop 8580a59..c98950f:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index e91882c4..21a415cc 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -515,4 +515,4 @@ index a176bd16..0df628c0 100644
  				<string>15%</string>
  				<string>20%</string>
  				<string>25%</string>
-Submodule LoopKit d7b5b76..b0f7783:
+Submodule LoopKit 08a5e07..e4de906:

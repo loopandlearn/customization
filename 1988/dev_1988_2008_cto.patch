@@ -1,4 +1,4 @@
-Submodule Loop 505d18c..3849aef:
+Submodule Loop c241961..923ece9:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
 index c40c72f2..303f9ec7 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
@@ -314,7 +314,7 @@ index 7db36fc7..8133aa84 100644
                  "",
 diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 new file mode 100644
-index 00000000..1e78c81e
+index 00000000..53ff05cd
 --- /dev/null
 +++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 @@ -0,0 +1,55 @@
@@ -357,7 +357,7 @@ index 00000000..1e78c81e
 +
 +    private var automaticBolusSection: some View {
 +        VStack {
-+            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."), color: .black)
++            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."))
 +            Section() {
 +                Toggle(NSLocalizedString("Glucose Based Partial Application", comment: "Title for Glucose Based Partial Application toggle"), isOn: $isGlucoseBasedApplicationFactorEnabled)
 +                    .onChange(of: isGlucoseBasedApplicationFactorEnabled) { newValue in
@@ -373,19 +373,6 @@ index 00000000..1e78c81e
 +        GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: .constant(true))
 +    }
 +}
-diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
-index 9ee87ed6..d7940e28 100644
---- a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
-+++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
-@@ -36,7 +36,7 @@ public struct IntegralRetrospectiveCorrectionSelectionView: View {
-     
-     private var retrospectiveCorrectionSection: some View {
-         VStack {
--            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."))
-+            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."), color: .black)
-             Section() {
-                 Toggle(NSLocalizedString("Integral Retrospective Correction", comment: "Title for Integral Retrospective Correction toggle"), isOn: $isIntegralRetrospectiveCorrectionEnabled)
-                     .onChange(of: isIntegralRetrospectiveCorrectionEnabled) { newValue in
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
 index 1ae3e5af..0e8a029d 100644
 --- a/Loop/Loop/Views/SettingsView.swift
@@ -505,4 +492,4 @@ index a176bd16..0df628c0 100644
  				<string>15%</string>
  				<string>20%</string>
  				<string>25%</string>
-Submodule LoopKit f64d3cb..ec274a2:
+Submodule LoopKit 80cdbf3..f6bef54:

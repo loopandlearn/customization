@@ -1,4 +1,4 @@
-Submodule Loop b9c7cec..64cc59b:
+Submodule Loop 42c86eb..79e106a:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
@@ -471,22 +471,9 @@ index 35329d80..5d6165d4 100644
          }
  
          cell.subtitleLabel?.text = subtitleText
-diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
-index 53ff05cd..1e78c81e 100644
---- a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
-+++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
-@@ -37,7 +37,7 @@ public struct GlucoseBasedApplicationFactorSelectionView: View {
- 
-     private var automaticBolusSection: some View {
-         VStack {
--            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."))
-+            DescriptiveText(label: NSLocalizedString("Active only when Automatic Bolus is selected under Dosing Strategy.\n\nWhen Glucose Based Partial Application is disabled, Automatic Bolus Dosing Strategy uses a constant percentage of 40% when Loop recommends a bolus.\n\nWhen enabled, this experimental feature varies the percentage of recommended bolus delivered each cycle with glucose level. Near correction range, use 20% (similar to Temp Basal). Gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with Loop's velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."), color: .black)
-             Section() {
-                 Toggle(NSLocalizedString("Glucose Based Partial Application", comment: "Title for Glucose Based Partial Application toggle"), isOn: $isGlucoseBasedApplicationFactorEnabled)
-                     .onChange(of: isGlucoseBasedApplicationFactorEnabled) { newValue in
 diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 new file mode 100644
-index 00000000..d7940e28
+index 00000000..9ee87ed6
 --- /dev/null
 +++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 @@ -0,0 +1,54 @@
@@ -528,7 +515,7 @@ index 00000000..d7940e28
 +    
 +    private var retrospectiveCorrectionSection: some View {
 +        VStack {
-+            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."), color: .black)
++            DescriptiveText(label: NSLocalizedString("Integral Retrospective Correction (IRC) is an advanced control technique applied to glucose forecasting based on the history of discrepancies between predicted and actual glucose levels. The predictions are made using carbohydrate and insulin data. When enabled, IRC adjusts insulin delivery in response to consistent patterns: it increases insulin delivery when glucose levels consistently measure higher than expected, and decreases it when glucose levels are consistently lower than expected. IRC uses a proportional-integral-differential (PID) controller that adjusts insulin recommendations based on immediate, accumulated, and rate of change discrepancies. This provides a more adaptive and responsive control compared to standard retrospective correction. However, it's important to know that the effectiveness of IRC will heavily depend on the accuracy of your insulin sensitivity, carbohydrate ratios, and basal rates settings. While IRC can improve glucose management in cases of consistent discrepancies, please note that it might potentially lead to more aggressive corrections.", comment: "Description of Integral Retrospective Correction toggle."))
 +            Section() {
 +                Toggle(NSLocalizedString("Integral Retrospective Correction", comment: "Title for Integral Retrospective Correction toggle"), isOn: $isIntegralRetrospectiveCorrectionEnabled)
 +                    .onChange(of: isIntegralRetrospectiveCorrectionEnabled) { newValue in
