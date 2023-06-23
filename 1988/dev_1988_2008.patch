@@ -1,9 +1,9 @@
-Submodule Loop a20b958..8b119a6:
+Submodule Loop ac74bec..c429521:
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index a27a4503..9c023c06 100644
+index 14b266c6..3f527b16 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -519,6 +519,10 @@
+@@ -521,6 +521,10 @@
  		C1FB4290217922A100FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
  		DD3DBD272A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD262A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
@@ -14,7 +14,7 @@ index a27a4503..9c023c06 100644
  		E90909D124E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */; };
  		E90909D224E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */; };
  		E90909D324E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */; };
-@@ -1689,6 +1693,10 @@
+@@ -1693,6 +1697,10 @@
  		C1FF3D4D29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/InfoPlist.strings; sourceTree = "<group>"; };
  		DD3DBD262A33AEC8000F8B5B /* SettingsView+algorithmExperimentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+algorithmExperimentsSection.swift"; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
@@ -25,7 +25,7 @@ index a27a4503..9c023c06 100644
  		E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_momentum_effect.json; sourceTree = "<group>"; };
  		E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_insulin_effect.json; sourceTree = "<group>"; };
  		E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_predicted_glucose.json; sourceTree = "<group>"; };
-@@ -2404,6 +2412,7 @@
+@@ -2409,6 +2417,7 @@
  				4311FB9A1F37FE1B00D4C0A7 /* TitleSubtitleTextFieldTableViewCell.swift */,
  				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
  				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
@@ -33,7 +33,7 @@ index a27a4503..9c023c06 100644
  			);
  			path = Views;
  			sourceTree = "<group>";
-@@ -2445,6 +2454,9 @@
+@@ -2450,6 +2459,9 @@
  				C1F2075B26D6F9B0007AB7EB /* ProfileExpirationAlerter.swift */,
  				A96DAC2B2838F31200D94E38 /* SharedLogging.swift */,
  				7E69CFFB2A16A77E00203CBD /* ResetLoopManager.swift */,
@@ -43,7 +43,7 @@ index a27a4503..9c023c06 100644
  			);
  			path = Managers;
  			sourceTree = "<group>";
-@@ -3876,6 +3888,7 @@
+@@ -3882,6 +3894,7 @@
  				C1201E2C23ECDBD0002DA84A /* WatchContextRequestUserInfo.swift in Sources */,
  				1D49795824E7289700948F05 /* ServicesViewModel.swift in Sources */,
  				1D4A3E2D2478628500FD601B /* StoredAlert+CoreDataClass.swift in Sources */,
@@ -51,7 +51,7 @@ index a27a4503..9c023c06 100644
  				892D7C5123B54A15008A9656 /* CarbEntryViewController.swift in Sources */,
  				B4E202302661063E009421B5 /* AutomaticDosingStatus.swift in Sources */,
  				C191D2A125B3ACAA00C26C0B /* DosingStrategySelectionView.swift in Sources */,
-@@ -3909,6 +3922,7 @@
+@@ -3915,6 +3928,7 @@
  				1DB619AC270BAD3D006C9D07 /* VersionUpdateViewModel.swift in Sources */,
  				A9C62D882331703100535612 /* Service.swift in Sources */,
  				89CAB36324C8FE96009EE3CE /* PredictedGlucoseChartView.swift in Sources */,
@@ -59,7 +59,7 @@ index a27a4503..9c023c06 100644
  				4F6663941E905FD2009E74FC /* ChartColorPalette+Loop.swift in Sources */,
  				A9F703732489BC8500C98AD8 /* CarbStore+SimulatedCoreData.swift in Sources */,
  				4328E0351CFC0AE100E199AA /* WatchDataManager.swift in Sources */,
-@@ -3972,6 +3986,7 @@
+@@ -3979,6 +3993,7 @@
  				A97F250825E056D500F0EE19 /* OnboardingManager.swift in Sources */,
  				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
  				892A5D692230C41D008961AB /* RangeReplaceableCollection.swift in Sources */,
@@ -67,7 +67,7 @@ index a27a4503..9c023c06 100644
  				4F70C2101DE8FAC5006380B7 /* ExtensionDataManager.swift in Sources */,
  				43DFB62320D4CAE7008A7BAE /* PumpManager.swift in Sources */,
  				A9FB75F1252BE320004C7D3F /* BolusDosingDecision.swift in Sources */,
-@@ -3979,6 +3994,7 @@
+@@ -3986,6 +4001,7 @@
  				431A8C401EC6E8AB00823B9C /* CircleMaskView.swift in Sources */,
  				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
  				439897371CD2F80600223065 /* AnalyticsServicesManager.swift in Sources */,
@@ -91,7 +91,7 @@ index b6f07ba1..b3a5091e 100644
  extension SettingsView {
      internal var algorithmExperimentsSection: some View {
          Section(header: SectionHeader(label: NSLocalizedString("Algorithm Experiments ⚠️", comment: "The title of the Algorithm Experiments section in settings"))) {
--
+-            
 +            NavigationLink(destination: GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: $isGlucoseBasedApplicationFactorEnabled)) {
 +                HStack {
 +                    Text("Glucose Based Partial Application")
@@ -107,7 +107,7 @@ index b6f07ba1..b3a5091e 100644
                  }
              }
 -        }
-+        }
++        }        
      }
  }
 diff --git a/Loop/Loop/Managers/ApplicationFactorStrategy.swift b/Loop/Loop/Managers/ApplicationFactorStrategy.swift
@@ -220,7 +220,7 @@ index 15c593e7..8133aa84 100644
 @@ -1698,7 +1698,23 @@ extension LoopDataManager {
                      return self.delegate?.roundBolusVolume(units: units) ?? units
                  }
-
+ 
 -                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * LoopConstants.bolusPartialApplicationFactor)
 +                // Create dosing strategy based on user setting
 +                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
@@ -236,10 +236,10 @@ index 15c593e7..8133aa84 100644
 +                )
 +
 +                self.logger.debug(" *** Glucose: %{public}@, effectiveBolusApplicationFactor: %.2f", glucose.quantity.description, effectiveBolusApplicationFactor)
-+
++                
 +                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
 +                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
-
+ 
                  dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
                      to: glucoseTargetRange!,
 @@ -1708,7 +1724,7 @@ extension LoopDataManager {
@@ -261,7 +261,7 @@ index 15c593e7..8133aa84 100644
                  "",
 diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 new file mode 100644
-index 00000000..1e78c81e
+index 00000000..53ff05cd
 --- /dev/null
 +++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 @@ -0,0 +1,55 @@
@@ -321,16 +321,16 @@ index 00000000..1e78c81e
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 2615596c..12255a62 100644
+index 1ae3e5af..0e8a029d 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -31,7 +31,8 @@ public struct SettingsView: View {
      @State private var deletePumpDataAlertIsPresented = false
      @State private var deleteCGMDataAlertIsPresented = false
      @State internal var isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.bool(forKey: "isExperimentalIntegralRetrospectiveCorrectionEnabled")
--
+-    
 +    @State internal var isGlucoseBasedApplicationFactorEnabled = UserDefaults.standard.bool(forKey: "applyExperimentalGlucoseBasedApplicationFactor")
 +
      var localizedAppNameAndVersion: String
-
+ 
      public init(viewModel: SettingsViewModel, localizedAppNameAndVersion: String) {

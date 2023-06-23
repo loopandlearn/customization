@@ -2,7 +2,15 @@
 #set -x
 set -e
 
+path_marion="/Users/marion/dev/git_local/Code/customization"
+path_jonas="../.."
+
 branch="dev"
+# this requires that Loop already have remotes configures
+# first arg goes with dosing-strategy-linear-ramp branch (i.e., marionbarker)
+# second arg goes with prep_irc and combined_1988_2008 (i.e., loopandlearn)
+repo1="marionbarker"
+repo2="loopandlearn"
 
 function git_cleanup_submodule() {
   local submodule_path=$1
@@ -27,12 +35,19 @@ function git_reset() {
 
     # Fetch the branches
     cd Loop
-    git fetch repo1
-    git fetch repo2
+    git fetch $repo1
+    git fetch $repo2
     cd ..
 }
 
-cd Loop_dev/LoopWorkspace
+# marion starts in LoopWorkspace
+thisFolder=$(pwd)
+if [[ thisFolder -ne "LoopWorkspace" ]]; then
+    cd Loop_dev/LoopWorkspace
+    path_to_use="$path_jonas"
+else
+    path_to_use="$path_marion"
+fi
 git_reset
 
 commit() {
@@ -71,7 +86,7 @@ create_submodule_branch() {
 
 create_patch() {
     local patch_path="$1"
-    git diff --submodule=diff | sed 's/[[:space:]]*$//' > "$patch_path"
+    git diff --submodule=diff > "$patch_path"
 }
 
 apply_diff() {
@@ -113,16 +128,16 @@ reverse_diff() {
 echo "1988"
 #############################
 create_submodule_branch Loop branch_1988
-apply_diff "dosing-strategy-linear-ramp" "repo1" Loop
-create_patch "../../1988/${branch}_1988.patch"
+apply_diff "dosing-strategy-linear-ramp" "$repo1" Loop
+create_patch "$path_to_use/1988/${branch}_1988.patch"
 
 
 #############################
 echo "2008"
 #############################
 create_submodule_branch Loop branch_2008
-apply_diff "prep_irc" "repo2" Loop
-create_patch "../../2008/${branch}_2008.patch"
+apply_diff "prep_irc" "$repo2" Loop
+create_patch "$path_to_use/2008/${branch}_2008.patch"
 
 
 #############################
@@ -132,10 +147,10 @@ echo "1988 based on 2008 = combined_1988_2008"
 cd Loop
 git checkout -b "branch_1988_2008" branch_2008
 stage_workspace
-reverse_diff "prep_irc" "repo2"
-apply_diff "combined_1988_2008" "repo2"
+reverse_diff "prep_irc" "$repo2"
+apply_diff "combined_1988_2008" "$repo2"
 cd ..
-create_patch "../../1988/${branch}_1988_2008.patch"
+create_patch "$path_to_use/1988/${branch}_1988_2008.patch"
 
 
 #############################
@@ -145,10 +160,10 @@ echo "2008 based on 1988 -> combined_1988_2008"
 cd Loop
 git checkout -b "branch_2008_1988" branch_1988
 stage_workspace
-reverse_diff "dosing-strategy-linear-ramp" "repo1"
-apply_diff "combined_1988_2008" "repo2"
+reverse_diff "dosing-strategy-linear-ramp" "$repo1"
+apply_diff "combined_1988_2008" "$repo2"
 cd ..
-create_patch "../../2008/${branch}_2008_1988.patch"
+create_patch "$path_to_use/2008/${branch}_2008_1988.patch"
 
 
 #############################
@@ -157,23 +172,23 @@ echo "1988 over original cto"
 git_reset
 
 #Set workspace cto original
-git apply ../../cto_original_LoopWorkspace.patch
+git apply "$path_to_use/customtypeone_looppatches/cto_original.patch"
 commit Loop LoopKit
 commit
 
 #Remove original cto
-git apply --reverse ../../cto_original_LoopWorkspace.patch
+git apply --reverse "$path_to_use/customtypeone_looppatches/cto_original.patch"
 commit Loop LoopKit
 
 # Apply 1988 changes
-apply_diff "dosing-strategy-linear-ramp" "repo1" Loop
+apply_diff "dosing-strategy-linear-ramp" "$repo1" Loop
 
 #Add cto no switcher
-git apply ../../cto_no_switcher_LoopWorkspace.patch
+git apply "$path_to_use/customtypeone_looppatches/cto_no_switcher.patch"
 commit Loop LoopKit
 
 # Do a workspace level patch
-create_patch "../../1988/${branch}_1988_cto.patch"
+create_patch "$path_to_use/1988/${branch}_1988_cto.patch"
 
 
 #############################
@@ -182,20 +197,20 @@ echo "1988 over original cto + 2008"
 git_reset
 
 # Stage workspace as 2008 + cto
-apply_diff "prep_irc" "repo2" Loop
-git apply ../../cto_original_LoopWorkspace.patch
+apply_diff "prep_irc" "$repo2" Loop
+git apply "$path_to_use/customtypeone_looppatches/cto_original.patch"
 commit Loop LoopKit
 commit
 
 # Remove 2008 + cto
-reverse_diff "prep_irc" "repo2" Loop
-git apply --reverse ../../cto_original_LoopWorkspace.patch
+reverse_diff "prep_irc" "$repo2" Loop
+git apply --reverse "$path_to_use/customtypeone_looppatches/cto_original.patch"
 commit Loop LoopKit
 
 # Apply combined_1988_2008 + cto no switch
-apply_diff "combined_1988_2008" "repo2" Loop
-git apply ../../cto_no_switcher_LoopWorkspace.patch
+apply_diff "combined_1988_2008" "$repo2" Loop
+git apply "$path_to_use/customtypeone_looppatches/cto_no_switcher.patch"
 commit Loop LoopKit
 
 # Do a workspace level patch
-create_patch "../../1988/${branch}_1988_2008_cto.patch"
+create_patch "$path_to_use/1988/${branch}_1988_2008_cto.patch"
