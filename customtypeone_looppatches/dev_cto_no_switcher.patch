@@ -102,7 +102,7 @@ index 5084108e..0e01cea3 100644
          settings: LoopSettings
      ) -> Double {
 +        // Modify Bolus Application Factor for modified CustomTypeOne LoopPatches
-+        //   only effective for ConstantDosingStrategy
++        //   only effective for ConstantApplicationFactorStrategy
 +        var constantBolusApplicationFactor = LoopConstants.bolusPartialApplicationFactor
 +        let alternatePAFEnabled = UserDefaults.standard.bool(forKey: "alternatePAFEnabled")
 +        let alternatePAFSetting = UserDefaults.standard.double(forKey: "alternatePAFSetting")
