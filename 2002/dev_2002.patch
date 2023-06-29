@@ -142,7 +142,7 @@ new file mode 100644
 index 00000000..a8090735
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,233 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -276,10 +276,11 @@ index 00000000..a8090735
 +                switch result {
 +                case .success(let syncedSchedule):
 +                    DispatchQueue.main.async {
-+                        self?.saveCorrectionRange(range: profile.correctionRange)
++                        let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
++                        self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
 +                        self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
 +                        self?.saveBasalRates(basalRates: syncedSchedule)
-+                        self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule)
++                        self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
 +                        print("New profile loaded")
 +                        completion(.success)
 +                    }
