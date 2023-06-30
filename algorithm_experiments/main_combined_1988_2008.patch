@@ -1,0 +1,916 @@
+Submodule Loop befcbcb..a7b2444:
+diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
+index c8ef74fe..ccc75b0b 100644
+--- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
++++ b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
+@@ -13,6 +13,9 @@ extension GlucoseRangeSchedule {
+     func minQuantity(at date: Date) -> HKQuantity {
+         return HKQuantity(unit: unit, doubleValue: value(at: date).minValue)
+     }
++    func maxQuantity(at date: Date) -> HKQuantity {
++        return HKQuantity(unit: unit, doubleValue: value(at: date).maxValue)
++    }
+ }
+
+
+diff --git a/Loop/Common/FeatureFlags.swift b/Loop/Common/FeatureFlags.swift
+index b2f0953e..b5c39d73 100644
+--- a/Loop/Common/FeatureFlags.swift
++++ b/Loop/Common/FeatureFlags.swift
+@@ -38,6 +38,7 @@ struct FeatureFlagConfiguration: Decodable {
+     let dynamicCarbAbsorptionEnabled: Bool
+     let adultChildInsulinModelSelectionEnabled: Bool
+     let profileExpirationSettingsViewEnabled: Bool
++    let allowAlgorithmExperiments: Bool
+
+
+     fileprivate init() {
+@@ -220,6 +221,11 @@ struct FeatureFlagConfiguration: Decodable {
+         #else
+         self.profileExpirationSettingsViewEnabled = true
+         #endif
++        #if ALLOW_ALGORITHM_EXPERIMENTS
++        self.allowAlgorithmExperiments = true
++        #else
++        self.allowAlgorithmExperiments = false
++        #endif
+     }
+ }
+
+@@ -253,7 +259,8 @@ extension FeatureFlagConfiguration : CustomDebugStringConvertible {
+             "* usePositiveMomentumAndRCForManualBoluses: \(usePositiveMomentumAndRCForManualBoluses)",
+             "* dynamicCarbAbsorptionEnabled: \(dynamicCarbAbsorptionEnabled)",
+             "* adultChildInsulinModelSelectionEnabled: \(adultChildInsulinModelSelectionEnabled)",
+-            "* profileExpirationSettingsViewEnabled: \(profileExpirationSettingsViewEnabled)"
++            "* profileExpirationSettingsViewEnabled: \(profileExpirationSettingsViewEnabled)",
++            "* allowAlgorithmExperiments: \(allowAlgorithmExperiments)"
+         ].joined(separator: "\n")
+     }
+ }
+diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
+index 31b6ebff..6800c7f2 100644
+--- a/Loop/Loop.xcodeproj/project.pbxproj
++++ b/Loop/Loop.xcodeproj/project.pbxproj
+@@ -519,6 +519,13 @@
+ 		C1FB428D21791D2500FAB378 /* PumpManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C3B6F620BBCAA30026CAFA /* PumpManager.swift */; };
+ 		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
+ 		C1FB4290217922A100FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
++		DD3AABAE2A4CB2050083232D /* GlucoseBasedApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABAB2A4CB2050083232D /* GlucoseBasedApplicationFactorStrategy.swift */; };
++		DD3AABAF2A4CB2050083232D /* ConstantApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABAC2A4CB2050083232D /* ConstantApplicationFactorStrategy.swift */; };
++		DD3AABB02A4CB2050083232D /* ApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABAD2A4CB2050083232D /* ApplicationFactorStrategy.swift */; };
++		DD3AABB22A4CB22A0083232D /* IntegralRetrospectiveCorrection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABB12A4CB22A0083232D /* IntegralRetrospectiveCorrection.swift */; };
++		DD3AABB62A4CB24C0083232D /* GlucoseBasedApplicationFactorSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABB32A4CB24B0083232D /* GlucoseBasedApplicationFactorSelectionView.swift */; };
++		DD3AABB72A4CB24C0083232D /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABB42A4CB24B0083232D /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
++		DD3AABB82A4CB24C0083232D /* SettingsView+algorithmExperimentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3AABB52A4CB24C0083232D /* SettingsView+algorithmExperimentsSection.swift */; };
+ 		E90909D124E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */; };
+ 		E90909D224E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */; };
+ 		E90909D324E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json in Resources */ = {isa = PBXBuildFile; fileRef = E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */; };
+@@ -1687,6 +1694,13 @@
+ 		C1FF3D4B29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
+ 		C1FF3D4C29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
+ 		C1FF3D4D29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/InfoPlist.strings; sourceTree = "<group>"; };
++		DD3AABAB2A4CB2050083232D /* GlucoseBasedApplicationFactorStrategy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorStrategy.swift; sourceTree = "<group>"; };
++		DD3AABAC2A4CB2050083232D /* ConstantApplicationFactorStrategy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConstantApplicationFactorStrategy.swift; sourceTree = "<group>"; };
++		DD3AABAD2A4CB2050083232D /* ApplicationFactorStrategy.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ApplicationFactorStrategy.swift; sourceTree = "<group>"; };
++		DD3AABB12A4CB22A0083232D /* IntegralRetrospectiveCorrection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrection.swift; sourceTree = "<group>"; };
++		DD3AABB32A4CB24B0083232D /* GlucoseBasedApplicationFactorSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorSelectionView.swift; sourceTree = "<group>"; };
++		DD3AABB42A4CB24B0083232D /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
++		DD3AABB52A4CB24C0083232D /* SettingsView+algorithmExperimentsSection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SettingsView+algorithmExperimentsSection.swift"; sourceTree = "<group>"; };
+ 		E90909CC24E34AC500F963D2 /* high_and_rising_with_cob_momentum_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_momentum_effect.json; sourceTree = "<group>"; };
+ 		E90909CD24E34AC500F963D2 /* high_and_rising_with_cob_insulin_effect.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_insulin_effect.json; sourceTree = "<group>"; };
+ 		E90909CE24E34AC500F963D2 /* high_and_rising_with_cob_predicted_glucose.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = high_and_rising_with_cob_predicted_glucose.json; sourceTree = "<group>"; };
+@@ -2028,6 +2042,7 @@
+ 		43511CDD21FD80AD00566C63 /* RetrospectiveCorrection */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				DD3AABB12A4CB22A0083232D /* IntegralRetrospectiveCorrection.swift */,
+ 				43511CDF21FD80E400566C63 /* RetrospectiveCorrection.swift */,
+ 				43511CE021FD80E400566C63 /* StandardRetrospectiveCorrection.swift */,
+ 			);
+@@ -2037,6 +2052,9 @@
+ 		43757D131C06F26C00910CB9 /* Models */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				DD3AABAD2A4CB2050083232D /* ApplicationFactorStrategy.swift */,
++				DD3AABAC2A4CB2050083232D /* ConstantApplicationFactorStrategy.swift */,
++				DD3AABAB2A4CB2050083232D /* GlucoseBasedApplicationFactorStrategy.swift */,
+ 				A99A114029A581D6007919CE /* Remote */,
+ 				43511CDD21FD80AD00566C63 /* RetrospectiveCorrection */,
+ 				A9FB75F0252BE320004C7D3F /* BolusDosingDecision.swift */,
+@@ -2376,6 +2394,9 @@
+ 		43F5C2CF1B92A2ED003EB13D /* Views */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				DD3AABB32A4CB24B0083232D /* GlucoseBasedApplicationFactorSelectionView.swift */,
++				DD3AABB42A4CB24B0083232D /* IntegralRetrospectiveCorrectionSelectionView.swift */,
++				DD3AABB52A4CB24C0083232D /* SettingsView+algorithmExperimentsSection.swift */,
+ 				B4001CED28CBBC82002FB414 /* AlertManagementView.swift */,
+ 				897A5A9524C2175B00C4E71D /* BolusEntryView.swift */,
+ 				C1F8B1D122375E4200DD66CF /* BolusProgressTableViewCell.swift */,
+@@ -3763,6 +3784,7 @@
+ 			isa = PBXSourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				DD3AABB02A4CB2050083232D /* ApplicationFactorStrategy.swift in Sources */,
+ 				C17824A51E1AD4D100D9D25C /* ManualBolusRecommendation.swift in Sources */,
+ 				897A5A9624C2175B00C4E71D /* BolusEntryView.swift in Sources */,
+ 				4F70C2131DE90339006380B7 /* StatusExtensionContext.swift in Sources */,
+@@ -3802,6 +3824,7 @@
+ 				1DA649A9244126DA00F61E75 /* InAppModalAlertScheduler.swift in Sources */,
+ 				43B260491ED248FB008CAA77 /* CarbEntryTableViewCell.swift in Sources */,
+ 				A9D5C5B625DC6C6A00534873 /* LoopAppManager.swift in Sources */,
++				DD3AABB62A4CB24C0083232D /* GlucoseBasedApplicationFactorSelectionView.swift in Sources */,
+ 				4302F4E11D4E9C8900F0FCAF /* TextFieldTableViewController.swift in Sources */,
+ 				C1742332259BEADC00399C9D /* ManualEntryDoseView.swift in Sources */,
+ 				43F64DD91D9C92C900D24DC6 /* TitleSubtitleTableViewCell.swift in Sources */,
+@@ -3884,6 +3907,7 @@
+ 				E9B080B1253BDA6300BAD8F8 /* UserDefaults+LoopIntents.swift in Sources */,
+ 				C1AF062329426300002C1B19 /* ManualGlucoseEntryRow.swift in Sources */,
+ 				C148CEE724FD91BD00711B3B /* DeliveryUncertaintyAlertManager.swift in Sources */,
++				DD3AABAE2A4CB2050083232D /* GlucoseBasedApplicationFactorStrategy.swift in Sources */,
+ 				1D12D3B92548EFDD00B53E8B /* main.swift in Sources */,
+ 				435400341C9F878D00D5819C /* SetBolusUserInfo.swift in Sources */,
+ 				A9DCF32A25B0FABF00C89088 /* LoopUIColorPalette+Default.swift in Sources */,
+@@ -3892,6 +3916,7 @@
+ 				43F89CA322BDFBBD006BB54E /* UIActivityIndicatorView.swift in Sources */,
+ 				A999D40624663D18004C89D4 /* PumpManagerError.swift in Sources */,
+ 				437D9BA31D7BC977007245E8 /* PredictionTableViewController.swift in Sources */,
++				DD3AABB22A4CB22A0083232D /* IntegralRetrospectiveCorrection.swift in Sources */,
+ 				A987CD4924A58A0100439ADC /* ZipArchive.swift in Sources */,
+ 				43F41C371D3BF32400C11ED6 /* UIAlertController.swift in Sources */,
+ 				A9CBE45C248ACC03008E7BA2 /* SettingsStore+SimulatedCoreData.swift in Sources */,
+@@ -3919,9 +3944,12 @@
+ 				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
+ 				892A5D692230C41D008961AB /* RangeReplaceableCollection.swift in Sources */,
+ 				4F70C2101DE8FAC5006380B7 /* ExtensionDataManager.swift in Sources */,
++				DD3AABB82A4CB24C0083232D /* SettingsView+algorithmExperimentsSection.swift in Sources */,
+ 				43DFB62320D4CAE7008A7BAE /* PumpManager.swift in Sources */,
++				DD3AABAF2A4CB2050083232D /* ConstantApplicationFactorStrategy.swift in Sources */,
+ 				A9FB75F1252BE320004C7D3F /* BolusDosingDecision.swift in Sources */,
+ 				892A5D59222F0A27008961AB /* Debug.swift in Sources */,
++				DD3AABB72A4CB24C0083232D /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */,
+ 				1DD0B76724EC77AC008A2DC3 /* SupportScreenView.swift in Sources */,
+ 				431A8C401EC6E8AB00823B9C /* CircleMaskView.swift in Sources */,
+ 				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 18a08166..5f3c1625 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -123,8 +123,6 @@ final class LoopDataManager {
+
+         self.trustedTimeOffset = trustedTimeOffset
+
+-        retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
+-
+         overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
+             guard let name = change.newValue??.lowercased(), let appGroup = UserDefaults.appGroup else {
+                 return
+@@ -435,7 +433,23 @@ final class LoopDataManager {
+     }
+
+     // Confined to dataAccessQueue
+-    private var retrospectiveCorrection: RetrospectiveCorrection
++    private var lastIntegralRetrospectiveCorrectionEnabled: Bool?
++    private var cachedRetrospectiveCorrection: RetrospectiveCorrection?
++
++    var retrospectiveCorrection: RetrospectiveCorrection {
++        let currentIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.integralRetrospectiveCorrectionEnabled
++
++        if lastIntegralRetrospectiveCorrectionEnabled != currentIntegralRetrospectiveCorrectionEnabled || cachedRetrospectiveCorrection == nil {
++            lastIntegralRetrospectiveCorrectionEnabled = currentIntegralRetrospectiveCorrectionEnabled
++            if currentIntegralRetrospectiveCorrectionEnabled {
++                cachedRetrospectiveCorrection = IntegralRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
++            } else {
++                cachedRetrospectiveCorrection = StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
++            }
++        }
++
++        return cachedRetrospectiveCorrection!
++    }
+
+     // MARK: - Background task management
+
+@@ -1696,7 +1710,23 @@ extension LoopDataManager {
+                     return self.delegate?.roundBolusVolume(units: units) ?? units
+                 }
+
+-                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * LoopConstants.bolusPartialApplicationFactor)
++                // Create dosing strategy based on user setting
++                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.glucoseBasedApplicationFactorEnabled
++                    ? GlucoseBasedApplicationFactorStrategy()
++                    : ConstantApplicationFactorStrategy()
++
++                let correctionRangeSchedule = settings.effectiveGlucoseTargetRangeSchedule()
++
++                let effectiveBolusApplicationFactor = applicationFactorStrategy.calculateDosingFactor(
++                    for: glucose.quantity,
++                    correctionRangeSchedule: correctionRangeSchedule!,
++                    settings: settings
++                )
++
++                self.logger.debug(" *** Glucose: %{public}@, effectiveBolusApplicationFactor: %.2f", glucose.quantity.description, effectiveBolusApplicationFactor)
++
++                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
++                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
+
+                 dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
+                     to: glucoseTargetRange!,
+@@ -1706,7 +1736,7 @@ extension LoopDataManager {
+                     model: doseStore.insulinModelProvider.model(for: pumpInsulinType),
+                     basalRates: basalRateSchedule!,
+                     maxAutomaticBolus: maxAutomaticBolus,
+-                    partialApplicationFactor: LoopConstants.bolusPartialApplicationFactor * self.timeBasedDoseApplicationFactor,
++                    partialApplicationFactor: effectiveBolusApplicationFactor * self.timeBasedDoseApplicationFactor,
+                     lastTempBasal: lastTempBasal,
+                     volumeRounder: volumeRounder,
+                     rateRounder: rateRounder,
+@@ -2102,9 +2132,11 @@ extension LoopDataManager {
+                 }),
+                 "]",
+
++                "integralRetrospectiveCorrectionEnabled: \(UserDefaults.standard.integralRetrospectiveCorrectionEnabled)",
++
+                 "retrospectiveGlucoseDiscrepancies: [",
+                 "* GlucoseEffect(start, mg/dL)",
+-                (state.retrospectiveGlucoseDiscrepancies ?? []).reduce(into: "", { (entries, entry) in
++                (manager.retrospectiveGlucoseDiscrepancies ?? []).reduce(into: "", { (entries, entry) in
+                     entries.append("* \(entry.startDate), \(entry.quantity.doubleValue(for: .milligramsPerDeciliter))\n")
+                 }),
+                 "]",
+@@ -2126,6 +2158,7 @@ extension LoopDataManager {
+                 "insulinOnBoard: \(String(describing: manager.insulinOnBoard))",
+                 "error: \(String(describing: state.error))",
+                 "overrideInUserDefaults: \(String(describing: UserDefaults.appGroup?.intentExtensionOverrideToSet))",
++                "glucoseBasedApplicationFactorEnabled: \(UserDefaults.standard.glucoseBasedApplicationFactorEnabled)",
+                 "",
+                 String(reflecting: self.retrospectiveCorrection),
+                 "",
+diff --git a/Loop/Loop/Models/ApplicationFactorStrategy.swift b/Loop/Loop/Models/ApplicationFactorStrategy.swift
+new file mode 100644
+index 00000000..bf67935c
+--- /dev/null
++++ b/Loop/Loop/Models/ApplicationFactorStrategy.swift
+@@ -0,0 +1,20 @@
++//
++//  ApplicationFactorStrategy.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-03.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++import LoopKit
++import LoopCore
++
++protocol ApplicationFactorStrategy {
++    func calculateDosingFactor(
++        for glucose: HKQuantity,
++        correctionRangeSchedule: GlucoseRangeSchedule,
++        settings: LoopSettings
++    ) -> Double
++}
+diff --git a/Loop/Loop/Models/ConstantApplicationFactorStrategy.swift b/Loop/Loop/Models/ConstantApplicationFactorStrategy.swift
+new file mode 100644
+index 00000000..e13c40c4
+--- /dev/null
++++ b/Loop/Loop/Models/ConstantApplicationFactorStrategy.swift
+@@ -0,0 +1,23 @@
++//
++//  ConstantDosingStrategy.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-03.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++import LoopKit
++import LoopCore
++
++struct ConstantApplicationFactorStrategy: ApplicationFactorStrategy {
++    func calculateDosingFactor(
++        for glucose: HKQuantity,
++        correctionRangeSchedule: GlucoseRangeSchedule,
++        settings: LoopSettings
++    ) -> Double {
++        // The original strategy uses a constant dosing factor.
++        return LoopConstants.bolusPartialApplicationFactor
++    }
++}
+diff --git a/Loop/Loop/Models/GlucoseBasedApplicationFactorStrategy.swift b/Loop/Loop/Models/GlucoseBasedApplicationFactorStrategy.swift
+new file mode 100644
+index 00000000..41caa3d7
+--- /dev/null
++++ b/Loop/Loop/Models/GlucoseBasedApplicationFactorStrategy.swift
+@@ -0,0 +1,42 @@
++//
++//  GlucoseBasedApplicationFactorStrategy.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-03.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++import LoopKit
++import LoopCore
++
++struct GlucoseBasedApplicationFactorStrategy: ApplicationFactorStrategy {
++    static let minPartialApplicationFactor = 0.20 // min fraction of correction when glucose > minGlucoseSlidingScale
++    static let maxPartialApplicationFactor = 0.80 // max fraction of correction when glucose > maxGlucoseSlidingScale
++    // set minGlucoseSlidingScale based on user setting for correction range
++    // use mg/dL for calculations
++    static let minGlucoseDeltaSlidingScale = 10.0 // mg/dL
++    static let maxGlucoseSlidingScale = 200.0 // mg/dL
++
++    func calculateDosingFactor(
++        for glucose: HKQuantity,
++        correctionRangeSchedule: GlucoseRangeSchedule,
++        settings: LoopSettings
++    ) -> Double {
++        // Calculate current glucose and lower bound target
++        let currentGlucose = glucose.doubleValue(for: .milligramsPerDeciliter)
++        let correctionRange = correctionRangeSchedule.quantityRange(at: Date())
++        let lowerBoundTarget = correctionRange.lowerBound.doubleValue(for: .milligramsPerDeciliter)
++
++        // Calculate minimum glucose sliding scale and scaling fraction
++        let minGlucoseSlidingScale = GlucoseBasedApplicationFactorStrategy.minGlucoseDeltaSlidingScale + lowerBoundTarget
++        let scalingFraction = (GlucoseBasedApplicationFactorStrategy.maxPartialApplicationFactor - GlucoseBasedApplicationFactorStrategy.minPartialApplicationFactor) / (GlucoseBasedApplicationFactorStrategy.maxGlucoseSlidingScale - minGlucoseSlidingScale)
++        let scalingGlucose = max(currentGlucose - minGlucoseSlidingScale, 0.0)
++
++        // Calculate effectiveBolusApplicationFactor
++        let effectiveBolusApplicationFactor = min(GlucoseBasedApplicationFactorStrategy.minPartialApplicationFactor + scalingGlucose * scalingFraction, GlucoseBasedApplicationFactorStrategy.maxPartialApplicationFactor)
++
++        return effectiveBolusApplicationFactor
++    }
++}
+diff --git a/Loop/Loop/Models/LoopSettings+Loop.swift b/Loop/Loop/Models/LoopSettings+Loop.swift
+index ce7433a9..fd35b641 100644
+--- a/Loop/Loop/Models/LoopSettings+Loop.swift
++++ b/Loop/Loop/Models/LoopSettings+Loop.swift
+@@ -19,9 +19,5 @@ extension LoopSettings {
+     }
+
+     static let retrospectiveCorrectionEffectDuration = TimeInterval(hours: 1)
+-
+-    /// Creates an instance of the enabled retrospective correction implementation
+-    var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection {
+-        return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
+-    }
++
+ }
+diff --git a/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift b/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift
+new file mode 100644
+index 00000000..e6ece1c7
+--- /dev/null
++++ b/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift
+@@ -0,0 +1,226 @@
++//
++//  IntegralRetrospectiveCorrection.swift
++//  Loop
++//
++//  Created by Dragan Maksimovic on 9/19/21.
++//  Copyright © 2021 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++import LoopKit
++import LoopCore
++
++/**
++    Integral Retrospective Correction (IRC) calculates a correction effect in glucose prediction based on a timeline of past discrepancies between observed glucose movement and movement expected based on insulin and carb models. Integral retrospective correction acts as a proportional-integral-differential (PID) controller aimed at reducing modeling errors in glucose prediction.
++
++    In the above summary, "discrepancy" is a difference between the actual glucose and the model predicted glucose over retrospective correction grouping interval (set to 30 min in LoopSettings), whereas "past discrepancies" refers to a timeline of discrepancies computed over retrospective correction integration interval (set to 180 min in Loop Settings).
++
++ */
++class IntegralRetrospectiveCorrection: RetrospectiveCorrection {
++    let retrospectionInterval = TimeInterval(minutes: 180)
++
++    /// RetrospectiveCorrection protocol variables
++    /// Standard effect duration
++    let effectDuration: TimeInterval
++    /// Overall retrospective correction effect
++    var totalGlucoseCorrectionEffect: HKQuantity?
++
++    /**
++     Integral retrospective correction parameters:
++     - currentDiscrepancyGain: Standard retrospective correction gain
++     - persistentDiscrepancyGain: Gain for persistent long-term modeling errors, must be greater than or equal to currentDiscrepancyGain
++     - correctionTimeConstant: How fast integral effect accumulates in response to persistent errors
++     - differentialGain: Differential effect gain
++     - delta: Glucose sampling time interval (5 min)
++     - maximumCorrectionEffectDuration: Maximum duration of the correction effect in glucose prediction
++     - retrospectiveCorrectionIntegrationInterval: Maximum duration over which to integrate retrospective correction changes
++    */
++    static let currentDiscrepancyGain: Double = 1.0
++    static let persistentDiscrepancyGain: Double = 2.0 // was 5.0
++    static let correctionTimeConstant: TimeInterval = TimeInterval(minutes: 60.0) // was 90.0
++    static let differentialGain: Double = 2.0
++    static let delta: TimeInterval = TimeInterval(minutes: 5.0)
++    static let maximumCorrectionEffectDuration: TimeInterval = TimeInterval(minutes: 180.0) // was 240.0
++
++    /// Initialize computed integral retrospective correction parameters
++    static let integralForget: Double = exp( -delta.minutes / correctionTimeConstant.minutes )
++    static let integralGain: Double = ((1 - integralForget) / integralForget) *
++        (persistentDiscrepancyGain - currentDiscrepancyGain)
++    static let proportionalGain: Double = currentDiscrepancyGain - integralGain
++
++    /// All math is performed with glucose expressed in mg/dL
++    private let unit = HKUnit.milligramsPerDeciliter
++
++    /// State variables reported in diagnostic issue report
++    var recentDiscrepancyValues: [Double] = []
++    var integralCorrectionEffectDuration: TimeInterval?
++    var proportionalCorrection: Double = 0.0
++    var integralCorrection: Double = 0.0
++    var differentialCorrection: Double = 0.0
++    var currentDate: Date = Date()
++    var ircStatus: String = "-"
++
++    /**
++     Initialize integral retrospective correction settings based on current values of user settings
++
++     - Parameters:
++        - settings: User settings
++        - insulinSensitivity: User insulin sensitivity schedule
++        - basalRates: User basal rate schedule
++
++     - Returns: Integral Retrospective Correction customized with controller parameters and user settings
++    */
++    init(effectDuration: TimeInterval) {
++        self.effectDuration = effectDuration
++    }
++
++    /**
++     Calculates overall correction effect based on timeline of discrepancies, and updates glucoseCorrectionEffect
++
++     - Parameters:
++     - glucose: Most recent glucose
++     - retrospectiveGlucoseDiscrepanciesSummed: Timeline of past discepancies
++
++     - Returns:
++     - totalRetrospectiveCorrection: Overall glucose effect
++     */
++    func computeEffect(
++        startingAt startingGlucose: GlucoseValue,
++        retrospectiveGlucoseDiscrepanciesSummed: [GlucoseChange]?,
++        recencyInterval: TimeInterval,
++        insulinSensitivitySchedule: InsulinSensitivitySchedule?,
++        basalRateSchedule: BasalRateSchedule?,
++        glucoseCorrectionRangeSchedule: GlucoseRangeSchedule?,
++        retrospectiveCorrectionGroupingInterval: TimeInterval
++        ) -> [GlucoseEffect] {
++
++        // Loop settings relevant for calculation of effect limits
++        // let settings = UserDefaults.appGroup?.loopSettings ?? LoopSettings()
++        currentDate = Date()
++
++        // Last discrepancy should be recent, otherwise clear the effect and return
++        let glucoseDate = startingGlucose.startDate
++        var glucoseCorrectionEffect: [GlucoseEffect] = []
++        guard let currentDiscrepancy = retrospectiveGlucoseDiscrepanciesSummed?.last,
++            glucoseDate.timeIntervalSince(currentDiscrepancy.endDate) <= recencyInterval
++            else {
++                ircStatus = "discrepancy not available, effect not computed."
++                totalGlucoseCorrectionEffect = nil
++                return( [] )
++        }
++
++        // Default values if we are not able to calculate integral retrospective correction
++        ircStatus = "defaulted to standard RC, past discrepancies or user settings not available."
++        let currentDiscrepancyValue = currentDiscrepancy.quantity.doubleValue(for: unit)
++        var scaledCorrection = currentDiscrepancyValue
++        totalGlucoseCorrectionEffect = HKQuantity(unit: unit, doubleValue: currentDiscrepancyValue)
++        integralCorrectionEffectDuration = effectDuration
++
++        // Calculate integral retrospective correction if past discrepancies over integration interval are available and if user settings are available
++        if  let pastDiscrepancies = retrospectiveGlucoseDiscrepanciesSummed?.filterDateRange(glucoseDate.addingTimeInterval(-retrospectionInterval), glucoseDate),
++            let sensitivity = insulinSensitivitySchedule,
++            let basals = basalRateSchedule,
++            let glucoseCorrectionRangeSchedule = glucoseCorrectionRangeSchedule {
++
++            ircStatus = "effect computed successfully."
++
++            // To reduce response delay, integral retrospective correction is computed over an array of recent contiguous discrepancy values having the same sign as the latest discrepancy value
++            recentDiscrepancyValues = []
++            var nextDiscrepancy = currentDiscrepancy
++            let currentDiscrepancySign = currentDiscrepancy.quantity.doubleValue(for: unit).sign
++            for pastDiscrepancy in pastDiscrepancies.reversed() {
++                let pastDiscrepancyValue = pastDiscrepancy.quantity.doubleValue(for: unit)
++                if (pastDiscrepancyValue.sign == currentDiscrepancySign &&
++                    nextDiscrepancy.endDate.timeIntervalSince(pastDiscrepancy.endDate)
++                    <= recencyInterval && abs(pastDiscrepancyValue) >= 0.1)
++                {
++                    recentDiscrepancyValues.append(pastDiscrepancyValue)
++                    nextDiscrepancy = pastDiscrepancy
++                } else {
++                    break
++                }
++            }
++            recentDiscrepancyValues = recentDiscrepancyValues.reversed()
++
++            let currentSensitivity = sensitivity.quantity(at: glucoseDate).doubleValue(for: unit)
++            let currentBasalRate = basals.value(at: glucoseDate)
++            let correctionRangeMin = glucoseCorrectionRangeSchedule.minQuantity(at: glucoseDate).doubleValue(for: unit)
++            let correctionRangeMax = glucoseCorrectionRangeSchedule.maxQuantity(at: glucoseDate).doubleValue(for: unit)
++            let latestGlucoseValue = startingGlucose.quantity.doubleValue(for: unit) // most recent glucose
++
++            // Safety limit for (+) integral effect. The limit is set to a larger value if the current blood glucose is further away from the correction range because we have more time available for corrections
++            let glucoseError = latestGlucoseValue - correctionRangeMax
++            let zeroTempEffect = abs(currentSensitivity * currentBasalRate)
++            let integralEffectPositiveLimit = min(max(glucoseError, 1.0 * zeroTempEffect), 4.0 * zeroTempEffect)
++
++            // Limit for (-) integral effect: glucose prediction reduced by no more than 10 mg/dL below the correction range minimum
++            let integralEffectNegativeLimit = -max(10.0, latestGlucoseValue - correctionRangeMin)
++
++            // Integral effect math
++            integralCorrection = 0.0
++            var integralCorrectionEffectMinutes = effectDuration.minutes - 2.0 * IntegralRetrospectiveCorrection.delta.minutes
++            for discrepancy in recentDiscrepancyValues {
++                integralCorrection =
++                    IntegralRetrospectiveCorrection.integralForget * integralCorrection +
++                    IntegralRetrospectiveCorrection.integralGain * discrepancy
++                integralCorrectionEffectMinutes += 2.0 * IntegralRetrospectiveCorrection.delta.minutes
++            }
++            // Limits applied to integral correction effect and effect duration
++            integralCorrection = min(max(integralCorrection, integralEffectNegativeLimit), integralEffectPositiveLimit)
++            integralCorrectionEffectMinutes = min(integralCorrectionEffectMinutes, IntegralRetrospectiveCorrection.maximumCorrectionEffectDuration.minutes)
++
++            // Differential effect math
++            var differentialDiscrepancy: Double = 0.0
++            if recentDiscrepancyValues.count > 1 {
++                let previousDiscrepancyValue = recentDiscrepancyValues[recentDiscrepancyValues.count - 2]
++                differentialDiscrepancy = currentDiscrepancyValue - previousDiscrepancyValue
++            }
++
++            // Overall glucose effect calculated as a sum of propotional, integral and differential effects
++            proportionalCorrection = IntegralRetrospectiveCorrection.proportionalGain * currentDiscrepancyValue
++            differentialCorrection = IntegralRetrospectiveCorrection.differentialGain * differentialDiscrepancy
++            let totalCorrection = proportionalCorrection + integralCorrection + differentialCorrection
++            totalGlucoseCorrectionEffect = HKQuantity(unit: unit, doubleValue: totalCorrection)
++            integralCorrectionEffectDuration = TimeInterval(minutes: integralCorrectionEffectMinutes)
++
++            // correction value scaled to account for extended effect duration
++            scaledCorrection = totalCorrection * effectDuration.minutes / integralCorrectionEffectDuration!.minutes
++        }
++
++        let retrospectionTimeInterval = currentDiscrepancy.endDate.timeIntervalSince(currentDiscrepancy.startDate)
++        let discrepancyTime = max(retrospectionTimeInterval, retrospectiveCorrectionGroupingInterval)
++        let velocity = HKQuantity(unit: unit.unitDivided(by: .second()), doubleValue: scaledCorrection / discrepancyTime)
++
++        // Update array of glucose correction effects
++        glucoseCorrectionEffect = startingGlucose.decayEffect(atRate: velocity, for: integralCorrectionEffectDuration!)
++
++        // Return glucose correction effects
++        return( glucoseCorrectionEffect )
++    }
++
++    var debugDescription: String {
++        let report: [String] = [
++            "## IntegralRetrospectiveCorrection",
++            "",
++            "Last updated: \(currentDate)",
++            "Status: \(ircStatus)",
++            "currentDiscrepancyGain: \(IntegralRetrospectiveCorrection.currentDiscrepancyGain)",
++            "persistentDiscrepancyGain: \(IntegralRetrospectiveCorrection.persistentDiscrepancyGain)",
++            "correctionTimeConstant [min]: \(IntegralRetrospectiveCorrection.correctionTimeConstant.minutes)",
++            "proportionalGain: \(IntegralRetrospectiveCorrection.proportionalGain)",
++            "integralForget: \(IntegralRetrospectiveCorrection.integralForget)",
++            "integralGain: \(IntegralRetrospectiveCorrection.integralGain)",
++            "differentialGain: \(IntegralRetrospectiveCorrection.differentialGain)",
++            "Integration performed over \(recentDiscrepancyValues.count) most recent discrepancies having the same sign as the latest discrepancy value. Earliest-to-most-recent recentDiscrepancyValues [mg/dL]: \(recentDiscrepancyValues)",
++            "proportionalCorrection [mg/dL]: \(proportionalCorrection)",
++            "integralCorrection [mg/dL]: \(integralCorrection)",
++            "differentialCorrection [mg/dL]: \(differentialCorrection)",
++            "totalGlucoseCorrectionEffect: \(String(describing: totalGlucoseCorrectionEffect))",
++            "integralCorrectionEffectDuration [min]: \(String(describing: integralCorrectionEffectDuration?.minutes))"
++        ]
++
++        return report.joined(separator: "\n")
++    }
++
++}
+diff --git a/Loop/Loop/View Controllers/PredictionTableViewController.swift b/Loop/Loop/View Controllers/PredictionTableViewController.swift
+index 10ed414a..55ade065 100644
+--- a/Loop/Loop/View Controllers/PredictionTableViewController.swift
++++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift
+@@ -276,9 +276,26 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+                 format: NSLocalizedString("Predicted: %1$@\nActual: %2$@ (%3$@)", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
+                 values[0], values[1], values[2]
+             )
+-
+-            // Standard retrospective correction
+-            subtitleText = String(format: "%@\n%@", subtitleText, retro)
++            let isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.integralRetrospectiveCorrectionEnabled
++
++            if isIntegralRetrospectiveCorrectionEnabled {
++                var integralEffectDisplay = "?"
++                var totalEffectDisplay = "?"
++                if let totalEffect = self.totalRetrospectiveCorrection {
++                    let integralEffectValue = totalEffect.doubleValue(for: glucoseChart.glucoseUnit) - lastDiscrepancy.quantity.doubleValue(for: glucoseChart.glucoseUnit)
++                    let integralEffect = HKQuantity(unit: glucoseChart.glucoseUnit, doubleValue: integralEffectValue)
++                    integralEffectDisplay = formatter.string(from: integralEffect, for: glucoseChart.glucoseUnit) ?? "?"
++                    totalEffectDisplay = formatter.string(from: totalEffect, for: glucoseChart.glucoseUnit) ?? "?"
++                }
++                let integralRetro = String(
++                    format: NSLocalizedString("prediction-description-integral-retrospective-correction", comment: "Format string describing integral retrospective correction. (1: Integral glucose effect)(2: Total glucose effect)"),
++                    integralEffectDisplay, totalEffectDisplay
++                )
++                subtitleText = String(format: "%@\n%@", retro, integralRetro)
++            } else {
++                subtitleText = String(format: "%@\n%@", subtitleText, retro)
++            }
++
+         }
+
+         cell.subtitleLabel?.text = subtitleText
+diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
+new file mode 100644
+index 00000000..09a68d58
+--- /dev/null
++++ b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
+@@ -0,0 +1,61 @@
++//
++//  GlucoseBasedApplicationFactorSelectionView.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-04.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++public struct GlucoseBasedApplicationFactorSelectionView: View {
++    @Binding var isGlucoseBasedApplicationFactorEnabled: Bool
++    var automaticDosingStrategy: AutomaticDosingStrategy
++
++    public init(isGlucoseBasedApplicationFactorEnabled: Binding<Bool>, automaticDosingStrategy: AutomaticDosingStrategy) {
++        self.automaticDosingStrategy = automaticDosingStrategy
++        self._isGlucoseBasedApplicationFactorEnabled = isGlucoseBasedApplicationFactorEnabled
++    }
++
++    public var body: some View {
++        ScrollView {
++            VStack(spacing: 10) {
++                Text(NSLocalizedString("Glucose Based Partial Application", comment: "Title for glucose based partial application experiment description"))
++                    .font(.headline)
++                    .padding(.bottom, 20)
++
++                Divider()
++
++                if automaticDosingStrategy == .automaticBolus {
++                    Text(NSLocalizedString("Loop normally gives 40% of your predicted insulin needs each dosing cycle.\n\nWhen the Glucose Based Partial Application experiment is enabled, Loop will vary the percentage of recommended bolus delivered each cycle with glucose level.\n\nNear correction range, it will use 20% (similar to Temp Basal), and gradually increase to a maximum of 80% at high glucose (200 mg/dL, 11.1 mmol/L).\n\nPlease be aware that during fast rising glucose, such as after an unannounced meal, this feature, combined with velocity and retrospective correction effects, may result in a larger dose than your ISF would call for.", comment: "Description of Glucose Based Partial Application toggle."))
++                        .foregroundColor(.secondary)
++                    Divider()
++
++                    HStack {
++                        Toggle(NSLocalizedString("Enable Glucose Based Partial Application", comment: "Title for Glucose Based Partial Application toggle"), isOn: $isGlucoseBasedApplicationFactorEnabled)
++                        Spacer()
++                    }
++                    .padding(.top, 20)
++                } else {
++                    Text(NSLocalizedString("This option only applies when Loop's Dosing Strategy is set to Automatic Bolus.", comment: "String shown when glucose based partial application cannot be enabled because dosing strategy is not set to Automatic Bolus"))
++                }
++            }
++            .padding()
++            .onChange(of: isGlucoseBasedApplicationFactorEnabled) { newValue in
++                UserDefaults.standard.glucoseBasedApplicationFactorEnabled = newValue
++            }
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++}
++
++struct GlucoseBasedApplicationFactorSelectionView_Previews: PreviewProvider {
++    static var previews: some View {
++        NavigationView {
++            GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: .constant(true), automaticDosingStrategy: .automaticBolus)
++        }
++    }
++}
+diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
+new file mode 100644
+index 00000000..dfeb37d5
+--- /dev/null
++++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
+@@ -0,0 +1,46 @@
++//
++//  IntegralRetrospectiveCorrectionSelectionView.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-04.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++public struct IntegralRetrospectiveCorrectionSelectionView: View {
++    @Binding var isIntegralRetrospectiveCorrectionEnabled: Bool
++
++    public var body: some View {
++        ScrollView {
++            VStack(spacing: 10) {
++                Text(NSLocalizedString("Integral Retrospective Correction", comment: "Title for integral retrospective correction experiment description"))
++                    .font(.headline)
++                    .padding(.bottom, 20)
++
++                Divider()
++
++                Text(NSLocalizedString("Integral Retrospective Correction (IRC) is an extension of the standard Retrospective Correction (RC) algorithm component in Loop, which adjusts the forecast based on the history of discrepancies between predicted and actual glucose levels.\n\nIn contrast to RC, which looks at discrepancies over the last 30 minute, with IRC, the history of discrepancies adds up over time. So continued positive discrepencies over time will result in increased dosing. If the discrepancies are negative over time, Loop will reduce dosing further.", comment: "Description of Integral Retrospective Correction toggle."))
++                    .foregroundColor(.secondary)
++                Divider()
++
++                Toggle(NSLocalizedString("Enable Integral Retrospective Correction", comment: "Title for Integral Retrospective Correction toggle"), isOn: $isIntegralRetrospectiveCorrectionEnabled)
++                    .onChange(of: isIntegralRetrospectiveCorrectionEnabled) { newValue in
++                        UserDefaults.standard.integralRetrospectiveCorrectionEnabled = newValue
++                    }
++                    .padding(.top, 20)
++            }
++            .padding()
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++
++}
++
++struct IntegralRetrospectiveCorrectionSelectionView_Previews: PreviewProvider {
++    static var previews: some View {
++        IntegralRetrospectiveCorrectionSelectionView(isIntegralRetrospectiveCorrectionEnabled: .constant(true))
++    }
++}
+diff --git a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+new file mode 100644
+index 00000000..54bd2c71
+--- /dev/null
++++ b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+@@ -0,0 +1,106 @@
++//
++//  SettingsView+algorithmExperimentsSection.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2023-06-03.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++extension SettingsView {
++    internal var algorithmExperimentsSection: some View {
++        NavigationLink(NSLocalizedString("Algorithm Experiments", comment: "The title of the Algorithm Experiments section in settings")) {
++            ExperimentsSettingsView(automaticDosingStrategy: viewModel.automaticDosingStrategy)
++        }
++    }
++}
++
++public struct ExperimentRow: View {
++    var name: String
++    var enabled: Bool
++
++    public var body: some View {
++        HStack {
++            Text(name)
++                .foregroundColor(.primary)
++            Spacer()
++            Text(enabled ? "On" : "Off")
++                .foregroundColor(enabled ? .red : .secondary)
++        }
++        .padding()
++        .background(Color(UIColor.secondarySystemBackground))
++        .foregroundColor(.accentColor)
++        .cornerRadius(10)
++    }
++}
++
++public struct ExperimentsSettingsView: View {
++    @State private var isGlucoseBasedApplicationFactorEnabled = UserDefaults.standard.glucoseBasedApplicationFactorEnabled
++    @State private var isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.integralRetrospectiveCorrectionEnabled
++    var automaticDosingStrategy: AutomaticDosingStrategy
++
++    public var body: some View {
++        ScrollView {
++            VStack(alignment: .center, spacing: 12) {
++                Text(NSLocalizedString("Algorithm Experiments", comment: "Navigation title for algorithms experiments screen"))
++                    .font(.headline)
++                VStack {
++                    Text("⚠️").font(.largeTitle)
++                    Text("Caution")
++                }
++                Divider()
++                VStack(alignment: .leading, spacing: 12) {
++                    Text(NSLocalizedString("Algorithm Experiments are optional modifications to the Loop Algorithm. These modifications are less tested than the standard Loop Algorithm, so please use carefully.", comment: "Algorithm Experiments description."))
++                    Text(NSLocalizedString("In future versions of Loop these experiments may change, end up as standard parts of the Loop Algorithm, or be removed from Loop entirely. Please follow along in the Loop Zulip chat to stay informed of possible changes to these features.", comment: "Algorithm Experiments description second paragraph."))
++                }
++                .foregroundColor(.secondary)
++
++                Divider()
++                NavigationLink(destination: GlucoseBasedApplicationFactorSelectionView(isGlucoseBasedApplicationFactorEnabled: $isGlucoseBasedApplicationFactorEnabled, automaticDosingStrategy: automaticDosingStrategy)) {
++                    ExperimentRow(
++                        name: NSLocalizedString("Glucose Based Partial Application", comment: "Title of glucose based partial application experiment"),
++                        enabled: isGlucoseBasedApplicationFactorEnabled && automaticDosingStrategy == .automaticBolus)
++                }
++                NavigationLink(destination: IntegralRetrospectiveCorrectionSelectionView(isIntegralRetrospectiveCorrectionEnabled: $isIntegralRetrospectiveCorrectionEnabled)) {
++                    ExperimentRow(
++                        name: NSLocalizedString("Integral Retrospective Correction", comment: "Title of integral retrospective correction experiment"),
++                        enabled: isIntegralRetrospectiveCorrectionEnabled)
++                }
++                Spacer()
++            }
++            .padding()
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++}
++
++
++extension UserDefaults {
++    private enum Key: String {
++        case GlucoseBasedApplicationFactorEnabled = "com.loopkit.algorithmExperiments.glucoseBasedApplicationFactorEnabled"
++        case IntegralRetrospectiveCorrectionEnabled = "com.loopkit.algorithmExperiments.integralRetrospectiveCorrectionEnabled"
++    }
++
++    var glucoseBasedApplicationFactorEnabled: Bool {
++        get {
++            bool(forKey: Key.GlucoseBasedApplicationFactorEnabled.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.GlucoseBasedApplicationFactorEnabled.rawValue)
++        }
++    }
++
++    var integralRetrospectiveCorrectionEnabled: Bool {
++        get {
++            bool(forKey: Key.IntegralRetrospectiveCorrectionEnabled.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.IntegralRetrospectiveCorrectionEnabled.rawValue)
++        }
++    }
++
++}
+diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
+index 90859273..347adb52 100644
+--- a/Loop/Loop/Views/SettingsView.swift
++++ b/Loop/Loop/Views/SettingsView.swift
+@@ -30,7 +30,7 @@ public struct SettingsView: View {
+     @State private var therapySettingsIsPresented: Bool = false
+     @State private var deletePumpDataAlertIsPresented = false
+     @State private var deleteCGMDataAlertIsPresented = false
+-
++
+     public init(viewModel: SettingsViewModel) {
+         self.viewModel = viewModel
+         self.versionUpdateViewModel = viewModel.versionUpdateViewModel
+@@ -177,6 +177,10 @@ extension SettingsView {
+             ForEach(configurationMenuItemsForSupportPlugins) { item in
+                 item.view
+             }
++
++            if FeatureFlags.allowAlgorithmExperiments {
++                algorithmExperimentsSection
++            }
+         }
+     }
+
+diff --git a/Loop/Loop/en.lproj/Localizable.strings b/Loop/Loop/en.lproj/Localizable.strings
+index 78907ea3..54d0ee57 100644
+--- a/Loop/Loop/en.lproj/Localizable.strings
++++ b/Loop/Loop/en.lproj/Localizable.strings
+@@ -246,6 +246,12 @@
+ /* The title text for the issue report cell */
+ "Issue Report" = "Issue Report";
+
++/* Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference) */
++"prediction-description-retrospective-correction" = "Predicted: %1$@\nActual: %2$@ (%3$@)";
++
++/* Format string describing integral retrospective correction. (1: Integral glucose effect)(2: Total glucose effect) */
++"prediction-description-integral-retrospective-correction" = "Integral effect: %1$@\nTotal glucose effect: %2$@";
++
+ /* Glucose HUD accessibility hint */
+ "Launches CGM app" = "Launches CGM app";
+
+diff --git a/LoopConfigOverride.xcconfig b/LoopConfigOverride.xcconfig
+index 3ffab2c..bcf7df7 100644
+--- a/LoopConfigOverride.xcconfig
++++ b/LoopConfigOverride.xcconfig
+@@ -10,7 +10,7 @@
+ //URL_SCHEME_NAME = $(MAIN_APP_DISPLAY_NAME)
+
+ // Features
+-SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SIMULATORS_ENABLED //DEBUG_FEATURES_ENABLED
++SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SIMULATORS_ENABLED ALLOW_ALGORITHM_EXPERIMENTS //DEBUG_FEATURES_ENABLED
+
+ // Put your team id here for signing
+ //LOOP_DEVELOPMENT_TEAM = UY678SP37Q
