@@ -368,7 +368,7 @@ new file mode 100644
 index 00000000..e6ece1c7
 --- /dev/null
 +++ b/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift
-@@ -0,0 +1,226 @@
+@@ -0,0 +1,231 @@
 +//
 +//  IntegralRetrospectiveCorrection.swift
 +//  Loop
