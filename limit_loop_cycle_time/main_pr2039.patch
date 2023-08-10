@@ -57,7 +57,7 @@ index 18a08166..5da70aff 100644
      /// temporary basal rate.
 +    ///
      func loop() {
--
+-        
 +
 +        if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
 +            print("Looping too fast!")
