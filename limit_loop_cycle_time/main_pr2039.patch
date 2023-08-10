@@ -1,0 +1,100 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
+index 96452b2e..40938be0 100644
+--- a/Loop/Loop/Managers/DeviceDataManager.swift
++++ b/Loop/Loop/Managers/DeviceDataManager.swift
+@@ -47,6 +47,8 @@ final class DeviceDataManager {
+ 
+     @Published var pumpIsAllowingAutomation: Bool
+ 
++    private var lastCGMLoopTrigger: Date = .distantPast
++
+     private let closedLoopStatus: ClosedLoopStatus
+ 
+     var closedLoopDisallowedLocalizedDescription: String? {
+@@ -949,8 +951,14 @@ extension DeviceDataManager: CGMManagerDelegate {
+ 
+     func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {
+         dispatchPrecondition(condition: .onQueue(queue))
++        log.default("CGMManager:%{public}@ did update with %{public}@", String(describing: type(of: manager)), String(describing: readingResult))
+         processCGMReadingResult(manager, readingResult: readingResult) {
+-            self.checkPumpDataAndLoop()
++            let now = Date()
++            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > .minutes(4.2) {
++                self.log.default("Triggering loop from new CGM data at %{public}@", String(describing: now))
++                self.lastCGMLoopTrigger = now
++                self.checkPumpDataAndLoop()
++            }
+         }
+     }
+ 
+@@ -1032,7 +1040,8 @@ extension DeviceDataManager: PumpManagerDelegate {
+ 
+             self.queue.async {
+                 self.processCGMReadingResult(cgmManager, readingResult: result) {
+-                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(6) {
++                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(4.2) {
++                        self.log.default("Triggering Loop from refreshCGM()")
+                         self.checkPumpDataAndLoop()
+                     }
+                     completion?()
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 18a08166..5da70aff 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -27,6 +27,8 @@ final class LoopDataManager {
+         case loopFinished
+     }
+ 
++    let loopLock = UnfairLock()
++
+     static let LoopUpdateContextKey = "com.loudnate.Loop.LoopDataManager.LoopUpdateContext"
+ 
+     private let carbStore: CarbStoreProtocol
+@@ -824,8 +826,24 @@ extension LoopDataManager {
+     ///
+     /// Executes an analysis of the current data, and recommends an adjustment to the current
+     /// temporary basal rate.
++    ///
+     func loop() {
+-        
++
++        if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
++            print("Looping too fast!")
++        }
++
++        let available = loopLock.withLockIfAvailable {
++            loopInternal()
++            return true
++        }
++        if available == nil {
++            print("Loop attempted while already looping!")
++        }
++    }
++
++    func loopInternal() {
++
+         dataAccessQueue.async {
+ 
+             // If time was changed to future time, and a loop completed, then time was fixed, lastLoopCompleted will prevent looping
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKit/UnfairLock.swift b/LoopKit/LoopKit/UnfairLock.swift
+index 9741920..7ceae42 100644
+--- a/LoopKit/LoopKit/UnfairLock.swift
++++ b/LoopKit/LoopKit/UnfairLock.swift
+@@ -28,6 +28,15 @@ public class UnfairLock {
+         return try f()
+     }
+ 
++    public func withLockIfAvailable<ReturnValue>(_ f: () throws -> ReturnValue) rethrows -> ReturnValue? {
++        if os_unfair_lock_trylock(_lock) {
++            defer { os_unfair_lock_unlock(_lock) }
++            return try f()
++        } else {
++            return nil
++        }
++    }
++
+     public func assertOwned() {
+         os_unfair_lock_assert_owner(_lock)
+     }
