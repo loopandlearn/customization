@@ -57,8 +57,8 @@ index 18a08166..5da70aff 100644
      /// temporary basal rate.
 +    ///
      func loop() {
--        
-+    
+-
++
 +        if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
 +            print("Looping too fast!")
 +        }
@@ -73,7 +73,7 @@ index 18a08166..5da70aff 100644
 +    }
 +
 +    func loopInternal() {
-+    
++
          dataAccessQueue.async {
  
              // If time was changed to future time, and a loop completed, then time was fixed, lastLoopCompleted will prevent looping
