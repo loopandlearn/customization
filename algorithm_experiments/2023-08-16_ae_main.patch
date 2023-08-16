@@ -1,4 +1,4 @@
-Submodule Loop befcbcb..a7b2444:
+Submodule Loop befcbcb..4d65b26:
 diff --git a/Loop/Common/Extensions/GlucoseRangeSchedule.swift b/Loop/Common/Extensions/GlucoseRangeSchedule.swift
 index c8ef74fe..ccc75b0b 100644
 --- a/Loop/Common/Extensions/GlucoseRangeSchedule.swift
@@ -11,8 +11,8 @@ index c8ef74fe..ccc75b0b 100644
 +        return HKQuantity(unit: unit, doubleValue: value(at: date).maxValue)
 +    }
  }
-
-
+ 
+ 
 diff --git a/Loop/Common/FeatureFlags.swift b/Loop/Common/FeatureFlags.swift
 index b2f0953e..b5c39d73 100644
 --- a/Loop/Common/FeatureFlags.swift
@@ -22,8 +22,8 @@ index b2f0953e..b5c39d73 100644
      let adultChildInsulinModelSelectionEnabled: Bool
      let profileExpirationSettingsViewEnabled: Bool
 +    let allowAlgorithmExperiments: Bool
-
-
+ 
+ 
      fileprivate init() {
 @@ -220,6 +221,11 @@ struct FeatureFlagConfiguration: Decodable {
          #else
@@ -36,7 +36,7 @@ index b2f0953e..b5c39d73 100644
 +        #endif
      }
  }
-
+ 
 @@ -253,7 +259,8 @@ extension FeatureFlagConfiguration : CustomDebugStringConvertible {
              "* usePositiveMomentumAndRCForManualBoluses: \(usePositiveMomentumAndRCForManualBoluses)",
              "* dynamicCarbAbsorptionEnabled: \(dynamicCarbAbsorptionEnabled)",
@@ -153,13 +153,13 @@ index 31b6ebff..6800c7f2 100644
  				431A8C401EC6E8AB00823B9C /* CircleMaskView.swift in Sources */,
  				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 18a08166..5f3c1625 100644
+index 18a08166..726878ed 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -123,8 +123,6 @@ final class LoopDataManager {
-
+ 
          self.trustedTimeOffset = trustedTimeOffset
-
+ 
 -        retrospectiveCorrection = settings.enabledRetrospectiveCorrectionAlgorithm
 -
          overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
@@ -167,7 +167,7 @@ index 18a08166..5f3c1625 100644
                  return
 @@ -435,7 +433,23 @@ final class LoopDataManager {
      }
-
+ 
      // Confined to dataAccessQueue
 -    private var retrospectiveCorrection: RetrospectiveCorrection
 +    private var lastIntegralRetrospectiveCorrectionEnabled: Bool?
@@ -187,13 +187,13 @@ index 18a08166..5f3c1625 100644
 +
 +        return cachedRetrospectiveCorrection!
 +    }
-
+ 
      // MARK: - Background task management
-
+ 
 @@ -1696,7 +1710,23 @@ extension LoopDataManager {
                      return self.delegate?.roundBolusVolume(units: units) ?? units
                  }
-
+ 
 -                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * LoopConstants.bolusPartialApplicationFactor)
 +                // Create dosing strategy based on user setting
 +                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.glucoseBasedApplicationFactorEnabled
@@ -212,7 +212,7 @@ index 18a08166..5f3c1625 100644
 +
 +                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
 +                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
-
+ 
                  dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
                      to: glucoseTargetRange!,
 @@ -1706,7 +1736,7 @@ extension LoopDataManager {
@@ -227,7 +227,7 @@ index 18a08166..5f3c1625 100644
 @@ -2102,9 +2132,11 @@ extension LoopDataManager {
                  }),
                  "]",
-
+ 
 +                "integralRetrospectiveCorrectionEnabled: \(UserDefaults.standard.integralRetrospectiveCorrectionEnabled)",
 +
                  "retrospectiveGlucoseDiscrepancies: [",
@@ -349,23 +349,21 @@ index 00000000..41caa3d7
 +    }
 +}
 diff --git a/Loop/Loop/Models/LoopSettings+Loop.swift b/Loop/Loop/Models/LoopSettings+Loop.swift
-index ce7433a9..fd35b641 100644
+index ce7433a9..c285fb89 100644
 --- a/Loop/Loop/Models/LoopSettings+Loop.swift
 +++ b/Loop/Loop/Models/LoopSettings+Loop.swift
-@@ -19,9 +19,5 @@ extension LoopSettings {
-     }
-
+@@ -20,8 +20,4 @@ extension LoopSettings {
+ 
      static let retrospectiveCorrectionEffectDuration = TimeInterval(hours: 1)
--
+ 
 -    /// Creates an instance of the enabled retrospective correction implementation
 -    var enabledRetrospectiveCorrectionAlgorithm: RetrospectiveCorrection {
 -        return StandardRetrospectiveCorrection(effectDuration: LoopSettings.retrospectiveCorrectionEffectDuration)
 -    }
-+
  }
 diff --git a/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift b/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift
 new file mode 100644
-index 00000000..e6ece1c7
+index 00000000..b3b9445a
 --- /dev/null
 +++ b/Loop/Loop/Models/RetrospectiveCorrection/IntegralRetrospectiveCorrection.swift
 @@ -0,0 +1,231 @@
@@ -601,16 +599,13 @@ index 00000000..e6ece1c7
 +
 +}
 diff --git a/Loop/Loop/View Controllers/PredictionTableViewController.swift b/Loop/Loop/View Controllers/PredictionTableViewController.swift
-index 10ed414a..55ade065 100644
---- a/Loop/Loop/View Controllers/PredictionTableViewController.swift
-+++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift
+index 10ed414a..52e71ccf 100644
+--- a/Loop/Loop/View Controllers/PredictionTableViewController.swift	
++++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift	
 @@ -276,9 +276,26 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
                  format: NSLocalizedString("Predicted: %1$@\nActual: %2$@ (%3$@)", comment: "Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference)"),
                  values[0], values[1], values[2]
              )
--
--            // Standard retrospective correction
--            subtitleText = String(format: "%@\n%@", subtitleText, retro)
 +            let isIntegralRetrospectiveCorrectionEnabled = UserDefaults.standard.integralRetrospectiveCorrectionEnabled
 +
 +            if isIntegralRetrospectiveCorrectionEnabled {
@@ -630,9 +625,11 @@ index 10ed414a..55ade065 100644
 +            } else {
 +                subtitleText = String(format: "%@\n%@", subtitleText, retro)
 +            }
-+
+ 
+-            // Standard retrospective correction
+-            subtitleText = String(format: "%@\n%@", subtitleText, retro)
          }
-
+ 
          cell.subtitleLabel?.text = subtitleText
 diff --git a/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift b/Loop/Loop/Views/GlucoseBasedApplicationFactorSelectionView.swift
 new file mode 100644
@@ -703,7 +700,7 @@ index 00000000..09a68d58
 +}
 diff --git a/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 new file mode 100644
-index 00000000..dfeb37d5
+index 00000000..38e7c7f2
 --- /dev/null
 +++ b/Loop/Loop/Views/IntegralRetrospectiveCorrectionSelectionView.swift
 @@ -0,0 +1,46 @@
@@ -866,18 +863,9 @@ index 00000000..54bd2c71
 +
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 90859273..347adb52 100644
+index 90859273..68af9eda 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -30,7 +30,7 @@ public struct SettingsView: View {
-     @State private var therapySettingsIsPresented: Bool = false
-     @State private var deletePumpDataAlertIsPresented = false
-     @State private var deleteCGMDataAlertIsPresented = false
--
-+
-     public init(viewModel: SettingsViewModel) {
-         self.viewModel = viewModel
-         self.versionUpdateViewModel = viewModel.versionUpdateViewModel
 @@ -177,6 +177,10 @@ extension SettingsView {
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
@@ -888,7 +876,7 @@ index 90859273..347adb52 100644
 +            }
          }
      }
-
+ 
 diff --git a/Loop/Loop/en.lproj/Localizable.strings b/Loop/Loop/en.lproj/Localizable.strings
 index 78907ea3..54d0ee57 100644
 --- a/Loop/Loop/en.lproj/Localizable.strings
@@ -896,7 +884,7 @@ index 78907ea3..54d0ee57 100644
 @@ -246,6 +246,12 @@
  /* The title text for the issue report cell */
  "Issue Report" = "Issue Report";
-
+ 
 +/* Format string describing retrospective glucose prediction comparison. (1: Predicted glucose)(2: Actual glucose)(3: difference) */
 +"prediction-description-retrospective-correction" = "Predicted: %1$@\nActual: %2$@ (%3$@)";
 +
@@ -905,17 +893,16 @@ index 78907ea3..54d0ee57 100644
 +
  /* Glucose HUD accessibility hint */
  "Launches CGM app" = "Launches CGM app";
-
+ 
 diff --git a/LoopConfigOverride.xcconfig b/LoopConfigOverride.xcconfig
-index 3ffab2c..bcf7df7 100644
+index 3ffab2c..2714276 100644
 --- a/LoopConfigOverride.xcconfig
 +++ b/LoopConfigOverride.xcconfig
-@@ -10,7 +10,7 @@
- //URL_SCHEME_NAME = $(MAIN_APP_DISPLAY_NAME)
-
- // Features
--SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SIMULATORS_ENABLED //DEBUG_FEATURES_ENABLED
-+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SIMULATORS_ENABLED ALLOW_ALGORITHM_EXPERIMENTS //DEBUG_FEATURES_ENABLED
-
+@@ -14,3 +14,6 @@ SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) SIMULATORS_ENABLED //DEBUG_FE
+ 
  // Put your team id here for signing
  //LOOP_DEVELOPMENT_TEAM = UY678SP37Q
++
++// Add ALLOW_ALGORITHM_EXPERIMENTS to compilation conditions
++SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(SWIFT_ACTIVE_COMPILATION_CONDITIONS) ALLOW_ALGORITHM_EXPERIMENTS
+\ No newline at end of file
