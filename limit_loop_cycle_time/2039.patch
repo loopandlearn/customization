@@ -1,0 +1,96 @@
+Submodule Loop befcbcb..3b1220d:
+diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
+index 96452b2e..d51a797d 100644
+--- a/Loop/Loop/Managers/DeviceDataManager.swift
++++ b/Loop/Loop/Managers/DeviceDataManager.swift
+@@ -47,6 +47,8 @@ final class DeviceDataManager {
+ 
+     @Published var pumpIsAllowingAutomation: Bool
+ 
++    private var lastCGMLoopTrigger: Date = .distantPast
++
+     private let closedLoopStatus: ClosedLoopStatus
+ 
+     var closedLoopDisallowedLocalizedDescription: String? {
+@@ -533,7 +535,6 @@ final class DeviceDataManager {
+     private func processCGMReadingResult(_ manager: CGMManager, readingResult: CGMReadingResult, completion: @escaping () -> Void) {
+         switch readingResult {
+         case .newData(let values):
+-            log.default("CGMManager:%{public}@ did update with %d values", String(describing: type(of: manager)), values.count)
+             loopManager.addGlucoseSamples(values) { result in
+                 if !values.isEmpty {
+                     DispatchQueue.main.async {
+@@ -546,10 +547,8 @@ final class DeviceDataManager {
+             loopManager.receivedUnreliableCGMReading()
+             completion()
+         case .noData:
+-            log.default("CGMManager:%{public}@ did update with no data", String(describing: type(of: manager)))
+             completion()
+         case .error(let error):
+-            log.default("CGMManager:%{public}@ did update with error: %{public}@", String(describing: type(of: manager)), String(describing: error))
+             self.setLastError(error: error)
+             completion()
+         }
+@@ -949,8 +948,14 @@ extension DeviceDataManager: CGMManagerDelegate {
+ 
+     func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {
+         dispatchPrecondition(condition: .onQueue(queue))
++        log.default("CGMManager:%{public}@ did update with %{public}@", String(describing: type(of: manager)), String(describing: readingResult))
+         processCGMReadingResult(manager, readingResult: readingResult) {
+-            self.checkPumpDataAndLoop()
++            let now = Date()
++            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > .minutes(4.2) {
++                self.log.default("Triggering loop from new CGM data at %{public}@", String(describing: now))
++                self.lastCGMLoopTrigger = now
++                self.checkPumpDataAndLoop()
++            }
+         }
+     }
+ 
+@@ -1032,7 +1037,8 @@ extension DeviceDataManager: PumpManagerDelegate {
+ 
+             self.queue.async {
+                 self.processCGMReadingResult(cgmManager, readingResult: result) {
+-                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(6) {
++                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(4.2) {
++                        self.log.default("Triggering Loop from refreshCGM()")
+                         self.checkPumpDataAndLoop()
+                     }
+                     completion?()
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 18a08166..9b133959 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -27,6 +27,8 @@ final class LoopDataManager {
+         case loopFinished
+     }
+ 
++    let loopLock = UnfairLock()
++
+     static let LoopUpdateContextKey = "com.loudnate.Loop.LoopDataManager.LoopUpdateContext"
+ 
+     private let carbStore: CarbStoreProtocol
+@@ -824,7 +826,23 @@ extension LoopDataManager {
+     ///
+     /// Executes an analysis of the current data, and recommends an adjustment to the current
+     /// temporary basal rate.
++    ///
+     func loop() {
++
++        if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
++            print("Looping too fast!")
++        }
++
++        let available = loopLock.withLockIfAvailable {
++            loopInternal()
++            return true
++        }
++        if available == nil {
++            print("Loop attempted while already looping!")
++        }
++    }
++
++    func loopInternal() {
+         
+         dataAccessQueue.async {
+ 
