@@ -1,0 +1,31 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop/Models/LoopConstants.swift b/Loop/Loop/Models/LoopConstants.swift
+index a62fc138..795c5a6e 100644
+--- a/Loop/Loop/Models/LoopConstants.swift
++++ b/Loop/Loop/Models/LoopConstants.swift
+@@ -25,7 +25,7 @@ enum LoopConstants {
+     static let maxCarbAbsorptionTime = TimeInterval(hours: 8)
+     
+     static let maxCarbEntryPastTime = TimeInterval(hours: (-12))
+-    static let maxCarbEntryFutureTime = TimeInterval(hours: 1)
++    static let maxCarbEntryFutureTime = TimeInterval(hours: 4)
+ 
+     static let maxOverrideDurationTime = TimeInterval(hours: 24)
+     
+diff --git a/Loop/Loop/View Models/CarbEntryViewModel.swift b/Loop/Loop/View Models/CarbEntryViewModel.swift
+index d04ddba7..562bb61e 100644
+--- a/Loop/Loop/View Models/CarbEntryViewModel.swift	
++++ b/Loop/Loop/View Models/CarbEntryViewModel.swift	
+@@ -59,10 +59,10 @@ final class CarbEntryViewModel: ObservableObject {
+     @Published var time = Date()
+     private var date = Date()
+     var minimumDate: Date {
+-        get { date.addingTimeInterval(.hours(-12)) }
++        get { date.addingTimeInterval(LoopConstants.maxCarbEntryPastTime) }
+     }
+     var maximumDate: Date {
+-        get { date.addingTimeInterval(.hours(1)) }
++        get { date.addingTimeInterval(LoopConstants.maxCarbEntryFutureTime) }
+     }
+     
+     @Published var foodType = ""
