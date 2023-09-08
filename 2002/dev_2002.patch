@@ -52,7 +52,7 @@ index 0b4cb551..9d97f342 100644
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit 8e58b7e..fee7323:
+Submodule LoopKit 8e58b7e..b13348b:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index bfdc9db..7dded80 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -1115,10 +1115,10 @@ index 0000000..d8d16ff
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift
 new file mode 100644
-index 0000000..730dbe6
+index 0000000..8fd2666
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift	
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,92 @@
 +//
 +//  RenameProfileEditor.swift
 +//  LoopKitUI
@@ -1149,6 +1149,9 @@ index 0000000..730dbe6
 +                },
 +                trailing: { renameButton }
 +            )
++            .onAppear {
++                self.newProfileName = currentProfileName
++            }
 +            
 +            TextField("Profile Name", text: $newProfileName)
 +                .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -1177,6 +1180,11 @@ index 0000000..730dbe6
 +        Button(
 +            action: {
 +                withAnimation {
++                    guard newProfileName != currentProfileName else {
++                        self.isPresented = false
++                        return
++                    }
++
 +                    if viewModel.doesProfileExist(withName: self.newProfileName) {
 +                        self.showAlert = true
 +                    } else {
