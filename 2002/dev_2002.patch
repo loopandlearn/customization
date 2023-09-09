@@ -52,7 +52,7 @@ index 0b4cb551..9d97f342 100644
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit 8e58b7e..b13348b:
+Submodule LoopKit 8e58b7e..91a0054:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index bfdc9db..7dded80 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -154,10 +154,10 @@ index bfdc9db..7dded80 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..57f11a5
+index 0000000..dc23e92
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,308 @@
+@@ -0,0 +1,333 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -260,7 +260,8 @@ index 0000000..57f11a5
 +                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
 +                carbRatioSchedule: therapySettings.carbRatioSchedule!,
 +                basalRateSchedule: therapySettings.basalRateSchedule!,
-+                insulinSensitivitySchedule: (therapySettings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter)!)!
++                insulinSensitivitySchedule: (therapySettings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter)!)!,
++                sortOrder: -1
 +            )
 +
 +            let jsonData = try encodeProfile(profile)
@@ -297,7 +298,8 @@ index 0000000..57f11a5
 +                correctionRange: profile.correctionRange,
 +                carbRatioSchedule: profile.carbRatioSchedule,
 +                basalRateSchedule: profile.basalRateSchedule,
-+                insulinSensitivitySchedule: profile.insulinSensitivitySchedule
++                insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
++                sortOrder: profile.sortOrder
 +            )
 +            
 +            if let existingProfile = getProfileReference(withName: newName) {
@@ -314,6 +316,30 @@ index 0000000..57f11a5
 +            print("An error occurred while renaming profile: \(error)")
 +        }
 +    }
++
++    public func updateProfilesOrder() {
++        for (index, profileReference) in profiles.enumerated() {
++            do {
++                var profile = try getProfile(from: profileReference)
++                let newProfile = Profile(
++                    name: profile.name,
++                    correctionRange: profile.correctionRange,
++                    carbRatioSchedule: profile.carbRatioSchedule,
++                    basalRateSchedule: profile.basalRateSchedule,
++                    insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
++                    sortOrder: index
++                )
++                
++                let jsonData = try encodeProfile(newProfile)
++                let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
++                try jsonData.write(to: fileURL)
++                
++            } catch {
++                print("An error occurred while updating profile order: \(error)")
++            }
++        }
++        loadProfiles()
++    }
 +    
 +    public func loadProfiles() {
 +        do {
@@ -323,12 +349,11 @@ index 0000000..57f11a5
 +            for fileURL in profileFiles {
 +                let data = try Data(contentsOf: fileURL)
 +                let profile = try decodeProfile(from: data)
-+                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent)
++                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
 +                newProfiles.append(profileRef)
 +            }
 +            
-+            // Sort the profiles alphabetically by their name
-+            newProfiles.sort { $0.name < $1.name }
++            newProfiles.sort { $0.sortOrder ?? 0 < $1.sortOrder ?? 0 }
 +            
 +            self.profiles = newProfiles
 +        } catch {
@@ -468,10 +493,10 @@ index 0000000..57f11a5
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 new file mode 100644
-index 0000000..fe9dd4e
+index 0000000..3fe0362
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,82 @@
 +//
 +//  ProfileViewModel.swift
 +//  LoopKitUI
@@ -521,11 +546,13 @@ index 0000000..fe9dd4e
 +    let carbRatioSchedule: CarbRatioSchedule
 +    let basalRateSchedule: BasalRateSchedule
 +    let insulinSensitivitySchedule: InsulinSensitivitySchedule
++    var sortOrder: Int?
 +}
 +
 +public struct ProfileReference: Codable, Equatable {
 +    var name: String
 +    var fileName: String
++    var sortOrder: Int?
 +}
 +
 +
@@ -971,10 +998,10 @@ index 0000000..1192e88
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 0000000..d8d16ff
+index 0000000..e1acd9c
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
-@@ -0,0 +1,138 @@
+@@ -0,0 +1,145 @@
 +//
 +//  ProfileView.swift
 +//  LoopKitUI
@@ -996,7 +1023,7 @@ index 0000000..d8d16ff
 +    @State private var isAddingNewProfile = false
 +    @State private var selectedProfileIndex: Int? = nil
 +    @State private var showUpdateAlert = false
-+    
++    @State private var refreshID = UUID()
 +    public init(viewModel: ProfileViewModel) {
 +        self.viewModel = viewModel
 +    }
@@ -1042,7 +1069,8 @@ index 0000000..d8d16ff
 +                                            }
 +                                        }
 +                                    }
-+                                }.padding(.top, -15)
++                                    .onMove(perform: moveProfile)
++                                }.padding(.top, -15).id(refreshID)
 +                                
 +                            }
 +                        }
@@ -1084,6 +1112,12 @@ index 0000000..d8d16ff
 +                .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity).animation(.default))
 +            }
 +        }
++    }
++    
++    func moveProfile(from source: IndexSet, to destination: Int) {
++        viewModel.profiles.move(fromOffsets: source, toOffset: destination)
++        refreshID = UUID()
++        viewModel.updateProfilesOrder()
 +    }
 +}
 +
