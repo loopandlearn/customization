@@ -52,7 +52,7 @@ index 0b4cb551..9d97f342 100644
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit 8e58b7e..91a0054:
+Submodule LoopKit 8e58b7e..b7ccd0a:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index bfdc9db..7dded80 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -666,7 +666,7 @@ index 0000000..446910e
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 0000000..1192e88
+index 0000000..6de3598
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
 @@ -0,0 +1,326 @@
@@ -709,12 +709,12 @@ index 0000000..1192e88
 +        ZStack {
 +            ScrollView {
 +                VStack(alignment: .leading) {
-+                    Text("Review this profile before choosing to Load or Return to profile screen.")
-+                        .font(.subheadline)
-+                        .foregroundColor(.secondary)
++                    Text("Before proceeding, review the profile details below. Scroll to find options to Load, Rename, or Delete.")
++                        .font(.body)
++                        .foregroundColor(.primary)
 +                        .padding([.leading, .trailing])
-+                        .fixedSize(horizontal: false, vertical: true) // this allows the text to wrap
-+                        .textCase(nil) // keeps the original text casing
++                        .fixedSize(horizontal: false, vertical: true)
++                        .textCase(nil)
 +                    
 +                    profileCardStack
 +                    
