@@ -52,7 +52,7 @@ index 90859273..187a17c1 100644
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
              }
-Submodule LoopKit 9835a29..8d66ce1:
+Submodule LoopKit 9835a29..b041710:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 6b13fc8..c6bcc64 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -997,7 +997,7 @@ index 0000000..abe31ad
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 0000000..489580d
+index 0000000..5293e85
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
 @@ -0,0 +1,160 @@
@@ -1080,14 +1080,14 @@ index 0000000..489580d
 +                )
 +                .navigationBarItems(
 +                    leading: HStack {
++                        Button(action: { withAnimation { isAddingNewProfile = true } }) {
++                            Image(systemName: "plus")
++                        }
++
 +                        Button(action: { showInfoAlert.toggle() }) {
 +                            Image(systemName: "info.circle")
 +                                .resizable()
 +                                .frame(width: 24, height: 24)
-+                        }
-+                        
-+                        Button(action: { withAnimation { isAddingNewProfile = true } }) {
-+                            Image(systemName: "plus")
 +                        }
 +                    },
 +                    trailing: dismissButton
