@@ -52,7 +52,7 @@ index 0b4cb551..9d97f342 100644
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit 8e58b7e..eaa182f:
+Submodule LoopKit 8e58b7e..9e69b31:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index bfdc9db..7dded80 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -998,10 +998,10 @@ index 0000000..6de3598
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 0000000..3f99636
+index 0000000..1c6244a
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
-@@ -0,0 +1,160 @@
+@@ -0,0 +1,173 @@
 +//
 +//  ProfileView.swift
 +//  LoopKitUI
@@ -1022,9 +1022,17 @@ index 0000000..3f99636
 +    @State private var newProfileName: String = ""
 +    @State private var isAddingNewProfile = false
 +    @State private var selectedProfileIndex: Int? = nil
-+    @State private var showUpdateAlert = false
 +    @State private var refreshID = UUID()
-+    @State private var showInfoAlert = false
++
++    enum ActiveAlert: String, Identifiable {
++        case update, info
++        
++        var id: String {
++            return self.rawValue
++        }
++    }
++    @State private var activeAlert: ActiveAlert?
++    
 +    public init(viewModel: ProfileViewModel) {
 +        self.viewModel = viewModel
 +    }
@@ -1085,7 +1093,7 @@ index 0000000..3f99636
 +                            Image(systemName: "plus")
 +                        }
 +                        
-+                        Button(action: { showInfoAlert.toggle() }) {
++                        Button(action: { activeAlert = .info }) {
 +                            Image(systemName: "info.circle")
 +                                .resizable()
 +                                .frame(width: 24, height: 24)
@@ -1098,22 +1106,27 @@ index 0000000..3f99636
 +            .navigationBarHidden(false)
 +            .background(Color(.systemGroupedBackground))
 +            .onAppear {
-+                showUpdateAlert = viewModel.isCurrentProfileOutOfSync()
++                if viewModel.isCurrentProfileOutOfSync() {
++                    activeAlert = .update
++                }
 +            }
-+            .alert(isPresented: $showUpdateAlert) {
-+                Alert(
-+                    title: Text("Profile Outdated"),
-+                    message: Text("The current therapy settings have changed. Do you want to update the profile named: \(viewModel.currentProfileName ?? "")?"),
-+                    primaryButton: .default(Text("Update")) {
-+                        viewModel.saveProfile(withName: viewModel.currentProfileName ?? "")
-+                    },
-+                    secondaryButton: .cancel()
-+                )
-+            }
-+            .alert(isPresented: $showInfoAlert) {
-+                Alert(title: Text("Information"),
-+                      message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap on any profile to review its settings in detail. In detail view, you can Load, Rename or Delete that particular profile.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
-+                      dismissButton: .default(Text("Got it!")))
++            
++            .alert(item: $activeAlert) { alertType in
++                switch alertType {
++                case .update:
++                    return Alert(
++                        title: Text("Profile Outdated"),
++                        message: Text("The current therapy settings have changed. Do you want to update the profile named: \(viewModel.currentProfileName ?? "")?"),
++                        primaryButton: .default(Text("Update")) {
++                            viewModel.saveProfile(withName: viewModel.currentProfileName ?? "")
++                        },
++                        secondaryButton: .cancel()
++                    )
++                case .info:
++                    return Alert(title: Text("Information"),
++                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap on any profile to review its settings in detail. In detail view, you can Load, Rename or Delete that particular profile.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
++                                 dismissButton: .default(Text("Got it!")))
++                }
 +            }
 +            
 +            if isAddingNewProfile {
