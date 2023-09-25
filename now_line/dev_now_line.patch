@@ -1,4 +1,4 @@
-Submodule LoopKit 7b6be31..c55cd98:
+Submodule LoopKit 7b6be31..bd3f5db:
 diff --git a/LoopKit/LoopKitUI/Charts/COBChart.swift b/LoopKit/LoopKitUI/Charts/COBChart.swift
 index 2bbae1e..6cbdbde 100644
 --- a/LoopKit/LoopKitUI/Charts/COBChart.swift
@@ -23,7 +23,7 @@ index 2bbae1e..6cbdbde 100644
              yAxisLayer,
              cobChartCache?.highlightLayer,
 diff --git a/LoopKit/LoopKitUI/Charts/DoseChart.swift b/LoopKit/LoopKitUI/Charts/DoseChart.swift
-index ad30019..1988794 100644
+index ad30019..6f34555 100644
 --- a/LoopKit/LoopKitUI/Charts/DoseChart.swift
 +++ b/LoopKit/LoopKitUI/Charts/DoseChart.swift
 @@ -106,6 +106,10 @@ public extension DoseChart {
@@ -31,7 +31,7 @@ index ad30019..1988794 100644
          let gridLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: guideLinesLayerSettings, axisValuesX: Array(xAxisValues.dropFirst().dropLast()), axisValuesY: yAxisValues)
  
 +        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
-+        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.carbTint, linesWidth: 1.0)
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.insulinTint, linesWidth: 1.0)
 +        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
 +
          // 0-line
@@ -46,7 +46,7 @@ index ad30019..1988794 100644
              yAxisLayer,
              zeroGuidelineLayer,
 diff --git a/LoopKit/LoopKitUI/Charts/IOBChart.swift b/LoopKit/LoopKitUI/Charts/IOBChart.swift
-index 54d0921..5850f73 100644
+index 54d0921..aff259f 100644
 --- a/LoopKit/LoopKitUI/Charts/IOBChart.swift
 +++ b/LoopKit/LoopKitUI/Charts/IOBChart.swift
 @@ -66,6 +66,10 @@ public extension IOBChart {
@@ -54,7 +54,7 @@ index 54d0921..5850f73 100644
          let gridLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: guideLinesLayerSettings, axisValuesX: Array(xAxisValues.dropFirst().dropLast()), axisValuesY: yAxisValues)
  
 +        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
-+        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.carbTint, linesWidth: 1.0)
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.insulinTint, linesWidth: 1.0)
 +        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
 +
          // 0-line
@@ -69,7 +69,7 @@ index 54d0921..5850f73 100644
              yAxisLayer,
              zeroGuidelineLayer,
 diff --git a/LoopKit/LoopKitUI/Charts/PredictedGlucoseChart.swift b/LoopKit/LoopKitUI/Charts/PredictedGlucoseChart.swift
-index bd786fe..ce593b7 100644
+index bd786fe..0dcf20c 100644
 --- a/LoopKit/LoopKitUI/Charts/PredictedGlucoseChart.swift
 +++ b/LoopKit/LoopKitUI/Charts/PredictedGlucoseChart.swift
 @@ -170,6 +170,10 @@ extension PredictedGlucoseChart {
@@ -77,7 +77,7 @@ index bd786fe..ce593b7 100644
          let gridLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: guideLinesLayerSettings, axisValuesX: Array(xAxisValues.dropFirst().dropLast()), axisValuesY: yAxisValues)
  
 +        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
-+        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.carbTint, linesWidth: 1.0)
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.glucoseTint, linesWidth: 1.0)
 +        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
 +
          let circles = ChartPointsScatterCirclesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, chartPoints: glucosePoints, displayDelay: 0, itemSize: CGSize(width: 4, height: 4), itemFillColor: colors.glucoseTint, optimized: true)
