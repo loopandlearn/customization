@@ -1,63 +1,55 @@
-Submodule Loop befcbcb..f147f0b:
+Submodule Loop c7091c0..5170a02:
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 90859273..187a17c1 100644
+index c3ec98b8..74045900 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -24,6 +24,7 @@ public struct SettingsView: View {
-     @ObservedObject var viewModel: SettingsViewModel
-     @ObservedObject var versionUpdateViewModel: VersionUpdateViewModel
- 
-+    @State private var profilesIsPresented: Bool = false
-     @State private var pumpChooserIsPresented: Bool = false
-     @State private var cgmChooserIsPresented: Bool = false
-     @State private var serviceChooserIsPresented: Bool = false
-@@ -150,7 +151,11 @@ extension SettingsView {
-             }
+@@ -51,6 +51,7 @@ public struct SettingsView: View {
+             
+             case favoriteFoods
+             case therapySettings
++            case profiles
          }
      }
--        
-+
-+    private var isAnySheetPresented: Bool {
-+        therapySettingsIsPresented || profilesIsPresented
-+    }
-+
-     private var configurationSection: some View {
-         Section(header: SectionHeader(label: NSLocalizedString("Configuration", comment: "The title of the Configuration section in settings"))) {
-             LargeButton(action: { self.therapySettingsIsPresented = true },
-@@ -173,7 +178,26 @@ extension SettingsView {
-                         .environment(\.guidanceColors, self.guidanceColors)
-                         .environment(\.insulinTintColor, self.insulinTintColor)
+     
+@@ -157,6 +158,19 @@ public struct SettingsView: View {
+                     .environment(\.insulinTintColor, self.insulinTintColor)
+                 case .favoriteFoods:
+                     FavoriteFoodsView()
++                case .profiles:
++                    ProfileView(viewModel: ProfileViewModel(therapySettings: self.viewModel.therapySettings(),
++                                                            sensitivityOverridesEnabled: FeatureFlags.sensitivityOverridesEnabled,
++                                                            adultChildInsulinModelSelectionEnabled: FeatureFlags.adultChildInsulinModelSelectionEnabled,
++                                                            delegate: self.viewModel.therapySettingsViewModelDelegate))
++                    .environmentObject(displayGlucosePreference)
++                    .environment(\.dismissAction, self.dismiss)
++                    .environment(\.appName, self.appName)
++                    .environment(\.chartColorPalette, .primary)
++                    .environment(\.carbTintColor, self.carbTintColor)
++                    .environment(\.glucoseTintColor, self.glucoseTintColor)
++                    .environment(\.guidanceColors, self.guidanceColors)
++                    .environment(\.insulinTintColor, self.insulinTintColor)
+                 }
              }
+         }
+@@ -294,7 +308,11 @@ extension SettingsView {
+                             imageView: Image("Therapy Icon"),
+                             label: NSLocalizedString("Therapy Settings", comment: "Title text for button to Therapy Settings"),
+                             descriptiveText: NSLocalizedString("Diabetes Treatment", comment: "Descriptive text for Therapy Settings"))
 -            
-+            LargeButton(action: { self.profilesIsPresented = true },
++            LargeButton(action: { sheet = .profiles },
 +                        includeArrow: true,
 +                        imageView: AnyView(Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 30, weight: .bold))),
 +                        label: NSLocalizedString("Profiles", comment: "Title text for button to Profiles"),
 +                        descriptiveText: NSLocalizedString("Switch between profiles for different scenarios", comment: "Descriptive text for Profiles"))
-+            .sheet(isPresented: $profilesIsPresented) {
-+                ProfileView(viewModel: ProfileViewModel(therapySettings: self.viewModel.therapySettings(),
-+                                                        sensitivityOverridesEnabled: FeatureFlags.sensitivityOverridesEnabled,
-+                                                        adultChildInsulinModelSelectionEnabled: FeatureFlags.adultChildInsulinModelSelectionEnabled,
-+                                                        delegate: self.viewModel.therapySettingsViewModelDelegate))
-+                .environmentObject(displayGlucoseUnitObservable)
-+                .environment(\.dismissAction, self.dismiss)
-+                .environment(\.appName, self.appName)
-+                .environment(\.chartColorPalette, .primary)
-+                .environment(\.carbTintColor, self.carbTintColor)
-+                .environment(\.glucoseTintColor, self.glucoseTintColor)
-+                .environment(\.guidanceColors, self.guidanceColors)
-+                .environment(\.insulinTintColor, self.insulinTintColor)
-+            }
-+
-             ForEach(configurationMenuItemsForSupportPlugins) { item in
+             ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit 9835a29..d2042f9:
+Submodule LoopKit 23e6996..5ab1413:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-index 6b13fc8..c6bcc64 100644
+index 6187a17..9ec3fa5 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
 +++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-@@ -787,6 +787,12 @@
+@@ -861,6 +861,12 @@
  		C1FAEC1D264AD6B400A3250B /* DeviceStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */; };
  		C1FAEC1F264AE12700A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47ECF8725DC20810024A54D /* UIImage.swift */; };
  		C1FAEC21264AEEA300A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC20264AEEA300A3250B /* UIImage.swift */; };
@@ -66,11 +58,11 @@ index 6b13fc8..c6bcc64 100644
 +		DD7122612A1D2AA4004FE653 /* ProfilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7122602A1D2AA4004FE653 /* ProfilePreviewView.swift */; };
 +		DDAF746729F422C600719F0A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAF746629F422C600719F0A /* ProfileView.swift */; };
 +		DDAF746929F4234000719F0A /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAF746829F4234000719F0A /* ProfileViewModel.swift */; };
-+		DDEACA2A2AAF797F00E57735 /* RenameProfileEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEACA292AAF797F00E57735 /* RenameProfileEditor.swift */; };
++		DDCFC91E2AA9F702003DE656 /* RenameProfileEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCFC91D2AA9F702003DE656 /* RenameProfileEditor.swift */; };
  		E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2624ACD59F0066A88D /* InformationView.swift */; };
  		E9077D2A24ACDE2C0066A88D /* CorrectionRangeInformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */; };
  		E9086B2924B39EDC0062F5C8 /* ChartsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */; };
-@@ -1763,6 +1769,12 @@
+@@ -1917,6 +1923,12 @@
  		C1FDCC0A29C786F90056E652 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
  		C1FDCC0B29C786F90056E652 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
  		C1FF3D4E29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -79,17 +71,17 @@ index 6b13fc8..c6bcc64 100644
 +		DD7122602A1D2AA4004FE653 /* ProfilePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePreviewView.swift; sourceTree = "<group>"; };
 +		DDAF746629F422C600719F0A /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 +		DDAF746829F4234000719F0A /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
-+		DDEACA292AAF797F00E57735 /* RenameProfileEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameProfileEditor.swift; sourceTree = "<group>"; };
++		DDCFC91D2AA9F702003DE656 /* RenameProfileEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameProfileEditor.swift; sourceTree = "<group>"; };
  		E9077D2624ACD59F0066A88D /* InformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationView.swift; sourceTree = "<group>"; };
  		E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionRangeInformationView.swift; sourceTree = "<group>"; };
  		E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsTableViewController.swift; sourceTree = "<group>"; };
-@@ -2942,11 +2954,13 @@
+@@ -3162,11 +3174,13 @@
  			isa = PBXGroup;
  			children = (
  				B455F3A325FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift */,
 +				DDAF746829F4234000719F0A /* ProfileViewModel.swift */,
  				B4B7C1BB2604E3FC007379F6 /* CorrectionRangeScheduleEditorViewModel.swift */,
- 				B4D4C20C25F95A8700DA809D /* DisplayGlucoseUnitObservable.swift */,
+ 				B4D4C20C25F95A8700DA809D /* DisplayGlucosePreference.swift */,
  				B455F48025FF9A8B000ED456 /* InsulinSensitivityScheduleEditorViewModel.swift */,
  				B455F2A125FBE985000ED456 /* SuspendThresholdEditorViewModel.swift */,
  				1D1FCE2424BD42EF000300A8 /* TherapySettingsViewModel.swift */,
@@ -97,18 +89,18 @@ index 6b13fc8..c6bcc64 100644
  			);
  			path = ViewModels;
  			sourceTree = "<group>";
-@@ -3077,6 +3091,10 @@
+@@ -3349,6 +3363,10 @@
  				E96DCB5924AF74AC007117BC /* SuspendThresholdEditor.swift */,
  				1D1FCE2A24BE704A000300A8 /* TherapySetting+Settings.swift */,
  				1D1A019D24B678BF0077D86E /* TherapySettingsView.swift */,
 +				DDAF746629F422C600719F0A /* ProfileView.swift */,
 +				DD508E072A17763700EEF8FD /* NewProfileEditor.swift */,
 +				DD7122602A1D2AA4004FE653 /* ProfilePreviewView.swift */,
-+				DDEACA292AAF797F00E57735 /* RenameProfileEditor.swift */,
++				DDCFC91D2AA9F702003DE656 /* RenameProfileEditor.swift */,
  			);
  			path = "Settings Editors";
  			sourceTree = "<group>";
-@@ -3757,6 +3775,7 @@
+@@ -4053,6 +4071,7 @@
  				E9086B4824B5405E0062F5C8 /* ChartAxisValueDoubleUnit.swift in Sources */,
  				B429D66C24BF7204003E1B4A /* GlucoseTrend.swift in Sources */,
  				432CF86720D76AB90066B889 /* SettingsTableViewCell.swift in Sources */,
@@ -116,26 +108,27 @@ index 6b13fc8..c6bcc64 100644
  				898B4E7B246DC6A70053C484 /* CorrectionRangeScheduleEditor.swift in Sources */,
  				E9E5E56A24D5CCE800B5DFFE /* OverrideViewCell.swift in Sources */,
  				892A5DB42231E191008961AB /* LevelMaskView.swift in Sources */,
-@@ -3799,6 +3818,7 @@
- 				43BA7187201EE7090058961E /* GlucoseRangeScheduleTableViewController.swift in Sources */,
- 				B46B62AF23FF0BF6001E69BA /* SectionHeader.swift in Sources */,
- 				43BA7183201EE7090058961E /* DailyQuantityScheduleTableViewController.swift in Sources */,
-+				DDEACA2A2AAF797F00E57735 /* RenameProfileEditor.swift in Sources */,
- 				1D1FCE2324BD13A2000300A8 /* CorrectionRangeOverridesExpandableSetting.swift in Sources */,
- 				E93BA06624A39DBC00C5D7E6 /* DismissibleHostingController.swift in Sources */,
- 				43F503632106C761009FA89A /* ServiceAuthenticationUI.swift in Sources */,
-@@ -3812,8 +3832,10 @@
+@@ -4062,6 +4081,7 @@
+ 				B43D69D62A26642300DF0925 /* DemoPlaceHolderView.swift in Sources */,
+ 				E949E38F24B3711E00024DA0 /* InsulinModelInformationView.swift in Sources */,
+ 				895FE08B22011F0C00FCF18A /* EmojiInputHeaderView.swift in Sources */,
++				DDCFC91E2AA9F702003DE656 /* RenameProfileEditor.swift in Sources */,
+ 				895FE08322011F0C00FCF18A /* OverrideSelectionFooterView.swift in Sources */,
+ 				89AF78C22447E353002B4FCC /* Splat.swift in Sources */,
+ 				893C9F8C2447DBD900CD4185 /* CardBuilder.swift in Sources */,
+@@ -4112,9 +4132,11 @@
  				E9C58A6E24DA65E400487A17 /* HistoricalOverrideDetailView.swift in Sources */,
  				895FE08222011F0C00FCF18A /* LabeledTextFieldTableViewCell.swift in Sources */,
  				B43DA44224D9CD8500CAFF4E /* Environment+Colors.swift in Sources */,
 +				DD508E062A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift in Sources */,
  				892A5DB22231E191008961AB /* LoadingTableViewCell.swift in Sources */,
  				B4D3D4AD25B8A94E0085BA0F /* DisplayGlucoseUnitObserver.swift in Sources */,
+ 				A9D3FF102A6C19CA000C891D /* ChartAxisValueDoubleLog.swift in Sources */,
 +				DD7122612A1D2AA4004FE653 /* ProfilePreviewView.swift in Sources */,
  				E96DCB5A24AF74AC007117BC /* SuspendThresholdEditor.swift in Sources */,
  				E96DCB5824AEF50F007117BC /* SuspendThresholdInformationView.swift in Sources */,
- 				C140E0522602908A000A4FF7 /* SettingsPresentationMode.swift in Sources */,
-@@ -3880,6 +3902,7 @@
+ 				A9D3FF0C2A6C198C000C891D /* CollectionType.swift in Sources */,
+@@ -4190,6 +4212,7 @@
  				E93C86B624D08CAD0073089B /* InsulinSensitivityInformationView.swift in Sources */,
  				C18733AF29B9492300519CDF /* Collection.swift in Sources */,
  				892A5DA22231E137008961AB /* HUDProvider.swift in Sources */,
@@ -143,7 +136,7 @@ index 6b13fc8..c6bcc64 100644
  				898E6E6C224194060019E459 /* UIColor.swift in Sources */,
  				43BA717D201EE7090058961E /* GlucoseRangeTableViewCell.swift in Sources */,
  				B455F3A425FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift in Sources */,
-@@ -3902,6 +3925,7 @@
+@@ -4216,6 +4239,7 @@
  				1D1065E9282DC54700026A70 /* VideoPlayView.swift in Sources */,
  				E99A132E2557548300D3F5B3 /* SegmentedGaugeBar.swift in Sources */,
  				B455F31825FBEC5F000ED456 /* SuspendThresholdEditorViewModel.swift in Sources */,
@@ -153,7 +146,7 @@ index 6b13fc8..c6bcc64 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..3279377
+index 0000000..dc23e92
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 @@ -0,0 +1,333 @@
@@ -176,7 +169,7 @@ index 0000000..3279377
 +    case carbRatioError
 +    case basalRateError
 +    case maxBasalRateNotSet
-+    
++
 +    public var errorDescription: String? {
 +        switch self {
 +        case .fileLoadError:
@@ -221,7 +214,7 @@ index 0000000..3279377
 +        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
 +        return documentsDirectory.appendingPathComponent("LoopProfile")
 +    }
-+    
++
 +    private func createProfileDirectoryIfNotExists() throws {
 +        let fileManager = FileManager.default
 +        var isDir : ObjCBool = false
@@ -231,29 +224,29 @@ index 0000000..3279377
 +            throw NSError(domain: NSCocoaErrorDomain, code: NSFileWriteFileExistsError, userInfo: nil)
 +        }
 +    }
-+    
++
 +    private func getAllProfileFiles() throws -> [URL] {
 +        let fileManager = FileManager.default
 +        let files = try fileManager.contentsOfDirectory(at: profilesDirectory, includingPropertiesForKeys: nil)
 +        return files.filter { $0.pathExtension == "json" }
 +    }
-+    
++
 +    private func encodeProfile(_ profile: Profile) throws -> Data {
 +        return try JSONEncoder().encode(profile)
 +    }
-+    
++
 +    private func decodeProfile(from data: Data) throws -> Profile {
 +        return try JSONDecoder().decode(Profile.self, from: data)
 +    }
-+    
++
 +    public func saveProfile(withName name: String) {
 +        do {
 +            try createProfileDirectoryIfNotExists()
-+            
++
 +            if let existingProfile = getProfileReference(withName: name) {
 +                removeProfile(profileReference: existingProfile)
 +            }
-+            
++
 +            let profile = Profile(
 +                name: name,
 +                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
@@ -262,23 +255,23 @@ index 0000000..3279377
 +                insulinSensitivitySchedule: (therapySettings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter)!)!,
 +                sortOrder: -1
 +            )
-+            
++
 +            let jsonData = try encodeProfile(profile)
-+            
++
 +            let dateFormatter = DateFormatter()
 +            dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
 +            let fileName = dateFormatter.string(from: Date()) + ".json"
 +            let fileURL = profilesDirectory.appendingPathComponent(fileName)
-+            
++
 +            try jsonData.write(to: fileURL)
 +            setCurrentProfile(name: name)
-+            
++
 +            self.loadProfiles()
 +        } catch {
 +            print("An error occurred while saving profile: \(error)")
 +        }
 +    }
-+    
++
 +    public func renameProfile(oldName: String, newName: String) {
 +        if currentProfileName == oldName {
 +            currentProfileName = newName
@@ -315,7 +308,7 @@ index 0000000..3279377
 +            print("An error occurred while renaming profile: \(error)")
 +        }
 +    }
-+    
++
 +    public func updateProfilesOrder() {
 +        for (index, profileReference) in profiles.enumerated() {
 +            do {
@@ -359,7 +352,7 @@ index 0000000..3279377
 +            print("An error occurred while loading profiles: \(error)")
 +        }
 +    }
-+    
++
 +    public func loadProfile(profile: Profile, completion: @escaping (LoadProfileResult) -> Void) {
 +        do {
 +            delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
@@ -382,23 +375,23 @@ index 0000000..3279377
 +            })
 +        }
 +    }
-+    
++
 +    func getProfileReference(withName name: String) -> ProfileReference? {
 +        return profiles.first(where: { $0.name == name })
 +    }
-+    
++
 +    public func removeProfile(profile: Profile) {
 +        guard let profileReference = getProfileReference(withName: profile.name) else {
 +            print("No ProfileReference found for given Profile")
 +            return
 +        }
-+        
++
 +        removeProfile(profileReference: profileReference)
 +        if getCurrentProfileName() == profile.name {
 +            clearCurrentProfile()
 +        }
 +    }
-+    
++
 +    public func removeProfile(profileReference: ProfileReference) {
 +        do {
 +            let fileManager = FileManager.default
@@ -409,56 +402,56 @@ index 0000000..3279377
 +            print("An error occurred while removing profile: \(error)")
 +        }
 +    }
-+    
++
 +    func doesProfileExist(withName name: String) -> Bool {
 +        return profiles.contains(where: { $0.name == name })
 +    }
-+    
++
 +    public func getProfile(from profileReference: ProfileReference) throws -> Profile {
 +        let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
 +        let data = try Data(contentsOf: fileURL)
 +        let getProfile = try decodeProfile(from: data)
 +        return getProfile
 +    }
-+    
++
 +    public func validateProfile(_ profile: Profile) -> Result<Void, ProfileValidationError> {
 +        guard let supportedIncrements = delegate?.pumpSupportedIncrements() else {
 +            return .failure(.fileLoadError)
 +        }
-+        
++
 +        // Checking Correction Range Schedule
 +        for item in profile.correctionRange.items {
 +            let minValue = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: item.value.minValue)
 +            let maxValue = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: item.value.maxValue)
-+            
++
 +            if !(Guardrail.correctionRange.absoluteBounds.contains(minValue) && Guardrail.correctionRange.absoluteBounds.contains(maxValue)) {
 +                return .failure(.correctionRangeError)
 +            }
 +        }
-+        
++
 +        // Checking Insulin Sensitivity Schedule
 +        for item in profile.insulinSensitivitySchedule.items {
 +            let value = HKQuantity(unit: HKUnit.milligramsPerDeciliter.unitDivided(by: .internationalUnit()), doubleValue: item.value)
-+            
++
 +            if !Guardrail.insulinSensitivity.absoluteBounds.contains(value) {
 +                return .failure(.insulinSensitivityError)
 +            }
 +        }
-+        
++
 +        // Checking Carb Ratio Schedule
 +        for item in profile.carbRatioSchedule.items {
 +            let value = HKQuantity(unit: .gramsPerUnit, doubleValue: item.value)
-+            
++
 +            if !Guardrail.carbRatio.absoluteBounds.contains(value) {
 +                return .failure(.carbRatioError)
 +            }
 +        }
-+        
++
 +        // Checking Basal Rate Schedule
 +        if let maximumBasalRate = therapySettings.maximumBasalRatePerHour {
 +            for item in profile.basalRateSchedule.items {
 +                let value = item.value
-+                
++
 +                if value > maximumBasalRate || !supportedIncrements.basalRates.contains(value) {
 +                    return .failure(.basalRateError)
 +                }
@@ -466,10 +459,10 @@ index 0000000..3279377
 +        } else {
 +            return .failure(.maxBasalRateNotSet)
 +        }
-+        
++
 +        return .success(())
 +    }
-+    
++
 +    public func isCurrentProfileOutOfSync() -> Bool {
 +        guard let currentProfileName = self.currentProfileName else {
 +            return false // No current profile set
@@ -485,14 +478,14 @@ index 0000000..3279377
 +        }
 +        
 +        return !(therapySettings.glucoseTargetRangeSchedule == profile.correctionRange &&
-+                 therapySettings.carbRatioSchedule == profile.carbRatioSchedule &&
-+                 therapySettings.basalRateSchedule == profile.basalRateSchedule &&
-+                 therapySettings.insulinSensitivitySchedule == profile.insulinSensitivitySchedule)
++        therapySettings.carbRatioSchedule == profile.carbRatioSchedule &&
++        therapySettings.basalRateSchedule == profile.basalRateSchedule &&
++        therapySettings.insulinSensitivitySchedule == profile.insulinSensitivitySchedule)
 +    }
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 new file mode 100644
-index 0000000..edb3117
+index 0000000..3fe0362
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 @@ -0,0 +1,82 @@
@@ -519,7 +512,7 @@ index 0000000..edb3117
 +            UserDefaults.standard.setValue(currentProfileName, forKey: "currentProfileName")
 +        }
 +    }
-+    
++
 +    internal weak var delegate: TherapySettingsViewModelDelegate?
 +    
 +    public init(therapySettings: TherapySettings,
@@ -557,22 +550,22 @@ index 0000000..edb3117
 +
 +// MARK: Saving
 +extension ProfileViewModel {
-+    
++
 +    public func saveCorrectionRange(range: GlucoseRangeSchedule) {
 +        therapySettings.glucoseTargetRangeSchedule = range
 +        delegate?.saveCompletion(therapySettings: therapySettings)
 +    }
-+    
++
 +    public func saveBasalRates(basalRates: BasalRateSchedule) {
 +        therapySettings.basalRateSchedule = basalRates
 +        delegate?.saveCompletion(therapySettings: therapySettings)
 +    }
-+    
++
 +    public func saveCarbRatioSchedule(carbRatioSchedule: CarbRatioSchedule) {
 +        therapySettings.carbRatioSchedule = carbRatioSchedule
 +        delegate?.saveCompletion(therapySettings: therapySettings)
 +    }
-+    
++
 +    public func saveInsulinSensitivitySchedule(insulinSensitivitySchedule: InsulinSensitivitySchedule) {
 +        therapySettings.insulinSensitivitySchedule = insulinSensitivitySchedule
 +        delegate?.saveCompletion(therapySettings: therapySettings)
@@ -580,7 +573,7 @@ index 0000000..edb3117
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift
 new file mode 100644
-index 0000000..4fcbea1
+index 0000000..446910e
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift	
 @@ -0,0 +1,79 @@
@@ -600,7 +593,7 @@ index 0000000..4fcbea1
 +    @State var newProfileName: String
 +    var viewModel: ProfileViewModel
 +    @State private var showAlert = false
-+    
++
 +    var body: some View {
 +        VStack(spacing: 0) {
 +            ModalHeaderButtonBar(
@@ -611,7 +604,7 @@ index 0000000..4fcbea1
 +                },
 +                trailing: { addButton }
 +            )
-+            
++
 +            TextField("Profile Name", text: $newProfileName)
 +                .textFieldStyle(RoundedBorderTextFieldStyle())
 +                .padding()
@@ -633,7 +626,7 @@ index 0000000..4fcbea1
 +            )
 +        }
 +    }
-+    
++
 +    var addButton: some View {
 +        Button(
 +            action: {
@@ -650,7 +643,7 @@ index 0000000..4fcbea1
 +            }
 +        )
 +    }
-+    
++
 +    var cancelButton: some View {
 +        Button(
 +            action: {
@@ -665,7 +658,7 @@ index 0000000..4fcbea1
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 0000000..abe31ad
+index 0000000..6de3598
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
 @@ -0,0 +1,326 @@
@@ -689,21 +682,21 @@ index 0000000..abe31ad
 +}
 +
 +struct ProfilePreviewView: View {
-+    @EnvironmentObject private var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
++    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
 +    @ObservedObject var viewModel: ProfileViewModel
 +    @Environment(\.dismissAction) var dismissAction
 +    @Environment(\.presentationMode) var presentationMode
 +    var profile: Profile
-+    
++
 +    @State private var showingAlert = false
 +    @State private var activeAlert: ActiveAlert = .load
 +    @State private var errorText: String?
 +    @State private var newProfileName: String = ""
 +    @State private var isRenamingProfile = false
 +    @State private var shouldDismissSelf: Bool = false
-+    
++
 +    let nilDestination: (_ dismiss: @escaping () -> Void) -> AnyView = { _ in AnyView(EmptyView()) }
-+    
++
 +    var body: some View {
 +        ZStack {
 +            ScrollView {
@@ -844,18 +837,18 @@ index 0000000..abe31ad
 +            }
 +        }
 +    }
-+    
++
 +    private var profileCardStack: CardStack {
 +        var cards: [Card] = []
-+        
++
 +        cards.append(correctionRangeSection)
 +        cards.append(carbRatioSection)
 +        cards.append(basalRatesSection)
 +        cards.append(insulinSensitivitiesSection)
-+        
++
 +        return CardStack(cards: cards)
 +    }
-+    
++
 +    private var correctionRangeSection: Card {
 +        card(for: .glucoseTargetRange) {
 +            if let items = profile.correctionRange.schedule(for: glucoseUnit)?.items {
@@ -864,7 +857,7 @@ index 0000000..abe31ad
 +                    if index > 0 {
 +                        SettingsDivider()
 +                    }
-+                    
++
 +                    ScheduleRangeItem(time: items[index].startTime,
 +                                      range: items[index].value,
 +                                      unit: glucoseUnit,
@@ -873,7 +866,7 @@ index 0000000..abe31ad
 +            }
 +        }
 +    }
-+    
++
 +    private var carbRatioSection: Card {
 +        card(for: .carbRatio) {
 +            SectionDivider()
@@ -882,7 +875,7 @@ index 0000000..abe31ad
 +                if index > 0 {
 +                    SettingsDivider()
 +                }
-+                
++
 +                ScheduleValueItem(time: items[index].startTime,
 +                                  value: items[index].value,
 +                                  unit: .gramsPerUnit,
@@ -890,7 +883,7 @@ index 0000000..abe31ad
 +            }
 +        }
 +    }
-+    
++
 +    private var basalRatesSection: Card {
 +        card(for: .basalRate) {
 +            let items = profile.basalRateSchedule.items
@@ -902,7 +895,7 @@ index 0000000..abe31ad
 +                    if index > 0 {
 +                        SettingsDivider()
 +                    }
-+                    
++
 +                    ScheduleValueItem(time: items[index].startTime,
 +                                      value:  items[index].value,
 +                                      unit: .internationalUnitsPerHour,
@@ -921,7 +914,7 @@ index 0000000..abe31ad
 +            }
 +        }
 +    }
-+    
++
 +    private var insulinSensitivitiesSection: Card {
 +        card(for: .insulinSensitivity) {
 +            if let items = profile.insulinSensitivitySchedule.schedule(for: glucoseUnit)?.items
@@ -945,14 +938,14 @@ index 0000000..abe31ad
 +struct SectionWithContent<Content>: View where Content: View {
 +    let title: String
 +    let content: Content
-+    
++
 +    init(title: String,
 +         content: () -> Content)
 +    {
 +        self.title = title
 +        self.content = content()
 +    }
-+    
++
 +    public var body: some View {
 +        Section {
 +            Text(title)
@@ -965,15 +958,15 @@ index 0000000..abe31ad
 +
 +// MARK: Utilities
 +extension ProfilePreviewView {
-+    
++
 +    private var glucoseUnit: HKUnit {
-+        displayGlucoseUnitObservable.displayGlucoseUnit
++        displayGlucosePreference.unit
 +    }
 +
 +    private var sensitivityUnit: HKUnit {
 +        glucoseUnit.unitDivided(by: .internationalUnit())
 +    }
-+    
++
 +    private func card<Content>(for therapySetting: TherapySetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
 +        Card {
 +            SectionWithContent(title: therapySetting.title,
@@ -997,7 +990,7 @@ index 0000000..abe31ad
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 0000000..de24519
+index 0000000..1c6244a
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
 @@ -0,0 +1,173 @@
@@ -1022,7 +1015,7 @@ index 0000000..de24519
 +    @State private var isAddingNewProfile = false
 +    @State private var selectedProfileIndex: Int? = nil
 +    @State private var refreshID = UUID()
-+    
++
 +    enum ActiveAlert: String, Identifiable {
 +        case update, info
 +        
@@ -1176,7 +1169,7 @@ index 0000000..de24519
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift
 new file mode 100644
-index 0000000..e53775a
+index 0000000..8fd2666
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift	
 @@ -0,0 +1,92 @@
@@ -1198,7 +1191,7 @@ index 0000000..e53775a
 +    var viewModel: ProfileViewModel
 +    @State private var showAlert = false
 +    @Binding var shouldDismissParent: Bool
-+    
++
 +    var body: some View {
 +        VStack(spacing: 0) {
 +            ModalHeaderButtonBar(
@@ -1206,7 +1199,7 @@ index 0000000..e53775a
 +                center: {
 +                    Text("Rename Profile")
 +                        .font(.subheadline)
-+                    
++
 +                },
 +                trailing: { renameButton }
 +            )
@@ -1245,7 +1238,7 @@ index 0000000..e53775a
 +                        self.isPresented = false
 +                        return
 +                    }
-+                    
++
 +                    if viewModel.doesProfileExist(withName: self.newProfileName) {
 +                        self.showAlert = true
 +                    } else {
