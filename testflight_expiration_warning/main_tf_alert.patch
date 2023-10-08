@@ -1,32 +1,33 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/ProfileExpirationAlerter.swift b/Loop/Loop/Managers/ProfileExpirationAlerter.swift
-index a28d4527..62f458fb 100644
+index 3aa74273..fb33b1cb 100644
 --- a/Loop/Loop/Managers/ProfileExpirationAlerter.swift
 +++ b/Loop/Loop/Managers/ProfileExpirationAlerter.swift
-@@ -19,13 +19,19 @@ class ProfileExpirationAlerter {
+@@ -15,16 +15,20 @@ class ProfileExpirationAlerter {
+     
+     static let expirationAlertWindow: TimeInterval = .days(20)
+     static let settingsPageExpirationWarningModeWindow: TimeInterval = .days(3)
+-
++    
      static func alertIfNeeded(viewControllerToPresentFrom: UIViewController) {
          
          let now = Date()
--        
--        guard let profileExpiration = Bundle.main.profileExpiration, now > profileExpiration - expirationAlertWindow else {
-+
-+        guard let profileExpiration = Bundle.main.profileExpiration else {
+         
+-        guard let profileExpiration = BuildDetails.default.profileExpiration, now > profileExpiration - expirationAlertWindow else {
++        guard let profileExpiration = BuildDetails.default.profileExpiration else {
              return
          }
          
 -        let timeUntilExpiration = profileExpiration.timeIntervalSince(now)
 +        let expirationDate = calculateExpirationDate(profileExpiration: profileExpiration)
-+
 +        let timeUntilExpiration = expirationDate.timeIntervalSince(now)
-         
 +        if timeUntilExpiration > expirationAlertWindow {
 +            return
 +        }
-+
+         
          let minimumTimeBetweenAlerts: TimeInterval = timeUntilExpiration > .hours(24) ? .days(2) : .hours(1)
          
-         if let lastAlertDate = UserDefaults.appGroup?.lastProfileExpirationAlertDate {
-@@ -43,31 +49,48 @@ class ProfileExpirationAlerter {
+@@ -43,31 +47,48 @@ class ProfileExpirationAlerter {
          
          let alertMessage = createVerboseAlertMessage(timeUntilExpirationStr: timeUntilExpirationStr!)
          
@@ -48,7 +49,7 @@ index a28d4527..62f458fb 100644
 +            dialog.addAction(UIAlertAction(title: NSLocalizedString("More Info", comment: "Text for more info action on notification of upcoming TestFlight expiration"), style: .default, handler: { (_) in
 +                UIApplication.shared.open(URL(string: "https://loopkit.github.io/loopdocs/gh-actions/gh-update/")!)
 +            }))
-+
++            
 +        } else {
 +            dialog = UIAlertController(
 +                title: NSLocalizedString("Profile Expires Soon", comment: "The title for notification of upcoming profile expiration"),
@@ -89,58 +90,59 @@ index a28d4527..62f458fb 100644
          let relativeTimeRemaining: String = readableRelativeTime ?? NSLocalizedString("Unknown time", comment: "Unknown amount of time in settings' profile expiration section")
          let verboseMessage = createVerboseAlertMessage(timeUntilExpirationStr: relativeTimeRemaining)
          let conciseMessage = relativeTimeRemaining + NSLocalizedString(" remaining", comment: "remaining time in setting's profile expiration section")
-@@ -81,6 +104,56 @@ class ProfileExpirationAlerter {
+@@ -81,6 +102,57 @@ class ProfileExpirationAlerter {
          formatter.unitsStyle = .full
          formatter.zeroFormattingBehavior = .dropLeading
          formatter.maximumUnitCount = maxUnitCount
 -        return formatter;
 +        return formatter
 +    }
-+
++    
 +    static func buildDate() -> Date? {
 +        let dateFormatter = DateFormatter()
 +        dateFormatter.dateFormat = "EEE MMM d HH:mm:ss 'UTC' yyyy"
 +        dateFormatter.locale = Locale(identifier: "en_US_POSIX") // Set locale to ensure parsing works
 +        dateFormatter.timeZone = TimeZone(identifier: "UTC")
-+
-+        guard let dateString = Bundle.main.buildDateString,
++        
++        guard let dateString = BuildDetails.default.buildDateString,
 +              let date = dateFormatter.date(from: dateString) else {
 +            return nil
 +        }
-+
++        
 +        return date
 +    }
-+
++    
 +    static func isTestFlightBuild() -> Bool {
 +        // If the target environment is a simulator, then
 +        // this is not a TestFlight distribution. Return false.
-+        #if targetEnvironment(simulator)
-+            return false
-+        #endif
-+
++#if targetEnvironment(simulator)
++        return false
++#else
++        
 +        // If an "embedded.mobileprovision" is present in the main bundle, then
 +        // this is an Xcode, Ad-Hoc, or Enterprise distribution. Return false.
 +        if Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision") != nil {
 +            return false
 +        }
-+
++        
 +        // If an app store receipt is not present in the main bundle, then we cannot
 +        // say whether this is a TestFlight or App Store distribution. Return false.
 +        guard let receiptName = Bundle.main.appStoreReceiptURL?.lastPathComponent else {
 +            return false
 +        }
-+
++        
 +        // A TestFlight distribution presents a "sandboxReceipt", while an App Store
 +        // distribution presents a "receipt". Return true if we have a TestFlight receipt.
 +        return "sandboxReceipt".caseInsensitiveCompare(receiptName) == .orderedSame
++#endif
 +    }
-+
++    
 +    static func calculateExpirationDate(profileExpiration: Date) -> Date {
 +        let isTestFlight = isTestFlightBuild()
-+
++        
 +        if isTestFlight, let buildDate = buildDate() {
 +            let testflightExpiration = Calendar.current.date(byAdding: .day, value: 90, to: buildDate)!
-+
++            
 +            return profileExpiration < testflightExpiration ? profileExpiration : testflightExpiration
 +        } else {
 +            return profileExpiration
@@ -148,10 +150,10 @@ index a28d4527..62f458fb 100644
      }
  }
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 90859273..4021e5d4 100644
+index 8fca5668..a0b131ef 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -343,23 +343,50 @@ extension SettingsView {
+@@ -343,23 +343,49 @@ extension SettingsView {
       DIY loop specific component to show users the amount of time remaining on their build before a rebuild is necessary.
       */
      private func profileExpirationSection(profileExpiration:Date) -> some View {
@@ -160,15 +162,14 @@ index 90859273..4021e5d4 100644
 -        let readableExpirationTime = Self.dateFormatter.string(from: profileExpiration)
 +        let expirationDate = ProfileExpirationAlerter.calculateExpirationDate(profileExpiration: profileExpiration)
 +        let isTestFlight = ProfileExpirationAlerter.isTestFlightBuild()
++        let nearExpiration = ProfileExpirationAlerter.isNearExpiration(expirationDate: expirationDate)
++        let profileExpirationMsg = ProfileExpirationAlerter.createProfileExpirationSettingsMessage(expirationDate: expirationDate)
++        let readableExpirationTime = Self.dateFormatter.string(from: expirationDate)
          
 -        return Section(header: SectionHeader(label: NSLocalizedString("App Profile", comment: "Settings app profile section")),
 -                       footer: Text(NSLocalizedString("Profile expires ", comment: "Time that profile expires") + readableExpirationTime)) {
 -            if(nearExpiration) {
 -                Text(profileExpirationMsg).foregroundColor(.red)
-+        let nearExpiration : Bool = ProfileExpirationAlerter.isNearExpiration(expirationDate: expirationDate)
-+        let profileExpirationMsg = ProfileExpirationAlerter.createProfileExpirationSettingsMessage(expirationDate: expirationDate)
-+        let readableExpirationTime = Self.dateFormatter.string(from: expirationDate)
-+
 +        if isTestFlight {
 +            return createAppExpirationSection(
 +                headerLabel: NSLocalizedString("TestFlight", comment: "Settings app TestFlight section"),
