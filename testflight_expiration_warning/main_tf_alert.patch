@@ -143,7 +143,7 @@ index 3aa74273..fb33b1cb 100644
 +        if isTestFlight, let buildDate = buildDate() {
 +            let testflightExpiration = Calendar.current.date(byAdding: .day, value: 90, to: buildDate)!
 +            
-+            return profileExpiration < testflightExpiration ? profileExpiration : testflightExpiration
++            return testflightExpiration
 +        } else {
 +            return profileExpiration
 +        }
