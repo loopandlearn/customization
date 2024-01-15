@@ -1,4 +1,4 @@
-Submodule Loop contains modified content
+Submodule Loop c6b058b..df945eb:
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
 index 4e1cbfdf..30de494f 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
@@ -82,7 +82,7 @@ index 8fca5668..1b7828c8 100644
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
              }
-Submodule LoopKit contains modified content
+Submodule LoopKit 9835a29..8a58d2e:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 6b13fc8..c6bcc64 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -181,6 +181,493 @@ index 6b13fc8..c6bcc64 100644
  				892A5DB32231E191008961AB /* LevelHUDView.swift in Sources */,
  				B41A60B223D1DBC700636320 /* UIFont.swift in Sources */,
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
+diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
+new file mode 100644
+index 0000000..c4100d5
+--- /dev/null
++++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
+@@ -0,0 +1,389 @@
++//
++//  ProfileViewModel+FileManagement.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-05-19.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import LoopKit
++import HealthKit
++
++public enum ProfileValidationError: Error, LocalizedError {
++    case fileLoadError
++    case unsupportedIncrement
++    case correctionRangeError
++    case insulinSensitivityError
++    case carbRatioError
++    case basalRateError
++    case maxBasalRateNotSet
++    
++    public var errorDescription: String? {
++        switch self {
++        case .fileLoadError:
++            return "Unable to load the profile file."
++        case .unsupportedIncrement:
++            return "The profile contains unsupported increments."
++        case .correctionRangeError:
++            return "Correction Range values are out of bounds."
++        case .insulinSensitivityError:
++            return "Insulin Sensitivity values are out of bounds."
++        case .carbRatioError:
++            return "Carb Ratio values are out of bounds."
++        case .basalRateError:
++            return "Basal Rate values are out of bounds."
++        case .maxBasalRateNotSet:
++            return "Maximum Basal Rate is not set."
++        }
++    }
++}
++
++public enum LoadProfileResult {
++    case success
++    case failure(Error)
++}
++
++// MARK: File management
++extension ProfileViewModel {
++    private func setCurrentProfile(name: String, syncChange: Bool = false) {
++        currentProfileName = name
++        if (syncChange) {
++            triggerProfileSync()
++        }
++    }
++    
++    private func clearCurrentProfile() {
++        currentProfileName = nil
++        triggerProfileSync()
++    }
++    
++    private func getCurrentProfileName() -> String? {
++        return currentProfileName
++    }
++    
++    private var profilesDirectory: URL {
++        let fileManager = FileManager.default
++        let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
++        return documentsDirectory.appendingPathComponent("LoopProfile")
++    }
++    
++    private func createProfileDirectoryIfNotExists() throws {
++        let fileManager = FileManager.default
++        var isDir : ObjCBool = false
++        if !fileManager.fileExists(atPath: profilesDirectory.path, isDirectory: &isDir) {
++            try fileManager.createDirectory(at: profilesDirectory, withIntermediateDirectories: true, attributes: nil)
++        } else if !isDir.boolValue {
++            throw NSError(domain: NSCocoaErrorDomain, code: NSFileWriteFileExistsError, userInfo: nil)
++        }
++    }
++    
++    private func getAllProfileFiles() throws -> [URL] {
++        let fileManager = FileManager.default
++        let files = try fileManager.contentsOfDirectory(at: profilesDirectory, includingPropertiesForKeys: nil)
++        return files.filter { $0.pathExtension == "json" }
++    }
++    
++    private func encodeProfile(_ profile: Profile) throws -> Data {
++        return try JSONEncoder().encode(profile)
++    }
++    
++    private func decodeProfile(from data: Data) throws -> Profile {
++        return try JSONDecoder().decode(Profile.self, from: data)
++    }
++    
++    public func saveProfile(withName name: String) {
++        do {
++            try createProfileDirectoryIfNotExists()
++            
++            if let existingProfile = getProfileReference(withName: name) {
++                removeProfile(profileReference: existingProfile)
++            }
++            
++            let profile = Profile(
++                name: name,
++                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
++                carbRatioSchedule: therapySettings.carbRatioSchedule!,
++                basalRateSchedule: therapySettings.basalRateSchedule!,
++                insulinSensitivitySchedule: (therapySettings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter)!)!,
++                sortOrder: -1
++            )
++            
++            let jsonData = try encodeProfile(profile)
++            
++            let dateFormatter = DateFormatter()
++            dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
++            let fileName = dateFormatter.string(from: Date()) + ".json"
++            let fileURL = profilesDirectory.appendingPathComponent(fileName)
++            
++            try jsonData.write(to: fileURL)
++            setCurrentProfile(name: name, syncChange: true)
++            
++            self.loadProfiles()
++        } catch {
++            print("An error occurred while saving profile: \(error)")
++        }
++    }
++    
++    public func renameProfile(oldName: String, newName: String) {
++        if currentProfileName == oldName {
++            setCurrentProfile(name: newName, syncChange: true)
++        }
++        
++        do {
++            guard let profileReference = getProfileReference(withName: oldName) else {
++                print("Profile with old name not found.")
++                return
++            }
++            
++            let profile = try getProfile(from: profileReference)
++            
++            let newProfile = Profile(
++                name: newName,
++                correctionRange: profile.correctionRange,
++                carbRatioSchedule: profile.carbRatioSchedule,
++                basalRateSchedule: profile.basalRateSchedule,
++                insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
++                sortOrder: profile.sortOrder
++            )
++            
++            if let existingProfile = getProfileReference(withName: newName) {
++                removeProfile(profileReference: existingProfile)
++            }
++            
++            let jsonData = try encodeProfile(newProfile)
++            let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
++            
++            try jsonData.write(to: fileURL)
++            
++            self.loadProfiles()
++        } catch {
++            print("An error occurred while renaming profile: \(error)")
++        }
++    }
++    
++    public func updateProfilesOrder() {
++        for (index, profileReference) in profiles.enumerated() {
++            do {
++                var profile = try getProfile(from: profileReference)
++                let newProfile = Profile(
++                    name: profile.name,
++                    correctionRange: profile.correctionRange,
++                    carbRatioSchedule: profile.carbRatioSchedule,
++                    basalRateSchedule: profile.basalRateSchedule,
++                    insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
++                    sortOrder: index
++                )
++                
++                let jsonData = try encodeProfile(newProfile)
++                let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
++                try jsonData.write(to: fileURL)
++                
++            } catch {
++                print("An error occurred while updating profile order: \(error)")
++            }
++        }
++        loadProfiles()
++    }
++    
++    public func loadProfiles() {
++        do {
++            let profileFiles = try getAllProfileFiles()
++            
++            var newProfiles = [ProfileReference]()
++            for fileURL in profileFiles {
++                let data = try Data(contentsOf: fileURL)
++                let profile = try decodeProfile(from: data)
++                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
++                newProfiles.append(profileRef)
++            }
++            
++            newProfiles.sort { $0.sortOrder ?? 0 < $1.sortOrder ?? 0 }
++            
++            self.profiles = newProfiles
++        } catch {
++            print("An error occurred while loading profiles: \(error)")
++        }
++    }
++    
++    public func loadProfile(profile: Profile, completion: @escaping (LoadProfileResult) -> Void) {
++        if(therapySettings.glucoseTargetRangeSchedule == profile.correctionRange &&
++           therapySettings.carbRatioSchedule == profile.carbRatioSchedule &&
++           therapySettings.basalRateSchedule == profile.basalRateSchedule &&
++           therapySettings.insulinSensitivitySchedule == profile.insulinSensitivitySchedule) {
++            self.setCurrentProfile(name: profile.name, syncChange: true)
++            completion(.success)
++        }
++        else
++        {
++            do {
++                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
++                    switch result {
++                    case .success(let syncedSchedule):
++                        DispatchQueue.main.async {
++                            let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
++                            self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
++                            self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
++                            self?.saveBasalRates(basalRates: syncedSchedule)
++                            self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
++                            print("New profile loaded")
++                            self?.setCurrentProfile(name: profile.name, syncChange: false)
++                            completion(.success)
++                        }
++                    case .failure(let error):
++                        print("An error occurred while syncing basal rates: \(error)")
++                        completion(.failure(error))
++                    }
++                })
++            }
++        }
++    }
++    
++    func getProfileReference(withName name: String) -> ProfileReference? {
++        return profiles.first(where: { $0.name == name })
++    }
++    
++    public func removeProfile(profile: Profile) {
++        guard let profileReference = getProfileReference(withName: profile.name) else {
++            print("No ProfileReference found for given Profile")
++            return
++        }
++        
++        removeProfile(profileReference: profileReference)
++        if getCurrentProfileName() == profile.name {
++            clearCurrentProfile()
++        }
++    }
++    
++    public func removeProfile(profileReference: ProfileReference) {
++        do {
++            let fileManager = FileManager.default
++            let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
++            try fileManager.removeItem(at: fileURL)
++            loadProfiles()
++        } catch {
++            print("An error occurred while removing profile: \(error)")
++        }
++    }
++    
++    func doesProfileExist(withName name: String) -> Bool {
++        return profiles.contains(where: { $0.name == name })
++    }
++    
++    public func getProfile(from profileReference: ProfileReference) throws -> Profile {
++        let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
++        let data = try Data(contentsOf: fileURL)
++        let getProfile = try decodeProfile(from: data)
++        return getProfile
++    }
++    
++    public func validateProfile(_ profile: Profile) -> Result<Void, ProfileValidationError> {
++        guard let supportedIncrements = delegate?.pumpSupportedIncrements() else {
++            return .failure(.fileLoadError)
++        }
++        
++        // Checking Correction Range Schedule
++        for item in profile.correctionRange.items {
++            let minValue = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: item.value.minValue)
++            let maxValue = HKQuantity(unit: .milligramsPerDeciliter, doubleValue: item.value.maxValue)
++            
++            if !(Guardrail.correctionRange.absoluteBounds.contains(minValue) && Guardrail.correctionRange.absoluteBounds.contains(maxValue)) {
++                return .failure(.correctionRangeError)
++            }
++        }
++        
++        // Checking Insulin Sensitivity Schedule
++        for item in profile.insulinSensitivitySchedule.items {
++            let value = HKQuantity(unit: HKUnit.milligramsPerDeciliter.unitDivided(by: .internationalUnit()), doubleValue: item.value)
++            
++            if !Guardrail.insulinSensitivity.absoluteBounds.contains(value) {
++                return .failure(.insulinSensitivityError)
++            }
++        }
++        
++        // Checking Carb Ratio Schedule
++        for item in profile.carbRatioSchedule.items {
++            let value = HKQuantity(unit: .gramsPerUnit, doubleValue: item.value)
++            
++            if !Guardrail.carbRatio.absoluteBounds.contains(value) {
++                return .failure(.carbRatioError)
++            }
++        }
++        
++        // Checking Basal Rate Schedule
++        if let maximumBasalRate = therapySettings.maximumBasalRatePerHour {
++            for item in profile.basalRateSchedule.items {
++                let value = item.value
++                
++                if value > maximumBasalRate || !supportedIncrements.basalRates.contains(value) {
++                    return .failure(.basalRateError)
++                }
++            }
++        } else {
++            return .failure(.maxBasalRateNotSet)
++        }
++        
++        return .success(())
++    }
++    
++    func isCorrectionRangeEqual(a: GlucoseRangeSchedule, b: GlucoseRangeSchedule) -> Bool {
++        guard a.items.count == b.items.count else {
++            return false
++        }
++        
++        for (item1, item2) in zip(a.items, b.items) {
++            if item1.startTime != item2.startTime ||
++                abs(item1.value.minValue - item2.value.minValue) > 0.01 ||
++                abs(item1.value.maxValue - item2.value.maxValue) > 0.01 {
++                return false
++            }
++        }
++        
++        return true
++    }
++    
++    func isInsulinSensitivityScheduleEqual(a: InsulinSensitivitySchedule, b: InsulinSensitivitySchedule) -> Bool {
++        guard a.items.count == b.items.count else {
++            return false
++        }
++        
++        for (item1, item2) in zip(a.items, b.items) {
++            if item1.startTime != item2.startTime ||
++                abs(item1.value - item2.value) > 0.01 {
++                return false
++            }
++        }
++        
++        return true
++    }
++    
++    public func isCurrentProfileOutOfSync() -> Bool {
++        guard let currentProfileName = self.currentProfileName,
++              let currentProfileReference = profiles.first(where: { $0.name == currentProfileName }),
++              let profile = try? getProfile(from: currentProfileReference),
++              let therapyGlucoseSchedule = therapySettings.glucoseTargetRangeSchedule?.schedule(for: HKUnit.milligramsPerDeciliter),
++              let therapyInsulinSensitivitySchedule = therapySettings.insulinSensitivitySchedule?.schedule(for: HKUnit.milligramsPerDeciliter) else {
++            return false // No current profile set or profile not found or schedules not available
++        }
++        
++        var isOutOfSync = false
++        
++        if !isCorrectionRangeEqual(a: therapyGlucoseSchedule, b: profile.correctionRange.schedule(for: HKUnit.milligramsPerDeciliter)!) {
++            print("Glucose target range schedule differs")
++            isOutOfSync = true
++        }
++        if therapySettings.carbRatioSchedule != profile.carbRatioSchedule {
++            print("Carb ratio schedule differs")
++            isOutOfSync = true
++        }
++        if therapySettings.basalRateSchedule != profile.basalRateSchedule {
++            print("Basal rate schedule differs")
++            isOutOfSync = true
++        }
++        if !isInsulinSensitivityScheduleEqual(a: therapyInsulinSensitivitySchedule, b: profile.insulinSensitivitySchedule.schedule(for: HKUnit.milligramsPerDeciliter)!) {
++            print("Insulin sensitivity schedule differs")
++            isOutOfSync = true
++        }
++        
++        return isOutOfSync
++    }
++}
+diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
+new file mode 100644
+index 0000000..2c6b870
+--- /dev/null
++++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
+@@ -0,0 +1,86 @@
++//
++//  ProfileViewModel.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-04-22.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import Combine
++import LoopKit
++import HealthKit
++import SwiftUI
++
++public class ProfileViewModel: ObservableObject {
++    
++    @Published public var therapySettings: TherapySettings
++    @Published public var profiles = [ProfileReference]()
++    @Published public var currentProfileName: String? {
++        didSet {
++            UserDefaults.standard.setValue(currentProfileName, forKey: "currentProfileName")
++        }
++    }
++    
++    internal weak var delegate: TherapySettingsViewModelDelegate?
++    
++    public init(therapySettings: TherapySettings,
++                pumpSupportedIncrements: (() -> PumpSupportedIncrements?)? = nil,
++                sensitivityOverridesEnabled: Bool = false,
++                adultChildInsulinModelSelectionEnabled: Bool = false,
++                prescription: Prescription? = nil,
++                delegate: TherapySettingsViewModelDelegate? = nil) {
++        self.therapySettings = therapySettings
++        self.delegate = delegate
++        self.currentProfileName = UserDefaults.standard.string(forKey: "currentProfileName")
++        self.loadProfiles()
++    }
++    
++    public func pumpSupportedIncrements() -> PumpSupportedIncrements? {
++        return delegate?.pumpSupportedIncrements()
++    }
++}
++
++public struct Profile: Codable {
++    let name: String
++    let correctionRange: GlucoseRangeSchedule
++    let carbRatioSchedule: CarbRatioSchedule
++    let basalRateSchedule: BasalRateSchedule
++    let insulinSensitivitySchedule: InsulinSensitivitySchedule
++    var sortOrder: Int?
++}
++
++public struct ProfileReference: Codable, Equatable {
++    var name: String
++    var fileName: String
++    var sortOrder: Int?
++}
++
++
++// MARK: Saving
++extension ProfileViewModel {
++    
++    public func saveCorrectionRange(range: GlucoseRangeSchedule) {
++        therapySettings.glucoseTargetRangeSchedule = range
++        delegate?.saveCompletion(therapySettings: therapySettings)
++    }
++    
++    public func saveBasalRates(basalRates: BasalRateSchedule) {
++        therapySettings.basalRateSchedule = basalRates
++        delegate?.saveCompletion(therapySettings: therapySettings)
++    }
++    
++    public func saveCarbRatioSchedule(carbRatioSchedule: CarbRatioSchedule) {
++        therapySettings.carbRatioSchedule = carbRatioSchedule
++        delegate?.saveCompletion(therapySettings: therapySettings)
++    }
++    
++    public func saveInsulinSensitivitySchedule(insulinSensitivitySchedule: InsulinSensitivitySchedule) {
++        therapySettings.insulinSensitivitySchedule = insulinSensitivitySchedule
++        delegate?.saveCompletion(therapySettings: therapySettings)
++    }
++    
++    public func triggerProfileSync() {
++        delegate?.updateCurrentProfileName()
++    }
++}
 diff --git a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
 index 3650ef6..956bc7e 100644
 --- a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
@@ -240,7 +727,701 @@ index 3650ef6..956bc7e 100644
          delegate?.saveCompletion(therapySettings: therapySettings)
      }
      
-Submodule LoopOnboarding contains modified content
+diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift
+new file mode 100644
+index 0000000..4fcbea1
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift	
+@@ -0,0 +1,79 @@
++//
++//  NewProfileEditor.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-05-19.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++
++struct NewProfileEditor: View {
++    @Binding var isPresented: Bool
++    @State var newProfileName: String
++    var viewModel: ProfileViewModel
++    @State private var showAlert = false
++    
++    var body: some View {
++        VStack(spacing: 0) {
++            ModalHeaderButtonBar(
++                leading: { cancelButton },
++                center: {
++                    Text("New Profile")
++                        .font(.headline)
++                },
++                trailing: { addButton }
++            )
++            
++            TextField("Profile Name", text: $newProfileName)
++                .textFieldStyle(RoundedBorderTextFieldStyle())
++                .padding()
++                .background(
++                    RoundedCorners(radius: 10, corners: [.bottomLeft, .bottomRight])
++                        .fill(Color(.secondarySystemGroupedBackground))
++                )
++        }
++        .padding(.horizontal)
++        .alert(isPresented: $showAlert) {
++            Alert(
++                title: Text("Overwrite Existing Profile"),
++                message: Text("A profile with this name already exists. Would you like to overwrite it?"),
++                primaryButton: .destructive(Text("Overwrite")) {
++                    self.viewModel.saveProfile(withName: self.newProfileName)
++                    self.isPresented = false
++                },
++                secondaryButton: .cancel()
++            )
++        }
++    }
++    
++    var addButton: some View {
++        Button(
++            action: {
++                withAnimation {
++                    if viewModel.doesProfileExist(withName: self.newProfileName) {
++                        self.showAlert = true
++                    } else {
++                        self.viewModel.saveProfile(withName: self.newProfileName)
++                        self.isPresented = false
++                    }
++                }
++            }, label: {
++                Text("Add")
++            }
++        )
++    }
++    
++    var cancelButton: some View {
++        Button(
++            action: {
++                withAnimation {
++                    self.isPresented = false
++                }
++            }, label: {
++                Text("Cancel")
++            }
++        )
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
+new file mode 100644
+index 0000000..abe31ad
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
+@@ -0,0 +1,326 @@
++//
++//  ProfilePreviewView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-05-23.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import HealthKit
++import LoopKit
++
++enum ActiveAlert {
++    case load
++    case delete
++    case error
++}
++
++struct ProfilePreviewView: View {
++    @EnvironmentObject private var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
++    @ObservedObject var viewModel: ProfileViewModel
++    @Environment(\.dismissAction) var dismissAction
++    @Environment(\.presentationMode) var presentationMode
++    var profile: Profile
++    
++    @State private var showingAlert = false
++    @State private var activeAlert: ActiveAlert = .load
++    @State private var errorText: String?
++    @State private var newProfileName: String = ""
++    @State private var isRenamingProfile = false
++    @State private var shouldDismissSelf: Bool = false
++    
++    let nilDestination: (_ dismiss: @escaping () -> Void) -> AnyView = { _ in AnyView(EmptyView()) }
++    
++    var body: some View {
++        ZStack {
++            ScrollView {
++                VStack(alignment: .leading) {
++                    Text("Before proceeding, review the profile details below. Scroll to find options to Load, Rename, or Delete.")
++                        .font(.body)
++                        .foregroundColor(.primary)
++                        .padding([.leading, .trailing])
++                        .fixedSize(horizontal: false, vertical: true)
++                        .textCase(nil)
++                    
++                    profileCardStack
++                    
++                    Button(action: {
++                        activeAlert = .load
++                        showingAlert = true
++                    }) {
++                        HStack {
++                            Spacer()
++                            Text("Load")
++                                .foregroundColor(.white)
++                                .padding()
++                            Spacer()
++                        }
++                    }
++                    .background(Color.blue)
++                    .cornerRadius(10)
++                    .padding(.horizontal)
++                    
++                    Button(action: {
++                        isRenamingProfile = true
++                    }) {
++                        HStack {
++                            Spacer()
++                            Text("Rename")
++                                .foregroundColor(.white)
++                                .padding()
++                            Spacer()
++                        }
++                    }
++                    .background(Color.orange)
++                    .cornerRadius(10)
++                    .padding(.horizontal)
++                    
++                    Button(action: {
++                        activeAlert = .delete
++                        showingAlert = true
++                    }) {
++                        HStack {
++                            Spacer()
++                            Text("Delete")
++                                .foregroundColor(.white)
++                                .padding()
++                            Spacer()
++                        }
++                    }
++                    .background(Color.red)
++                    .cornerRadius(10)
++                    .padding(.horizontal)
++                    
++                }
++            }
++            .navigationBarHidden(false)
++            .background(Color(.systemGroupedBackground))
++            .navigationTitle(Text(profile.name))
++            .alert(isPresented: $showingAlert) {
++                switch activeAlert {
++                case .load:
++                    return Alert(
++                        title: Text("Load Profile"),
++                        message: Text("Do you want to load the profile \(profile.name)?"),
++                        primaryButton: .default(Text("Yes"), action: {
++                            let validationResult = viewModel.validateProfile(profile)
++                            switch validationResult {
++                            case .success:
++                                viewModel.loadProfile(profile: profile) { result in
++                                    switch result {
++                                    case .success:
++                                        dismissAction()
++                                    case .failure(let error):
++                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                                            self.errorText = error.localizedDescription
++                                            self.activeAlert = .error
++                                            self.showingAlert = true
++                                        }
++                                    }
++                                }
++                            case .failure(let error):
++                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                                    self.errorText = error.localizedDescription
++                                    self.activeAlert = .error
++                                    self.showingAlert = true
++                                }
++                            }
++                        }),
++                        secondaryButton: .cancel()
++                    )
++                case .delete:
++                    return Alert(
++                        title: Text("Delete Profile"),
++                        message: Text("Are you sure you want to delete the profile \(profile.name)? This action cannot be undone."),
++                        primaryButton: .destructive(Text("Delete"), action: {
++                            viewModel.removeProfile(profile: profile)
++                            self.presentationMode.wrappedValue.dismiss()
++                        }),
++                        secondaryButton: .cancel()
++                    )
++                case .error:
++                    return Alert(
++                        title: Text("Error loading profile"),
++                        message: Text(errorText ?? "Unknown error"),
++                        dismissButton: .default(Text("OK"))
++                    )
++                }
++            }
++            if isRenamingProfile {
++                // Some hacks here to mimic Alert behaviour.
++                // This function should be migrateed to Alert when iOS 16 is required.
++                Color.black.opacity(0.5)
++                    .edgesIgnoringSafeArea(.all)
++                    .onTapGesture {
++                        isRenamingProfile = false
++                    }
++                
++                RenameProfileEditor(
++                    isPresented: $isRenamingProfile,
++                    currentProfileName: profile.name,
++                    viewModel: viewModel,
++                    shouldDismissParent: $shouldDismissSelf
++                )
++                .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity).animation(.default))
++                .offset(y: -22)
++            }
++        }
++        .onChange(of: shouldDismissSelf) { shouldDismiss in
++            if shouldDismiss {
++                self.presentationMode.wrappedValue.dismiss()
++            }
++        }
++    }
++    
++    private var profileCardStack: CardStack {
++        var cards: [Card] = []
++        
++        cards.append(correctionRangeSection)
++        cards.append(carbRatioSection)
++        cards.append(basalRatesSection)
++        cards.append(insulinSensitivitiesSection)
++        
++        return CardStack(cards: cards)
++    }
++    
++    private var correctionRangeSection: Card {
++        card(for: .glucoseTargetRange) {
++            if let items = profile.correctionRange.schedule(for: glucoseUnit)?.items {
++                SectionDivider()
++                ForEach(items.indices, id: \.self) { index in
++                    if index > 0 {
++                        SettingsDivider()
++                    }
++                    
++                    ScheduleRangeItem(time: items[index].startTime,
++                                      range: items[index].value,
++                                      unit: glucoseUnit,
++                                      guardrail: .correctionRange)
++                }
++            }
++        }
++    }
++    
++    private var carbRatioSection: Card {
++        card(for: .carbRatio) {
++            SectionDivider()
++            let items = profile.carbRatioSchedule.items
++            ForEach(items.indices, id: \.self) { index in
++                if index > 0 {
++                    SettingsDivider()
++                }
++                
++                ScheduleValueItem(time: items[index].startTime,
++                                  value: items[index].value,
++                                  unit: .gramsPerUnit,
++                                  guardrail: .carbRatio)
++            }
++        }
++    }
++    
++    private var basalRatesSection: Card {
++        card(for: .basalRate) {
++            let items = profile.basalRateSchedule.items
++            if let supportedBasalRates = viewModel.pumpSupportedIncrements()?.basalRates
++            {
++                SectionDivider()
++                let total = profile.basalRateSchedule.total()
++                ForEach(items.indices, id: \.self) { index in
++                    if index > 0 {
++                        SettingsDivider()
++                    }
++                    
++                    ScheduleValueItem(time: items[index].startTime,
++                                      value:  items[index].value,
++                                      unit: .internationalUnitsPerHour,
++                                      guardrail: .basalRate(supportedBasalRates: supportedBasalRates))
++                }
++                HStack {
++                    Text("Total")
++                        .bold()
++                        .foregroundColor(.primary)
++                    Spacer()
++                    Text(String(format: "%.2f ",total))
++                        .foregroundColor(.primary) +
++                    Text("U/day")
++                        .foregroundColor(.secondary)
++                }
++            }
++        }
++    }
++    
++    private var insulinSensitivitiesSection: Card {
++        card(for: .insulinSensitivity) {
++            if let items = profile.insulinSensitivitySchedule.schedule(for: glucoseUnit)?.items
++            {
++                SectionDivider()
++                ForEach(items.indices, id: \.self) { index in
++                    if index > 0 {
++                        SettingsDivider()
++                    }
++                    ScheduleValueItem(time: items[index].startTime,
++                                      value: items[index].value,
++                                      unit: sensitivityUnit,
++                                      guardrail: .insulinSensitivity)
++                }
++            }
++        }
++    }
++}
++
++
++struct SectionWithContent<Content>: View where Content: View {
++    let title: String
++    let content: Content
++    
++    init(title: String,
++         content: () -> Content)
++    {
++        self.title = title
++        self.content = content()
++    }
++    
++    public var body: some View {
++        Section {
++            Text(title)
++                .bold()
++                .frame(maxWidth: .infinity, alignment: .leading)
++            content
++        }
++    }
++}
++
++// MARK: Utilities
++extension ProfilePreviewView {
++    
++    private var glucoseUnit: HKUnit {
++        displayGlucoseUnitObservable.displayGlucoseUnit
++    }
++
++    private var sensitivityUnit: HKUnit {
++        glucoseUnit.unitDivided(by: .internationalUnit())
++    }
++    
++    private func card<Content>(for therapySetting: TherapySetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
++        Card {
++            SectionWithContent(title: therapySetting.title,
++                               content: content)
++        }
++    }
++}
++
++fileprivate struct SectionDivider: View {
++    var body: some View {
++        Divider()
++            .padding(.trailing, -16)
++    }
++}
++
++fileprivate struct SettingsDivider: View {
++    var body: some View {
++        Divider()
++            .padding(.trailing, -8)
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
+new file mode 100644
+index 0000000..de24519
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
+@@ -0,0 +1,173 @@
++//
++//  ProfileView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-04-22.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import AVFoundation
++import HealthKit
++import LoopKit
++import SwiftUI
++
++public struct ProfileView: View {
++    @ObservedObject public var viewModel: ProfileViewModel
++    @Environment(\.dismissAction) var dismissAction
++    @State private var newProfileName: String = ""
++    @State private var isAddingNewProfile = false
++    @State private var selectedProfileIndex: Int? = nil
++    @State private var refreshID = UUID()
++    
++    enum ActiveAlert: String, Identifiable {
++        case update, info
++        
++        var id: String {
++            return self.rawValue
++        }
++    }
++    @State private var activeAlert: ActiveAlert?
++    
++    public init(viewModel: ProfileViewModel) {
++        self.viewModel = viewModel
++    }
++    
++    private var dismissButton: some View {
++        Button(action: dismissAction) {
++            Text(LocalizedString("Done", comment: "Text for dismiss button"))
++                .bold()
++        }
++    }
++    
++    public var body: some View {
++        ZStack {
++            NavigationView {
++                ConfigurationPageScrollView(
++                    content: {
++                        VStack(alignment: .leading) {
++                            
++                            if !viewModel.profiles.isEmpty {
++                                List {
++                                    ForEach(viewModel.profiles.indices, id: \.self) { index in
++                                        if let profile = try? viewModel.getProfile(from: viewModel.profiles[index]) {
++                                            NavigationLink(destination: ProfilePreviewView(viewModel: viewModel, profile: profile)) {
++                                                HStack {
++                                                    if viewModel.currentProfileName == viewModel.profiles[index].name {
++                                                        Image(systemName: "checkmark")
++                                                            .foregroundColor(Color.blue)
++                                                    } else {
++                                                        // Add indentation to align with the checkmark for the active profile
++                                                        Image(systemName: "checkmark")
++                                                            .opacity(0) // Invisible
++                                                    }
++                                                    
++                                                    Text(viewModel.profiles[index].name)
++                                                }
++                                            }
++                                        }
++                                    }
++                                    .onMove(perform: moveProfile)
++                                }.id(refreshID)
++                                
++                            } else {
++                                Text("Use ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.")
++                                    .font(.subheadline)
++                                    .foregroundColor(.secondary)
++                                    .padding([.leading, .trailing])
++                                    .multilineTextAlignment(.leading)
++                                    .lineLimit(nil)
++                                    .textCase(nil)
++                            }
++                        }
++                    },
++                    actionArea: { EmptyView() } // no action area in this case
++                )
++                .navigationBarItems(
++                    leading: HStack {
++                        Button(action: { withAnimation { isAddingNewProfile = true } }) {
++                            Image(systemName: "plus")
++                        }
++                        
++                        Button(action: { activeAlert = .info }) {
++                            Image(systemName: "info.circle")
++                                .resizable()
++                                .frame(width: 24, height: 24)
++                        }
++                    },
++                    trailing: dismissButton
++                )
++                .navigationTitle(Text(LocalizedString("Profiles", comment: "Title on ProfileView")))
++            }
++            .navigationBarHidden(false)
++            .background(Color(.systemGroupedBackground))
++            .onAppear {
++                if viewModel.isCurrentProfileOutOfSync() {
++                    activeAlert = .update
++                }
++            }
++            
++            .alert(item: $activeAlert) { alertType in
++                switch alertType {
++                case .update:
++                    return Alert(
++                        title: Text("Profile Outdated"),
++                        message: Text("The current therapy settings have changed. Do you want to update the profile named: \(viewModel.currentProfileName ?? "")?"),
++                        primaryButton: .default(Text("Update")) {
++                            viewModel.saveProfile(withName: viewModel.currentProfileName ?? "")
++                        },
++                        secondaryButton: .cancel()
++                    )
++                case .info:
++                    return Alert(title: Text("Information"),
++                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap on any profile to review its settings in detail. In detail view, you can Load, Rename or Delete that particular profile.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
++                                 dismissButton: .default(Text("Got it!")))
++                }
++            }
++            
++            if isAddingNewProfile {
++                DarkenedOverlay()
++                
++                NewProfileEditor(
++                    isPresented: $isAddingNewProfile,
++                    newProfileName: newProfileName,
++                    viewModel: viewModel
++                )
++                .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity).animation(.default))
++            }
++        }
++    }
++    
++    func moveProfile(from source: IndexSet, to destination: Int) {
++        viewModel.profiles.move(fromOffsets: source, toOffset: destination)
++        refreshID = UUID()
++        viewModel.updateProfilesOrder()
++    }
++}
++
++struct ProfileView_Previews: PreviewProvider {
++    static let preview_glucoseScheduleItems = [
++        RepeatingScheduleValue(startTime: 0, value: DoubleRange(80...90)),
++        RepeatingScheduleValue(startTime: 1800, value: DoubleRange(90...100)),
++        RepeatingScheduleValue(startTime: 3600, value: DoubleRange(100...110))
++    ]
++    
++    static let preview_therapySettings = TherapySettings(
++        glucoseTargetRangeSchedule: GlucoseRangeSchedule(unit: .milligramsPerDeciliter, dailyItems: preview_glucoseScheduleItems),
++        correctionRangeOverrides: CorrectionRangeOverrides(preMeal: DoubleRange(88...99),
++                                                           workout: DoubleRange(99...111),
++                                                           unit: .milligramsPerDeciliter),
++        maximumBolus: 4,
++        suspendThreshold: GlucoseThreshold.init(unit: .milligramsPerDeciliter, value: 60),
++        insulinSensitivitySchedule: InsulinSensitivitySchedule(unit: HKUnit.milligramsPerDeciliter.unitDivided(by: HKUnit.internationalUnit()), dailyItems: []),
++        carbRatioSchedule: nil,
++        basalRateSchedule: BasalRateSchedule(dailyItems: [RepeatingScheduleValue(startTime: 0, value: 0.2), RepeatingScheduleValue(startTime: 1800, value: 0.75)]))
++    
++    static let preview_supportedBasalRates = [0.2, 0.5, 0.75, 1.0]
++    static let preview_supportedBolusVolumes = [1.0, 2.0, 3.0]
++    static let preview_supportedMaximumBolusVolumes = [5.0, 10.0, 15.0]
++    
++    static var previews: some View {
++        ProfileView(viewModel: ProfileViewModel(therapySettings: preview_therapySettings))
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift
+new file mode 100644
+index 0000000..e53775a
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Settings Editors/RenameProfileEditor.swift	
+@@ -0,0 +1,92 @@
++//
++//  RenameProfileEditor.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2023-09-07.
++//  Copyright © 2023 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++
++struct RenameProfileEditor: View {
++    @Binding var isPresented: Bool
++    @State var currentProfileName: String
++    @State var newProfileName: String = ""
++    var viewModel: ProfileViewModel
++    @State private var showAlert = false
++    @Binding var shouldDismissParent: Bool
++    
++    var body: some View {
++        VStack(spacing: 0) {
++            ModalHeaderButtonBar(
++                leading: { cancelButton },
++                center: {
++                    Text("Rename Profile")
++                        .font(.subheadline)
++                    
++                },
++                trailing: { renameButton }
++            )
++            .onAppear {
++                self.newProfileName = currentProfileName
++            }
++            
++            TextField("Profile Name", text: $newProfileName)
++                .textFieldStyle(RoundedBorderTextFieldStyle())
++                .padding()
++                .background(
++                    RoundedCorners(radius: 10, corners: [.bottomLeft, .bottomRight])
++                        .fill(Color(.secondarySystemGroupedBackground))
++                )
++        }
++        .padding(.horizontal)
++        .alert(isPresented: $showAlert) {
++            Alert(
++                title: Text("Overwrite Existing Profile"),
++                message: Text("A profile with this name already exists. Would you like to overwrite it?"),
++                primaryButton: .destructive(Text("Overwrite")) {
++                    self.viewModel.renameProfile(oldName: currentProfileName, newName: self.newProfileName)
++                    self.shouldDismissParent = true
++                    self.isPresented = false
++                },
++                secondaryButton: .cancel()
++            )
++        }
++    }
++    
++    var renameButton: some View {
++        Button(
++            action: {
++                withAnimation {
++                    guard newProfileName != currentProfileName else {
++                        self.isPresented = false
++                        return
++                    }
++                    
++                    if viewModel.doesProfileExist(withName: self.newProfileName) {
++                        self.showAlert = true
++                    } else {
++                        self.viewModel.renameProfile(oldName: currentProfileName, newName: self.newProfileName)
++                        self.shouldDismissParent = true
++                        self.isPresented = false
++                    }
++                }
++            }, label: {
++                Text("Rename")
++            }
++        )
++    }
++    
++    var cancelButton: some View {
++        Button(
++            action: {
++                withAnimation {
++                    self.isPresented = false
++                }
++            }, label: {
++                Text("Cancel")
++            }
++        )
++    }
++}
+Submodule LoopOnboarding 308097a..6c615ac:
 diff --git a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift b/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift
 index 079d59e..013e482 100644
 --- a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift	
@@ -255,7 +1436,7 @@ index 079d59e..013e482 100644
  }
  
  
-Submodule NightscoutService contains modified content
+Submodule NightscoutService 1196d9e..5036131:
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 index 0bed9c6..49c1f52 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
