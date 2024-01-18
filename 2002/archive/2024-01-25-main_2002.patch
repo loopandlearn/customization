@@ -1,36 +1,6 @@
-Submodule Loop c6b058b..df945eb:
-diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index 4e1cbfdf..30de494f 100644
---- a/Loop/Loop/Managers/DeviceDataManager.swift
-+++ b/Loop/Loop/Managers/DeviceDataManager.swift
-@@ -1754,6 +1754,10 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
-         }
-     }
-     
-+    func updateCurrentProfileName() {
-+        loopManager.updateCurrentProfileName()
-+    }
-+    
-     func saveCompletion(therapySettings: TherapySettings) {
- 
-         loopManager.mutateSettings { settings in
-diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 18a08166..8f1f44c6 100644
---- a/Loop/Loop/Managers/LoopDataManager.swift
-+++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -229,6 +229,10 @@ final class LoopDataManager {
-         lockedSettings.value
-     }
- 
-+    func updateCurrentProfileName () {
-+        notify(forChange: .preferences)
-+    }
-+    
-     func mutateSettings(_ changes: (_ settings: inout LoopSettings) -> Void) {
-         var oldValue: LoopSettings!
-         let newValue = lockedSettings.mutate { settings in
+Submodule Loop befcbcb..f147f0b:
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 8fca5668..1b7828c8 100644
+index 90859273..187a17c1 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -24,6 +24,7 @@ public struct SettingsView: View {
@@ -82,7 +52,7 @@ index 8fca5668..1b7828c8 100644
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
              }
-Submodule LoopKit 9835a29..8a58d2e:
+Submodule LoopKit 9835a29..d2042f9:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 6b13fc8..c6bcc64 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
@@ -183,10 +153,10 @@ index 6b13fc8..c6bcc64 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..c4100d5
+index 0000000..3279377
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,333 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -234,16 +204,12 @@ index 0000000..c4100d5
 +
 +// MARK: File management
 +extension ProfileViewModel {
-+    private func setCurrentProfile(name: String, syncChange: Bool = false) {
++    private func setCurrentProfile(name: String) {
 +        currentProfileName = name
-+        if (syncChange) {
-+            triggerProfileSync()
-+        }
 +    }
 +    
 +    private func clearCurrentProfile() {
 +        currentProfileName = nil
-+        triggerProfileSync()
 +    }
 +    
 +    private func getCurrentProfileName() -> String? {
@@ -305,7 +271,7 @@ index 0000000..c4100d5
 +            let fileURL = profilesDirectory.appendingPathComponent(fileName)
 +            
 +            try jsonData.write(to: fileURL)
-+            setCurrentProfile(name: name, syncChange: true)
++            setCurrentProfile(name: name)
 +            
 +            self.loadProfiles()
 +        } catch {
@@ -315,7 +281,7 @@ index 0000000..c4100d5
 +    
 +    public func renameProfile(oldName: String, newName: String) {
 +        if currentProfileName == oldName {
-+            setCurrentProfile(name: newName, syncChange: true)
++            currentProfileName = newName
 +        }
 +        
 +        do {
@@ -395,35 +361,25 @@ index 0000000..c4100d5
 +    }
 +    
 +    public func loadProfile(profile: Profile, completion: @escaping (LoadProfileResult) -> Void) {
-+        if(therapySettings.glucoseTargetRangeSchedule == profile.correctionRange &&
-+           therapySettings.carbRatioSchedule == profile.carbRatioSchedule &&
-+           therapySettings.basalRateSchedule == profile.basalRateSchedule &&
-+           therapySettings.insulinSensitivitySchedule == profile.insulinSensitivitySchedule) {
-+            self.setCurrentProfile(name: profile.name, syncChange: true)
-+            completion(.success)
-+        }
-+        else
-+        {
-+            do {
-+                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
-+                    switch result {
-+                    case .success(let syncedSchedule):
-+                        DispatchQueue.main.async {
-+                            let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
-+                            self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
-+                            self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
-+                            self?.saveBasalRates(basalRates: syncedSchedule)
-+                            self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
-+                            print("New profile loaded")
-+                            self?.setCurrentProfile(name: profile.name, syncChange: false)
-+                            completion(.success)
-+                        }
-+                    case .failure(let error):
-+                        print("An error occurred while syncing basal rates: \(error)")
-+                        completion(.failure(error))
++        do {
++            delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
++                switch result {
++                case .success(let syncedSchedule):
++                    DispatchQueue.main.async {
++                        let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
++                        self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
++                        self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
++                        self?.saveBasalRates(basalRates: syncedSchedule)
++                        self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
++                        print("New profile loaded")
++                        self?.setCurrentProfile(name: profile.name)
++                        completion(.success)
 +                    }
-+                })
-+            }
++                case .failure(let error):
++                    print("An error occurred while syncing basal rates: \(error)")
++                    completion(.failure(error))
++                }
++            })
 +        }
 +    }
 +    
@@ -514,74 +470,32 @@ index 0000000..c4100d5
 +        return .success(())
 +    }
 +    
-+    func isCorrectionRangeEqual(a: GlucoseRangeSchedule, b: GlucoseRangeSchedule) -> Bool {
-+        guard a.items.count == b.items.count else {
-+            return false
-+        }
-+        
-+        for (item1, item2) in zip(a.items, b.items) {
-+            if item1.startTime != item2.startTime ||
-+                abs(item1.value.minValue - item2.value.minValue) > 0.01 ||
-+                abs(item1.value.maxValue - item2.value.maxValue) > 0.01 {
-+                return false
-+            }
-+        }
-+        
-+        return true
-+    }
-+    
-+    func isInsulinSensitivityScheduleEqual(a: InsulinSensitivitySchedule, b: InsulinSensitivitySchedule) -> Bool {
-+        guard a.items.count == b.items.count else {
-+            return false
-+        }
-+        
-+        for (item1, item2) in zip(a.items, b.items) {
-+            if item1.startTime != item2.startTime ||
-+                abs(item1.value - item2.value) > 0.01 {
-+                return false
-+            }
-+        }
-+        
-+        return true
-+    }
-+    
 +    public func isCurrentProfileOutOfSync() -> Bool {
-+        guard let currentProfileName = self.currentProfileName,
-+              let currentProfileReference = profiles.first(where: { $0.name == currentProfileName }),
-+              let profile = try? getProfile(from: currentProfileReference),
-+              let therapyGlucoseSchedule = therapySettings.glucoseTargetRangeSchedule?.schedule(for: HKUnit.milligramsPerDeciliter),
-+              let therapyInsulinSensitivitySchedule = therapySettings.insulinSensitivitySchedule?.schedule(for: HKUnit.milligramsPerDeciliter) else {
-+            return false // No current profile set or profile not found or schedules not available
++        guard let currentProfileName = self.currentProfileName else {
++            return false // No current profile set
 +        }
 +        
-+        var isOutOfSync = false
++        // Assuming you have a method `getProfile(from: ProfileReference)`
++        // that fetches a Profile given a ProfileReference
++        let currentProfileReference = profiles.first { $0.name == currentProfileName }
 +        
-+        if !isCorrectionRangeEqual(a: therapyGlucoseSchedule, b: profile.correctionRange.schedule(for: HKUnit.milligramsPerDeciliter)!) {
-+            print("Glucose target range schedule differs")
-+            isOutOfSync = true
-+        }
-+        if therapySettings.carbRatioSchedule != profile.carbRatioSchedule {
-+            print("Carb ratio schedule differs")
-+            isOutOfSync = true
-+        }
-+        if therapySettings.basalRateSchedule != profile.basalRateSchedule {
-+            print("Basal rate schedule differs")
-+            isOutOfSync = true
-+        }
-+        if !isInsulinSensitivityScheduleEqual(a: therapyInsulinSensitivitySchedule, b: profile.insulinSensitivitySchedule.schedule(for: HKUnit.milligramsPerDeciliter)!) {
-+            print("Insulin sensitivity schedule differs")
-+            isOutOfSync = true
++        guard let profileRef = currentProfileReference,
++              let profile = try? getProfile(from: profileRef) else {
++            return false // Profile not found
 +        }
 +        
-+        return isOutOfSync
++        return !(therapySettings.glucoseTargetRangeSchedule == profile.correctionRange &&
++                 therapySettings.carbRatioSchedule == profile.carbRatioSchedule &&
++                 therapySettings.basalRateSchedule == profile.basalRateSchedule &&
++                 therapySettings.insulinSensitivitySchedule == profile.insulinSensitivitySchedule)
 +    }
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
 new file mode 100644
-index 0000000..2c6b870
+index 0000000..edb3117
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,82 @@
 +//
 +//  ProfileViewModel.swift
 +//  LoopKitUI
@@ -663,70 +577,7 @@ index 0000000..2c6b870
 +        therapySettings.insulinSensitivitySchedule = insulinSensitivitySchedule
 +        delegate?.saveCompletion(therapySettings: therapySettings)
 +    }
-+    
-+    public func triggerProfileSync() {
-+        delegate?.updateCurrentProfileName()
-+    }
 +}
-diff --git a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-index 3650ef6..956bc7e 100644
---- a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-+++ b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-@@ -16,6 +16,7 @@ public protocol TherapySettingsViewModelDelegate: AnyObject {
-     func syncDeliveryLimits(deliveryLimits: DeliveryLimits, completion: @escaping (Result<DeliveryLimits, Error>) -> Void)
-     func saveCompletion(therapySettings: TherapySettings)
-     func pumpSupportedIncrements() -> PumpSupportedIncrements?
-+    func updateCurrentProfileName()
- }
- 
- public class TherapySettingsViewModel: ObservableObject {
-@@ -110,16 +111,16 @@ extension TherapySettingsViewModel {
-         therapySettings.glucoseTargetRangeSchedule = range
-         delegate?.saveCompletion(therapySettings: therapySettings)
-     }
--        
-+    
-     public func saveCorrectionRangeOverride(preset: CorrectionRangeOverrides.Preset,
-                                             correctionRangeOverrides: CorrectionRangeOverrides) {
-         therapySettings.correctionRangeOverrides = correctionRangeOverrides
-         delegate?.saveCompletion(therapySettings: therapySettings)
-     }
--
-+    
-     public func saveSuspendThreshold(quantity: HKQuantity, withDisplayGlucoseUnit displayGlucoseUnit: HKUnit) {
-         therapySettings.suspendThreshold = GlucoseThreshold(unit: displayGlucoseUnit, value: quantity.doubleValue(for: displayGlucoseUnit))
--
-+        
-         // TODO: Eventually target editors should support conflicting initial values
-         // But for now, ensure target ranges do not conflict with suspend threshold.
-         if let targetSchedule = therapySettings.glucoseTargetRangeSchedule {
-@@ -133,7 +134,7 @@ extension TherapySettingsViewModel {
-             }
-             therapySettings.glucoseTargetRangeSchedule = GlucoseRangeSchedule(unit: targetSchedule.unit, dailyItems: newItems)
-         }
--
-+        
-         if let overrides = therapySettings.correctionRangeOverrides {
-             let adjusted = [overrides.preMeal, overrides.workout].map { item -> ClosedRange<HKQuantity>? in
-                 guard let item = item else {
-@@ -148,7 +149,7 @@ extension TherapySettingsViewModel {
-                 preMeal: adjusted[0],
-                 workout: adjusted[1])
-         }
--
-+        
-         if let presets = therapySettings.overridePresets {
-             therapySettings.overridePresets = presets.map { preset in
-                 if let targetRange = preset.settings.targetRange {
-@@ -165,7 +166,7 @@ extension TherapySettingsViewModel {
-                 }
-             }
-         }
--
-+        
-         delegate?.saveCompletion(therapySettings: therapySettings)
-     }
-     
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/NewProfileEditor.swift
 new file mode 100644
 index 0000000..4fcbea1
@@ -1421,48 +1272,3 @@ index 0000000..e53775a
 +        )
 +    }
 +}
-Submodule LoopOnboarding 308097a..6c615ac:
-diff --git a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift b/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift
-index 079d59e..013e482 100644
---- a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift	
-+++ b/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift	
-@@ -379,6 +379,9 @@ extension OnboardingUICoordinator: TherapySettingsViewModelDelegate {
-             maximumBasalScheduleEntryCount: maximumBasalScheduleEntryCount
-         )
-     }
-+
-+    func updateCurrentProfileName() {
-+    }
- }
- 
- 
-Submodule NightscoutService 1196d9e..5036131:
-diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-index 0bed9c6..49c1f52 100644
---- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-+++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-@@ -93,13 +93,21 @@ extension StoredSettings {
-         guard let bloodGlucoseUnit = bloodGlucoseUnit, let profile = profile, let loopSettings = loopSettings else {
-             return nil
-         }
--
-+        
-+        var store = ["Default": profile]
-+        var defaultProfile = "Default"
-+        
-+        if let name = UserDefaults.standard.string(forKey: "currentProfileName") {
-+            defaultProfile = name
-+            store[name] = profile
-+        }
-+        
-         return ProfileSet(
-             startDate: date,
-             units: bloodGlucoseUnit.shortLocalizedUnitString(avoidLineBreaking: false),
-             enteredBy: "Loop",
--            defaultProfile: "Default",
--            store: ["Default": profile],
-+            defaultProfile: defaultProfile,
-+            store: store,
-             settings: loopSettings,
-             syncIdentifier: syncIdentifier.uuidString)
-     }
