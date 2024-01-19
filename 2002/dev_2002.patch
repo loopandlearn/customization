@@ -177,10 +177,10 @@ index 8354209..f061a30 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..56dc952
+index 0000000..6d9e370
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,400 @@
+@@ -0,0 +1,402 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -229,8 +229,9 @@ index 0000000..56dc952
 +// MARK: File management
 +extension ProfileViewModel {
 +    private func setCurrentProfile(name: String, syncChange: Bool = false) {
-+        currentProfileName = name
-+        if (syncChange) {
++        let sanitizedProfileName = sanitizeProfileName(name)
++        currentProfileName = sanitizedProfileName
++        if syncChange {
 +            triggerProfileSync()
 +        }
 +    }
@@ -277,7 +278,7 @@ index 0000000..56dc952
 +    public func sanitizeProfileName(_ name: String) -> String {
 +        // Replace problematic characters
 +        var sanitized = name.replacingOccurrences(of: ".", with: "_")
-+        
++
 +        return sanitized
 +    }
 +
@@ -322,15 +323,15 @@ index 0000000..56dc952
 +        if currentProfileName == oldName {
 +            setCurrentProfile(name: sanitizedProfileName, syncChange: true)
 +        }
-+
++        
 +        do {
 +            guard let profileReference = getProfileReference(withName: oldName) else {
 +                print("Profile with old name not found.")
 +                return
 +            }
-+
++            
 +            let profile = try getProfile(from: profileReference)
-+
++            
 +            let newProfile = Profile(
 +                name: sanitizedProfileName,
 +                correctionRange: profile.correctionRange,
@@ -339,16 +340,16 @@ index 0000000..56dc952
 +                insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
 +                sortOrder: profile.sortOrder
 +            )
-+
++            
 +            if let existingProfile = getProfileReference(withName: sanitizedProfileName) {
 +                removeProfile(profileReference: existingProfile)
 +            }
-+
++            
 +            let jsonData = try encodeProfile(newProfile)
 +            let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
-+
++            
 +            try jsonData.write(to: fileURL)
-+
++            
 +            self.loadProfiles()
 +        } catch {
 +            print("An error occurred while renaming profile: \(error)")
@@ -387,7 +388,7 @@ index 0000000..56dc952
 +            for fileURL in profileFiles {
 +                let data = try Data(contentsOf: fileURL)
 +                let profile = try decodeProfile(from: data)
-+                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
++                let profileRef = ProfileReference(name: sanitizeProfileName(profile.name), fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
 +                newProfiles.append(profileRef)
 +            }
 +            
@@ -433,7 +434,8 @@ index 0000000..56dc952
 +    }
 +
 +    func getProfileReference(withName name: String) -> ProfileReference? {
-+        return profiles.first(where: { $0.name == name })
++        let sanitizedInputName = sanitizeProfileName(name)
++        return profiles.first(where: { sanitizeProfileName($0.name) == sanitizedInputName })
 +    }
 +
 +    public func removeProfile(profile: Profile) {

@@ -184,10 +184,10 @@ index 6b13fc8..c6bcc64 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..a7b2571
+index 0000000..c18c25f
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,400 @@
+@@ -0,0 +1,402 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -236,8 +236,9 @@ index 0000000..a7b2571
 +// MARK: File management
 +extension ProfileViewModel {
 +    private func setCurrentProfile(name: String, syncChange: Bool = false) {
-+        currentProfileName = name
-+        if (syncChange) {
++        let sanitizedProfileName = sanitizeProfileName(name)
++        currentProfileName = sanitizedProfileName
++        if syncChange {
 +            triggerProfileSync()
 +        }
 +    }
@@ -394,7 +395,7 @@ index 0000000..a7b2571
 +            for fileURL in profileFiles {
 +                let data = try Data(contentsOf: fileURL)
 +                let profile = try decodeProfile(from: data)
-+                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
++                let profileRef = ProfileReference(name: sanitizeProfileName(profile.name), fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
 +                newProfiles.append(profileRef)
 +            }
 +            
@@ -440,7 +441,8 @@ index 0000000..a7b2571
 +    }
 +    
 +    func getProfileReference(withName name: String) -> ProfileReference? {
-+        return profiles.first(where: { $0.name == name })
++        let sanitizedInputName = sanitizeProfileName(name)
++        return profiles.first(where: { sanitizeProfileName($0.name) == sanitizedInputName })
 +    }
 +    
 +    public func removeProfile(profile: Profile) {
