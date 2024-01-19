@@ -82,7 +82,6 @@ index 8fca5668..1b7828c8 100644
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
              }
-Submodule LoopKit contains modified content
 Submodule LoopKit 9835a29..8a58d2e:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 6b13fc8..c6bcc64 100644
@@ -184,10 +183,10 @@ index 6b13fc8..c6bcc64 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..c18c25f
+index 0000000..c4100d5
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,402 @@
+@@ -0,0 +1,389 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -236,9 +235,8 @@ index 0000000..c18c25f
 +// MARK: File management
 +extension ProfileViewModel {
 +    private func setCurrentProfile(name: String, syncChange: Bool = false) {
-+        let sanitizedProfileName = sanitizeProfileName(name)
-+        currentProfileName = sanitizedProfileName
-+        if syncChange {
++        currentProfileName = name
++        if (syncChange) {
 +            triggerProfileSync()
 +        }
 +    }
@@ -282,25 +280,16 @@ index 0000000..c18c25f
 +        return try JSONDecoder().decode(Profile.self, from: data)
 +    }
 +    
-+    public func sanitizeProfileName(_ name: String) -> String {
-+        // Replace problematic characters
-+        var sanitized = name.replacingOccurrences(of: ".", with: "_")
-+        
-+        return sanitized
-+    }
-+    
 +    public func saveProfile(withName name: String) {
-+        let sanitizedName = sanitizeProfileName(name)
-+
 +        do {
 +            try createProfileDirectoryIfNotExists()
 +            
-+            if let existingProfile = getProfileReference(withName: sanitizedName) {
++            if let existingProfile = getProfileReference(withName: name) {
 +                removeProfile(profileReference: existingProfile)
 +            }
 +            
 +            let profile = Profile(
-+                name: sanitizedName,
++                name: name,
 +                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
 +                carbRatioSchedule: therapySettings.carbRatioSchedule!,
 +                basalRateSchedule: therapySettings.basalRateSchedule!,
@@ -316,7 +305,7 @@ index 0000000..c18c25f
 +            let fileURL = profilesDirectory.appendingPathComponent(fileName)
 +            
 +            try jsonData.write(to: fileURL)
-+            setCurrentProfile(name: sanitizedName, syncChange: true)
++            setCurrentProfile(name: name, syncChange: true)
 +            
 +            self.loadProfiles()
 +        } catch {
@@ -325,10 +314,8 @@ index 0000000..c18c25f
 +    }
 +    
 +    public func renameProfile(oldName: String, newName: String) {
-+        let sanitizedProfileName = sanitizeProfileName(newName)
-+
 +        if currentProfileName == oldName {
-+            setCurrentProfile(name: sanitizedProfileName, syncChange: true)
++            setCurrentProfile(name: newName, syncChange: true)
 +        }
 +        
 +        do {
@@ -340,7 +327,7 @@ index 0000000..c18c25f
 +            let profile = try getProfile(from: profileReference)
 +            
 +            let newProfile = Profile(
-+                name: sanitizedProfileName,
++                name: newName,
 +                correctionRange: profile.correctionRange,
 +                carbRatioSchedule: profile.carbRatioSchedule,
 +                basalRateSchedule: profile.basalRateSchedule,
@@ -348,7 +335,7 @@ index 0000000..c18c25f
 +                sortOrder: profile.sortOrder
 +            )
 +            
-+            if let existingProfile = getProfileReference(withName: sanitizedProfileName) {
++            if let existingProfile = getProfileReference(withName: newName) {
 +                removeProfile(profileReference: existingProfile)
 +            }
 +            
@@ -395,7 +382,7 @@ index 0000000..c18c25f
 +            for fileURL in profileFiles {
 +                let data = try Data(contentsOf: fileURL)
 +                let profile = try decodeProfile(from: data)
-+                let profileRef = ProfileReference(name: sanitizeProfileName(profile.name), fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
++                let profileRef = ProfileReference(name: profile.name, fileName: fileURL.lastPathComponent, sortOrder: profile.sortOrder)
 +                newProfiles.append(profileRef)
 +            }
 +            
@@ -441,8 +428,7 @@ index 0000000..c18c25f
 +    }
 +    
 +    func getProfileReference(withName name: String) -> ProfileReference? {
-+        let sanitizedInputName = sanitizeProfileName(name)
-+        return profiles.first(where: { sanitizeProfileName($0.name) == sanitizedInputName })
++        return profiles.first(where: { $0.name == name })
 +    }
 +    
 +    public func removeProfile(profile: Profile) {
