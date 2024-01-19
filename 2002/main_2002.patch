@@ -82,6 +82,7 @@ index 8fca5668..1b7828c8 100644
              ForEach(configurationMenuItemsForSupportPlugins) { item in
                  item.view
              }
+Submodule LoopKit contains modified content
 Submodule LoopKit 9835a29..8a58d2e:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 6b13fc8..c6bcc64 100644
@@ -183,10 +184,10 @@ index 6b13fc8..c6bcc64 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..c4100d5
+index 0000000..a7b2571
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,400 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -280,16 +281,25 @@ index 0000000..c4100d5
 +        return try JSONDecoder().decode(Profile.self, from: data)
 +    }
 +    
++    public func sanitizeProfileName(_ name: String) -> String {
++        // Replace problematic characters
++        var sanitized = name.replacingOccurrences(of: ".", with: "_")
++        
++        return sanitized
++    }
++    
 +    public func saveProfile(withName name: String) {
++        let sanitizedName = sanitizeProfileName(name)
++
 +        do {
 +            try createProfileDirectoryIfNotExists()
 +            
-+            if let existingProfile = getProfileReference(withName: name) {
++            if let existingProfile = getProfileReference(withName: sanitizedName) {
 +                removeProfile(profileReference: existingProfile)
 +            }
 +            
 +            let profile = Profile(
-+                name: name,
++                name: sanitizedName,
 +                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
 +                carbRatioSchedule: therapySettings.carbRatioSchedule!,
 +                basalRateSchedule: therapySettings.basalRateSchedule!,
@@ -305,7 +315,7 @@ index 0000000..c4100d5
 +            let fileURL = profilesDirectory.appendingPathComponent(fileName)
 +            
 +            try jsonData.write(to: fileURL)
-+            setCurrentProfile(name: name, syncChange: true)
++            setCurrentProfile(name: sanitizedName, syncChange: true)
 +            
 +            self.loadProfiles()
 +        } catch {
@@ -314,8 +324,10 @@ index 0000000..c4100d5
 +    }
 +    
 +    public func renameProfile(oldName: String, newName: String) {
++        let sanitizedProfileName = sanitizeProfileName(newName)
++
 +        if currentProfileName == oldName {
-+            setCurrentProfile(name: newName, syncChange: true)
++            setCurrentProfile(name: sanitizedProfileName, syncChange: true)
 +        }
 +        
 +        do {
@@ -327,7 +339,7 @@ index 0000000..c4100d5
 +            let profile = try getProfile(from: profileReference)
 +            
 +            let newProfile = Profile(
-+                name: newName,
++                name: sanitizedProfileName,
 +                correctionRange: profile.correctionRange,
 +                carbRatioSchedule: profile.carbRatioSchedule,
 +                basalRateSchedule: profile.basalRateSchedule,
@@ -335,7 +347,7 @@ index 0000000..c4100d5
 +                sortOrder: profile.sortOrder
 +            )
 +            
-+            if let existingProfile = getProfileReference(withName: newName) {
++            if let existingProfile = getProfileReference(withName: sanitizedProfileName) {
 +                removeProfile(profileReference: existingProfile)
 +            }
 +            

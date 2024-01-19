@@ -74,7 +74,6 @@ index c3ec98b8..74045900 100644
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
-Submodule LoopKit contains modified content
 Submodule LoopKit 70d1860..4e09f44:
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 index 8354209..f061a30 100644
@@ -177,10 +176,10 @@ index 8354209..f061a30 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..56dc952
+index 0000000..ff45860
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,400 @@
+@@ -0,0 +1,389 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -274,25 +273,16 @@ index 0000000..56dc952
 +        return try JSONDecoder().decode(Profile.self, from: data)
 +    }
 +
-+    public func sanitizeProfileName(_ name: String) -> String {
-+        // Replace problematic characters
-+        var sanitized = name.replacingOccurrences(of: ".", with: "_")
-+        
-+        return sanitized
-+    }
-+
 +    public func saveProfile(withName name: String) {
-+        let sanitizedName = sanitizeProfileName(name)
-+
 +        do {
 +            try createProfileDirectoryIfNotExists()
 +
-+            if let existingProfile = getProfileReference(withName: sanitizedName) {
++            if let existingProfile = getProfileReference(withName: name) {
 +                removeProfile(profileReference: existingProfile)
 +            }
 +
 +            let profile = Profile(
-+                name: sanitizedName,
++                name: name,
 +                correctionRange: (therapySettings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter)!)!,
 +                carbRatioSchedule: therapySettings.carbRatioSchedule!,
 +                basalRateSchedule: therapySettings.basalRateSchedule!,
@@ -308,7 +298,7 @@ index 0000000..56dc952
 +            let fileURL = profilesDirectory.appendingPathComponent(fileName)
 +
 +            try jsonData.write(to: fileURL)
-+            setCurrentProfile(name: sanitizedName, syncChange: true)
++            setCurrentProfile(name: name, syncChange: true)
 +
 +            self.loadProfiles()
 +        } catch {
@@ -317,38 +307,36 @@ index 0000000..56dc952
 +    }
 +
 +    public func renameProfile(oldName: String, newName: String) {
-+        let sanitizedProfileName = sanitizeProfileName(newName)
-+
 +        if currentProfileName == oldName {
-+            setCurrentProfile(name: sanitizedProfileName, syncChange: true)
++            currentProfileName = newName
 +        }
-+
++        
 +        do {
 +            guard let profileReference = getProfileReference(withName: oldName) else {
 +                print("Profile with old name not found.")
 +                return
 +            }
-+
++            
 +            let profile = try getProfile(from: profileReference)
-+
++            
 +            let newProfile = Profile(
-+                name: sanitizedProfileName,
++                name: newName,
 +                correctionRange: profile.correctionRange,
 +                carbRatioSchedule: profile.carbRatioSchedule,
 +                basalRateSchedule: profile.basalRateSchedule,
 +                insulinSensitivitySchedule: profile.insulinSensitivitySchedule,
 +                sortOrder: profile.sortOrder
 +            )
-+
-+            if let existingProfile = getProfileReference(withName: sanitizedProfileName) {
++            
++            if let existingProfile = getProfileReference(withName: newName) {
 +                removeProfile(profileReference: existingProfile)
 +            }
-+
++            
 +            let jsonData = try encodeProfile(newProfile)
 +            let fileURL = profilesDirectory.appendingPathComponent(profileReference.fileName)
-+
++            
 +            try jsonData.write(to: fileURL)
-+
++            
 +            self.loadProfiles()
 +        } catch {
 +            print("An error occurred while renaming profile: \(error)")
