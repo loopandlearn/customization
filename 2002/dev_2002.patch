@@ -177,10 +177,10 @@ index 8354209..f061a30 100644
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 0000000..6d9e370
+index 0000000..74724fb
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,402 @@
+@@ -0,0 +1,408 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -278,6 +278,12 @@ index 0000000..6d9e370
 +    public func sanitizeProfileName(_ name: String) -> String {
 +        // Replace problematic characters
 +        var sanitized = name.replacingOccurrences(of: ".", with: "_")
++        sanitized = sanitized.replacingOccurrences(of: "<", with: "_")
++
++        // Limit the name to 32 characters
++        if sanitized.count > 32 {
++            sanitized = String(sanitized.prefix(32))
++        }
 +
 +        return sanitized
 +    }
