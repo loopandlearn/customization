@@ -1,0 +1,45 @@
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+index f4b8d44a..bf5083ee 100644
+--- a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
++++ b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+@@ -427,13 +427,22 @@ extension Collection where Element: GlucoseValue {
+             maxBasalRate = Swift.min(maxThirtyMinuteRateToKeepIOBBelowLimit, maxBasalRate)
+         }
+ 
+-        let temp = correction?.asTempBasal(
++        var temp = correction?.asTempBasal(
+             scheduledBasalRate: scheduledBasalRate,
+             maxBasalRate: maxBasalRate,
+             duration: duration,
+             rateRounder: rateRounder
+         )
+ 
++        if (( temp?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate  ||
++             lastTempBasal?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate
++             ) &&
++            self[0 as! Self.Index].quantity > HKQuantity(unit : HKUnit.milligramsPerDeciliter, doubleValue: 200))
++        {
++            print("####### Temp Basal Lock On #########")
++            temp = TempBasalRecommendation(unitsPerHour: scheduledBasalRate, duration: 1800)
++        }
++
+         return temp?.ifNecessary(
+             at: date,
+             scheduledBasalRate: scheduledBasalRate,
+@@ -517,6 +526,15 @@ extension Collection where Element: GlucoseValue {
+             volumeRounder: volumeRounder
+         )
+ 
++        if ( (temp?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate ||
++              lastTempBasal?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate
++              ) &&
++             self[0 as! Self.Index].quantity > HKQuantity(unit : HKUnit.milligramsPerDeciliter, doubleValue: 200))
++        {
++            print("####### Temp Basal Lock On #########")
++            temp = TempBasalRecommendation(unitsPerHour: scheduledBasalRate, duration: 1800)
++        }
++
+         if temp != nil || bolusUnits > 0 {
+             return AutomaticDoseRecommendation(basalAdjustment: temp, bolusUnits: bolusUnits)
+         }
