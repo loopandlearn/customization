@@ -69,6 +69,62 @@ index 2319f4ec..c3f0c422 100644
                  )
                  dosingRecommendation = AutomaticDoseRecommendation(basalAdjustment: temp)
              }
+diff --git a/Loop/Loop/Models/Preferences.swift b/Loop/Loop/Models/Preferences.swift
+new file mode 100644
+index 00000000..dc9150f8
+--- /dev/null
++++ b/Loop/Loop/Models/Preferences.swift
+@@ -0,0 +1,50 @@
++//
++//  Preferences.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import LoopKit
++import HealthKit
++
++struct Preferences: PreferencesProvider {
++    
++    static var shared = Preferences()
++    
++    private init() {}
++    
++    // Basal Lock Threshold
++    var basalLockThreshold: HKQuantity {
++        get {
++            let key = "basalLockThreshold"
++            if let value = UserDefaults.standard.value(forKey: key) as? Double {
++                return HKQuantity(unit: .milligramsPerDeciliter, doubleValue: value)
++            } else {
++                return HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 250)
++            }
++        }
++        set {
++            let key = "basalLockThreshold"
++            let value = newValue.doubleValue(for: .milligramsPerDeciliter)
++            UserDefaults.standard.set(value, forKey: key)
++        }
++    }
++    
++    // Basal Lock Enabled
++    var isBasalLockEnabled: Bool {
++        get {
++            let key = "isBasalLockEnabled"
++            if UserDefaults.standard.object(forKey: key) == nil {
++                return false
++            }
++            return UserDefaults.standard.bool(forKey: key)
++        }
++        set {
++            let key = "isBasalLockEnabled"
++            UserDefaults.standard.set(newValue, forKey: key)
++        }
++    }
++}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
 index c3ec98b8..60e36b9a 100644
 --- a/Loop/Loop/Views/SettingsView.swift
@@ -256,6 +312,30 @@ index 2ecb6c53..6e177b30 100644
  				C187339A29B9488300519CDF /* UUID.swift in Sources */,
  				C1CAB9E926A3254800A57273 /* StoredInsulinModel.swift in Sources */,
  				43CACE0E2247F89100F90AF5 /* WeakSynchronizedSet.swift in Sources */,
+diff --git a/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
+new file mode 100644
+index 00000000..e413f7b5
+--- /dev/null
++++ b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
+@@ -0,0 +1,18 @@
++//
++//  Guardrail+Preferences.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++
++public extension Guardrail where Value == HKQuantity {
++    static let basalLockThreshold = Guardrail(
++        absoluteBounds: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 200)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 300),
++        recommendedBounds: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 220)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 300),
++        startingSuggestion: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 250)
++    )
++}
 diff --git a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
 index f4b8d44a..1151ff12 100644
 --- a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
@@ -387,6 +467,261 @@ index f4b8d44a..1151ff12 100644
          ) else {
              return ManualBolusRecommendation(amount: 0, pendingInsulin: pendingInsulin)
          }
+diff --git a/LoopKit/LoopKit/PreferencesProvider.swift b/LoopKit/LoopKit/PreferencesProvider.swift
+new file mode 100644
+index 00000000..a164defb
+--- /dev/null
++++ b/LoopKit/LoopKit/PreferencesProvider.swift
+@@ -0,0 +1,15 @@
++//
++//  PreferencesProvider.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++
++public protocol PreferencesProvider {
++    var basalLockThreshold: HKQuantity { get set }
++    var isBasalLockEnabled: Bool { get set }
++}
+diff --git a/LoopKit/LoopKit/PreferencesSetting.swift b/LoopKit/LoopKit/PreferencesSetting.swift
+new file mode 100644
+index 00000000..0de6928d
+--- /dev/null
++++ b/LoopKit/LoopKit/PreferencesSetting.swift
+@@ -0,0 +1,60 @@
++//
++//  PreferencesSetting.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++public enum PreferencesSetting {
++    case basalLock
++}
++
++extension PreferencesSetting: Equatable { }
++
++public extension PreferencesSetting {
++    var title: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("Basal Lock", comment: "Title text for basal lock setting")
++        }
++    }
++    
++    var smallTitle: String {
++        return title
++    }
++    
++    func descriptiveText(appName: String) -> String {
++        switch self {
++        case .basalLock:
++            return String(format: LocalizedString("Basal Lock prevents the basal rate from being throttled if the blood glucose is above a certain level.", comment: "Descriptive text for basal lock (1: app name)"), appName)
++        }
++    }
++}
++
++// MARK: Guardrails
++public extension PreferencesSetting {
++    var guardrailCaptionForLowValue: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("The value you have entered is lower than what is typically recommended.", comment: "Descriptive text for guardrail low value warning for basal lock")
++        }
++    }
++    
++    var guardrailCaptionForHighValue: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("The value you have entered is higher than what is typically recommended.", comment: "Descriptive text for guardrail high value warning for basal lock")
++        }
++    }
++    
++    var guardrailCaptionForOutsideValues: String {
++        return LocalizedString("The value you have entered for Basal Lock is outside of the recommended range.", comment: "Descriptive text for guardrail outside value warning for basal lock")
++    }
++    
++    var guardrailSaveWarningCaption: String {
++        return LocalizedString("Please note that this value is outside of the recommended range.", comment: "Descriptive text for saving settings outside the recommended range for basal lock")
++    }
++}
+diff --git a/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
+new file mode 100644
+index 00000000..785a23f1
+--- /dev/null
++++ b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
+@@ -0,0 +1,34 @@
++//
++//  PreferencesViewModel.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import LoopKit
++import HealthKit
++
++public class PreferencesViewModel: ObservableObject {
++    @Published var basalLockThreshold: HKQuantity
++    @Published var isBasalLockEnabled: Bool
++    
++    private var preferencesProvider: PreferencesProvider
++    
++    public init(preferencesProvider: PreferencesProvider) {
++        self.preferencesProvider = preferencesProvider
++        self.basalLockThreshold = preferencesProvider.basalLockThreshold
++        self.isBasalLockEnabled = preferencesProvider.isBasalLockEnabled
++    }
++    
++    func updateBasalLockThreshold(_ newValue: HKQuantity) {
++        preferencesProvider.basalLockThreshold = newValue
++        self.basalLockThreshold = newValue
++    }
++    
++    func updateBasalLockEnabled(_ newValue: Bool) {
++        preferencesProvider.isBasalLockEnabled = newValue
++        self.isBasalLockEnabled = newValue
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift b/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift
+new file mode 100644
+index 00000000..c473fd51
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift
+@@ -0,0 +1,122 @@
++//
++//  GuardrailConstrainedTimeIntervalView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import HealthKit
++import LoopKit
++
++
++public struct GuardrailConstrainedTimeIntervalView: View {
++    @Environment(\.guidanceColors) var guidanceColors
++    var value: TimeInterval?
++    var guardrail: Guardrail<TimeInterval>
++    var isEditing: Bool
++    var isSupportedValue: Bool
++    var formatter: DateComponentsFormatter
++    var iconSpacing: CGFloat
++    var isUnitLabelVisible: Bool
++    var forceDisableAnimations: Bool
++    
++    @State private var hasAppeared = false
++    
++    public init(
++        value: TimeInterval,
++        guardrail: Guardrail<TimeInterval>,
++        isEditing: Bool,
++        isSupportedValue: Bool = true,
++        iconSpacing: CGFloat = 8,
++        isUnitLabelVisible: Bool = true,
++        forceDisableAnimations: Bool = false
++    ) {
++        self.value = value
++        self.guardrail = guardrail
++        self.isEditing = isEditing
++        self.isSupportedValue = isSupportedValue
++        self.iconSpacing = iconSpacing
++        self.isUnitLabelVisible = isUnitLabelVisible
++        self.forceDisableAnimations = forceDisableAnimations
++        
++        
++        self.formatter = {
++            let formatter = DateComponentsFormatter()
++            formatter.allowedUnits = [.hour, .minute]
++            formatter.unitsStyle = .short
++            formatter.zeroFormattingBehavior = [.dropLeading, .dropTrailing]
++            
++            return formatter
++        }()
++    }
++    
++    public var body: some View {
++        HStack {
++            HStack(spacing: iconSpacing) {
++                if value != nil {
++                    if guardrail.classification(for: value!) != .withinRecommendedRange {
++                        Image(systemName: "exclamationmark.triangle.fill")
++                            .foregroundColor(warningColor)
++                            .transition(.springInDisappear)
++                    }
++                    
++                    Text(formatter.string(from: value!) ?? "")
++                        .foregroundColor(warningColor)
++                        .fixedSize(horizontal: true, vertical: false)
++                } else {
++                    Text("–")
++                        .foregroundColor(.secondary)
++                }
++            }
++            
++/*            if isUnitLabelVisible {
++                Text(unit.shortLocalizedUnitString())
++                    .foregroundColor(Color(.secondaryLabel))
++            }*/
++        }
++        .accessibilityElement(children: .combine)
++        .onAppear { self.hasAppeared = true }
++        .animation(animation)
++    }
++    
++    private var animation: Animation? {
++        // A conditional implicit animation seems to behave funky on first appearance.
++        // Disable animations until the view has appeared.
++        if forceDisableAnimations || !hasAppeared {
++            return nil
++        }
++        
++        // While editing, the text width is liable to change, which can cause a slow-feeling animation
++        // of the guardrail warning icon. Disable animations while editing.
++        return isEditing ? nil : .default
++    }
++    
++    private var warningColor: Color {
++        guard let value = value else {
++            return .primary
++        }
++        
++        guard isSupportedValue else { return guidanceColors.critical }
++        
++        switch guardrail.classification(for: value) {
++        case .withinRecommendedRange:
++            return isEditing ? .accentColor : guidanceColors.acceptable
++        case .outsideRecommendedRange(let threshold):
++            switch threshold {
++            case .minimum, .maximum:
++                return guidanceColors.critical
++            case .belowRecommended, .aboveRecommended:
++                return guidanceColors.warning
++            }
++        }
++    }
++}
++
++fileprivate extension AnyTransition {
++    static let springInDisappear = asymmetric(
++        insertion: AnyTransition.scale.animation(.spring(dampingFraction: 0.5)),
++        removal: .identity
++    )
++}
 diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift
 new file mode 100644
 index 00000000..a57b4f78
@@ -707,5 +1042,152 @@ index 00000000..3a7dd0ad
 +        case .minimum, .maximum:
 +            return .critical
 +        }
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift
+new file mode 100644
+index 00000000..41476c35
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift	
+@@ -0,0 +1,141 @@
++//
++//  PreferencesView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import LoopKit
++import HealthKit
++
++public struct PreferencesView: View {
++    @Environment(\.dismissAction) private var dismiss
++    @Environment(\.appName) private var appName
++    @EnvironmentObject var displayGlucosePreference: DisplayGlucosePreference
++    
++    @ObservedObject var viewModel: PreferencesViewModel
++    
++    public init(viewModel: PreferencesViewModel) {
++        self.viewModel = viewModel
++    }
++    
++    private static func createFormatter(for unit: HKUnit) -> NumberFormatter {
++        let quantityFormatter = QuantityFormatter(for: unit)
++        return quantityFormatter.numberFormatter
++    }
++    
++    public var body: some View {
++        navigationViewWrappedContent
++    }
++    
++    private var formatter: NumberFormatter {
++        let quantityFormatter = QuantityFormatter(for: displayGlucosePreference.unit)
++        return quantityFormatter.numberFormatter
++    }
++}
++
++extension PreferencesView {
++    private var navigationViewWrappedContent: some View {
++        NavigationView {
++            ZStack {
++                Color(.systemGroupedBackground)
++                    .edgesIgnoringSafeArea(.all)
++                content
++                    .toolbar {
++                        ToolbarItem(placement: .navigationBarTrailing) {
++                            dismissButton
++                        }
++                    }
++                    .navigationBarTitle(preferencesTitle, displayMode: .large)
++            }
++        }
++    }
++    
++    private var dismissButton: some View {
++        Button(action: dismiss) {
++            Text("Done")
++        }
++    }
++    
++    private var preferencesTitle: String {
++        return "Preferences"
++    }
++    
++    private var content: some View {
++        CardList(title: nil, style: .sectioned(cardListSections)) //, trailer: cardListTrailer
++    }
++    
++    private var cardListSections: [CardListSection] {
++        var cardListSections: [CardListSection] = []
++        
++        cardListSections.append(preferencesCardListSection)
++        
++        return cardListSections
++    }
++    
++    private var preferencesCardListSection: CardListSection {
++        CardListSection {
++            preferencesCardStack
++                .spacing(20)
++        }
++    }
++    
++    private var preferencesCardStack: CardStack {
++        var cards: [Card] = []
++        
++        cards.append(basalLockSection)
++        
++        return CardStack(cards: cards)
++    }
++    
++    @ViewBuilder
++    func screen(for setting: PreferencesSetting, dismiss: @escaping () -> Void) -> some View {
++        switch setting {
++        case .basalLock:
++            BasalLockEditor(preferencesViewModel: viewModel, didSave: dismiss)
++        }
++    }
++    
++    private func card<Content>(for preferencesSetting: PreferencesSetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
++        Card {
++            SectionWithTapToEdit(
++                isEnabled: true,
++                title: preferencesSetting.title,
++                descriptiveText: preferencesSetting.descriptiveText(appName: appName),
++                destination: { dismiss in
++                    screen(for: preferencesSetting, dismiss: dismiss)
++                        .environment(\.dismissAction, dismiss)
++                },
++                content: content
++            )
++        }
++    }
++    
++    private var basalLockSection: Card {
++        card(for: .basalLock) {
++            SectionDivider()
++            HStack {
++                Spacer()
++                if viewModel.isBasalLockEnabled {
++                    HStack(alignment: .firstTextBaseline) {
++                        Text(formatter.string(for: viewModel.basalLockThreshold.doubleValue(for: displayGlucosePreference.unit)) ?? "")
++                        Text(displayGlucosePreference.unit.shortLocalizedUnitString())
++                            .foregroundColor(Color(.secondaryLabel))
++                    }
++                } else {
++                    Text("Off")
++                        .foregroundColor(Color(.secondaryLabel))
++                }
++            }
++        }
++    }
++}
++
++fileprivate struct SectionDivider: View {
++    var body: some View {
++        Divider()
++            .padding(.trailing, -16)
 +    }
 +}
