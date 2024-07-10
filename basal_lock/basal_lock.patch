@@ -724,7 +724,7 @@ index 00000000..c473fd51
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift
 new file mode 100644
-index 00000000..a57b4f78
+index 00000000..dc313a9c
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift	
 @@ -0,0 +1,209 @@
@@ -813,10 +813,10 @@ index 00000000..a57b4f78
 +            actionButtonState: saveButtonState,
 +            cards: {
 +                Card {
-+                    SettingDescription(text: description) {
-+                        EmptyView()
-+                    }
-+                    .transition(.slide)
++                    description
++                        .font(.callout)
++                        .foregroundColor(Color(.secondaryLabel))
++                        .fixedSize(horizontal: false, vertical: true)
 +                    
 +                    Toggle(isOn: $isBasalLockEnabled) {
 +                        Text("Enable Basal Lock")
