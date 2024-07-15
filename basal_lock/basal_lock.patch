@@ -1,0 +1,1193 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
+index 11819516..a22646b3 100644
+--- a/Loop/Loop.xcodeproj/project.pbxproj
++++ b/Loop/Loop.xcodeproj/project.pbxproj
+@@ -489,6 +489,7 @@
+ 		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
+ 		C1FB4290217922A100FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
+ 		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
++		DDC065142B65871E0033FD88 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC065132B65871E0033FD88 /* Preferences.swift */; };
+ 		DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */; };
+ 		DDC389F82A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */; };
+ 		DDC389FA2A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */; };
+@@ -1607,6 +1608,7 @@
+ 		C1FF3D4C29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
+ 		C1FF3D4D29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+ 		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
++		DDC065132B65871E0033FD88 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
+ 		DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+ 		DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+ 		DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstantApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+@@ -1960,6 +1962,7 @@
+ 				C1E3862428247B7100F561A4 /* StoredLoopNotRunningNotification.swift */,
+ 				4328E0311CFC068900E199AA /* WatchContext+LoopKit.swift */,
+ 				A987CD4824A58A0100439ADC /* ZipArchive.swift */,
++				DDC065132B65871E0033FD88 /* Preferences.swift */,
+ 			);
+ 			path = Models;
+ 			sourceTree = "<group>";
+@@ -3742,6 +3745,7 @@
+ 				E98A55EF24EDD6E60008715D /* DosingDecisionStoreProtocol.swift in Sources */,
+ 				B4001CEE28CBBC82002FB414 /* AlertManagementView.swift in Sources */,
+ 				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
++				DDC065142B65871E0033FD88 /* Preferences.swift in Sources */,
+ 				4389916B1E91B689000EEF90 /* ChartSettings+Loop.swift in Sources */,
+ 				C178249A1E1999FA00D9D25C /* CaseCountable.swift in Sources */,
+ 				B4F3D25124AF890C0095CE44 /* BluetoothStateManager.swift in Sources */,
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 2319f4ec..c3f0c422 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -1549,7 +1549,8 @@ extension LoopDataManager {
+             model: model,
+             pendingInsulin: 0, // Pending insulin is already reflected in the prediction
+             maxBolus: maxBolus,
+-            volumeRounder: volumeRounder
++            volumeRounder: volumeRounder,
++            preferences: Preferences.shared
+         )
+     }
+ 
+@@ -1832,7 +1833,8 @@ extension LoopDataManager {
+                     lastTempBasal: lastTempBasal,
+                     volumeRounder: volumeRounder,
+                     rateRounder: rateRounder,
+-                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
++                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true,
++                    preferences: Preferences.shared
+                 )
+             case .tempBasalOnly:
+ 
+@@ -1847,7 +1849,8 @@ extension LoopDataManager {
+                     additionalActiveInsulinClamp: iobHeadroom,
+                     lastTempBasal: lastTempBasal,
+                     rateRounder: rateRounder,
+-                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
++                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true,
++                    preferences: Preferences.shared
+                 )
+                 dosingRecommendation = AutomaticDoseRecommendation(basalAdjustment: temp)
+             }
+diff --git a/Loop/Loop/Models/Preferences.swift b/Loop/Loop/Models/Preferences.swift
+new file mode 100644
+index 00000000..dc9150f8
+--- /dev/null
++++ b/Loop/Loop/Models/Preferences.swift
+@@ -0,0 +1,50 @@
++//
++//  Preferences.swift
++//  Loop
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import LoopKit
++import HealthKit
++
++struct Preferences: PreferencesProvider {
++    
++    static var shared = Preferences()
++    
++    private init() {}
++    
++    // Basal Lock Threshold
++    var basalLockThreshold: HKQuantity {
++        get {
++            let key = "basalLockThreshold"
++            if let value = UserDefaults.standard.value(forKey: key) as? Double {
++                return HKQuantity(unit: .milligramsPerDeciliter, doubleValue: value)
++            } else {
++                return HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 250)
++            }
++        }
++        set {
++            let key = "basalLockThreshold"
++            let value = newValue.doubleValue(for: .milligramsPerDeciliter)
++            UserDefaults.standard.set(value, forKey: key)
++        }
++    }
++    
++    // Basal Lock Enabled
++    var isBasalLockEnabled: Bool {
++        get {
++            let key = "isBasalLockEnabled"
++            if UserDefaults.standard.object(forKey: key) == nil {
++                return false
++            }
++            return UserDefaults.standard.bool(forKey: key)
++        }
++        set {
++            let key = "isBasalLockEnabled"
++            UserDefaults.standard.set(newValue, forKey: key)
++        }
++    }
++}
+diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
+index c3ec98b8..60e36b9a 100644
+--- a/Loop/Loop/Views/SettingsView.swift
++++ b/Loop/Loop/Views/SettingsView.swift
+@@ -51,6 +51,7 @@ public struct SettingsView: View {
+             
+             case favoriteFoods
+             case therapySettings
++            case preferences
+         }
+     }
+     
+@@ -85,6 +86,9 @@ public struct SettingsView: View {
+                     if FeatureFlags.allowExperimentalFeatures {
+                         favoriteFoodsSection
+                     }
++                    if FeatureFlags.allowExperimentalFeatures {
++                        preferencesSection
++                    }
+                     if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
+                         deleteDataSection
+                     }
+@@ -157,6 +161,8 @@ public struct SettingsView: View {
+                     .environment(\.insulinTintColor, self.insulinTintColor)
+                 case .favoriteFoods:
+                     FavoriteFoodsView()
++                case .preferences:
++                    PreferencesView(viewModel: PreferencesViewModel(preferencesProvider: Preferences.shared)).environmentObject(displayGlucosePreference)
+                 }
+             }
+         }
+@@ -374,6 +380,16 @@ extension SettingsView {
+         }
+     }
+     
++    private var preferencesSection: some View {
++        Section {
++            LargeButton(action: { sheet = .preferences },
++                        includeArrow: true,
++                        imageView: AnyView(Image(systemName: "gearshape.fill").font(.system(size: 30, weight: .bold))),
++                        label: NSLocalizedString("Preferences", comment: "Title text for button to Preferences"),
++                        descriptiveText: NSLocalizedString("Customize your Loop experience by adjusting additional settings", comment: "Descriptive text for Preferences"))
++        }
++    }
++
+     private var cgmChoices: [ActionSheet.Button] {
+         var result = viewModel.cgmManagerSettingsViewModel.availableDevices
+             .sorted(by: {$0.localizedTitle < $1.localizedTitle})
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
+index 2ecb6c53..6e177b30 100644
+--- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
++++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
+@@ -863,6 +863,13 @@
+ 		C1FAEC1D264AD6B400A3250B /* DeviceStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */; };
+ 		C1FAEC1F264AE12700A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47ECF8725DC20810024A54D /* UIImage.swift */; };
+ 		C1FAEC21264AEEA300A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC20264AEEA300A3250B /* UIImage.swift */; };
++		DD13BC702C3C71A70062313B /* BasalLockEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD13BC6F2C3C71A70062313B /* BasalLockEditor.swift */; };
++		DD13BC722C3C74CD0062313B /* PreferencesGuardrailWarning.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD13BC712C3C74CD0062313B /* PreferencesGuardrailWarning.swift */; };
++		DD28B3712B80C074001044D4 /* PreferencesSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD28B3702B80C074001044D4 /* PreferencesSetting.swift */; };
++		DD545A5B2B80ECB900915F95 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD545A5A2B80ECB900915F95 /* PreferencesView.swift */; };
++		DD545A5F2B80EFA900915F95 /* PreferencesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD545A5E2B80EFA900915F95 /* PreferencesViewModel.swift */; };
++		DD545A652B814CA800915F95 /* PreferencesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD545A642B814CA800915F95 /* PreferencesProvider.swift */; };
++		DD545A692B8BCF8E00915F95 /* Guardrail+Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD545A682B8BCF8E00915F95 /* Guardrail+Preferences.swift */; };
+ 		E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2624ACD59F0066A88D /* InformationView.swift */; };
+ 		E9077D2A24ACDE2C0066A88D /* CorrectionRangeInformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */; };
+ 		E9086B2924B39EDC0062F5C8 /* ChartsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */; };
+@@ -1921,6 +1928,13 @@
+ 		C1FDCC0A29C786F90056E652 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
+ 		C1FDCC0B29C786F90056E652 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
+ 		C1FF3D4E29C786A900BDC1EC /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/Localizable.strings; sourceTree = "<group>"; };
++		DD13BC6F2C3C71A70062313B /* BasalLockEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasalLockEditor.swift; sourceTree = "<group>"; };
++		DD13BC712C3C74CD0062313B /* PreferencesGuardrailWarning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesGuardrailWarning.swift; sourceTree = "<group>"; };
++		DD28B3702B80C074001044D4 /* PreferencesSetting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesSetting.swift; sourceTree = "<group>"; };
++		DD545A5A2B80ECB900915F95 /* PreferencesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
++		DD545A5E2B80EFA900915F95 /* PreferencesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesViewModel.swift; sourceTree = "<group>"; };
++		DD545A642B814CA800915F95 /* PreferencesProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesProvider.swift; sourceTree = "<group>"; };
++		DD545A682B8BCF8E00915F95 /* Guardrail+Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Guardrail+Preferences.swift"; sourceTree = "<group>"; };
+ 		E9077D2624ACD59F0066A88D /* InformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationView.swift; sourceTree = "<group>"; };
+ 		E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionRangeInformationView.swift; sourceTree = "<group>"; };
+ 		E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsTableViewController.swift; sourceTree = "<group>"; };
+@@ -2271,6 +2285,7 @@
+ 		4369F090208B0D68000E3E45 /* Views */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				DD545A592B80EC9500915F95 /* Preferences Editors */,
+ 				B4C004B2241085DB00B40429 /* ActionButton.swift */,
+ 				89AF78C524482268002B4FCC /* ActionButtonStyle.swift */,
+ 				C1E4B307242E995200E70CCB /* ActivityIndicator.swift */,
+@@ -2441,6 +2456,7 @@
+ 				C187338229B9486200519CDF /* TimeInterval.swift */,
+ 				C187339629B9488300519CDF /* TimeZone.swift */,
+ 				C187339729B9488300519CDF /* UUID.swift */,
++				DD545A682B8BCF8E00915F95 /* Guardrail+Preferences.swift */,
+ 			);
+ 			path = Extensions;
+ 			sourceTree = "<group>";
+@@ -2649,6 +2665,8 @@
+ 				C1814B8B226371DF008D2D8E /* WeakSynchronizedDelegate.swift */,
+ 				43CACE0D2247F89100F90AF5 /* WeakSynchronizedSet.swift */,
+ 				B4A2ABEE2AAB5160007E3EC1 /* Pluggable.swift */,
++				DD28B3702B80C074001044D4 /* PreferencesSetting.swift */,
++				DD545A642B814CA800915F95 /* PreferencesProvider.swift */,
+ 			);
+ 			path = LoopKit;
+ 			sourceTree = "<group>";
+@@ -3169,6 +3187,7 @@
+ 				B455F48025FF9A8B000ED456 /* InsulinSensitivityScheduleEditorViewModel.swift */,
+ 				B455F2A125FBE985000ED456 /* SuspendThresholdEditorViewModel.swift */,
+ 				1D1FCE2424BD42EF000300A8 /* TherapySettingsViewModel.swift */,
++				DD545A5E2B80EFA900915F95 /* PreferencesViewModel.swift */,
+ 			);
+ 			path = ViewModels;
+ 			sourceTree = "<group>";
+@@ -3294,6 +3313,16 @@
+ 			path = LoopAlgorithm;
+ 			sourceTree = "<group>";
+ 		};
++		DD545A592B80EC9500915F95 /* Preferences Editors */ = {
++			isa = PBXGroup;
++			children = (
++				DD545A5A2B80ECB900915F95 /* PreferencesView.swift */,
++				DD13BC6F2C3C71A70062313B /* BasalLockEditor.swift */,
++				DD13BC712C3C74CD0062313B /* PreferencesGuardrailWarning.swift */,
++			);
++			path = "Preferences Editors";
++			sourceTree = "<group>";
++		};
+ 		E9077D2824ACD5AA0066A88D /* Information Screens */ = {
+ 			isa = PBXGroup;
+ 			children = (
+@@ -4052,6 +4081,7 @@
+ 				B4A2AAB1240830A30066563F /* LabeledTextField.swift in Sources */,
+ 				A9D3FF0B2A6C198C000C891D /* CGPoint.swift in Sources */,
+ 				B429D66E24BF7255003E1B4A /* UIImage.swift in Sources */,
++				DD13BC722C3C74CD0062313B /* PreferencesGuardrailWarning.swift in Sources */,
+ 				B46B62A923FF05F8001E69BA /* LabeledNumberInput.swift in Sources */,
+ 				892155152245C57E009112BC /* SegmentedGaugeBarLayer.swift in Sources */,
+ 				C1DD512B259FD8A600DE27AE /* InsulinTypeChooser.swift in Sources */,
+@@ -4087,6 +4117,7 @@
+ 				A9D3FF042A6C1944000C891D /* PredictedGlucoseChart.swift in Sources */,
+ 				C1DE4C2125A253BD007065F8 /* Color.swift in Sources */,
+ 				898E6E702241EDB70019E459 /* PercentageTextFieldTableViewController.swift in Sources */,
++				DD13BC702C3C71A70062313B /* BasalLockEditor.swift in Sources */,
+ 				89CAB36D24C9EC98009EE3CE /* Keyboard.swift in Sources */,
+ 				89186C0724BF7FC70003D0F3 /* Guardrail+UI.swift in Sources */,
+ 				43FB60E520DCBA02002B996B /* SetupTableViewController.swift in Sources */,
+@@ -4137,6 +4168,7 @@
+ 				B46B62B323FF0E62001E69BA /* SelectableLabel.swift in Sources */,
+ 				89FC6893245A2D680075CF59 /* ScheduleItemView.swift in Sources */,
+ 				43BA716F201E49220058961E /* FoodEmojiDataSource.swift in Sources */,
++				DD545A5F2B80EFA900915F95 /* PreferencesViewModel.swift in Sources */,
+ 				E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */,
+ 				E94141D024C8F31C0096C326 /* DeliveryLimitsEditor.swift in Sources */,
+ 				1452F4BA2A85266500F8B9E4 /* CarbQuantityRow.swift in Sources */,
+@@ -4200,6 +4232,7 @@
+ 				43BA717D201EE7090058961E /* GlucoseRangeTableViewCell.swift in Sources */,
+ 				B455F3A425FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift in Sources */,
+ 				A9D3FF002A6C1944000C891D /* ChartConstants.swift in Sources */,
++				DD545A5B2B80ECB900915F95 /* PreferencesView.swift in Sources */,
+ 				89BE75CB2464BC2000B145D9 /* AlertContent.swift in Sources */,
+ 				43BA7184201EE7090058961E /* TextFieldTableViewController.swift in Sources */,
+ 				1452F4B22A8521CD00F8B9E4 /* TextFieldRow.swift in Sources */,
+@@ -4288,6 +4321,7 @@
+ 				89AE222F228BC68000BDFD85 /* DoseProgressTimerEstimator.swift in Sources */,
+ 				43D8FDF61C7290350073BE78 /* DailyQuantitySchedule.swift in Sources */,
+ 				43D8FDF51C7290350073BE78 /* CarbRatioSchedule.swift in Sources */,
++				DD545A652B814CA800915F95 /* PreferencesProvider.swift in Sources */,
+ 				4322B76F202FA26F0002837D /* GlucoseSampleValue.swift in Sources */,
+ 				89AE222C228BC66E00BDFD85 /* Locked.swift in Sources */,
+ 				432CF87120D76D5A0066B889 /* GlucoseDisplayable.swift in Sources */,
+@@ -4357,6 +4391,7 @@
+ 				A93761C125ED670200F6BE43 /* BluetoothProvider.swift in Sources */,
+ 				433BC7A720523DB7000B1200 /* NewGlucoseSample.swift in Sources */,
+ 				4322B78E202FA2B30002837D /* InsulinMath.swift in Sources */,
++				DD28B3712B80C074001044D4 /* PreferencesSetting.swift in Sources */,
+ 				C17F39D023CE34B100FA1113 /* StoredDeviceLogEntry.swift in Sources */,
+ 				43B17C89208EEC0B00AC27E9 /* HealthStoreUnitCache.swift in Sources */,
+ 				A912BE29245B9CD500CBE199 /* SettingsObject+CoreDataClass.swift in Sources */,
+@@ -4383,6 +4418,7 @@
+ 				A932803B2798D63B0091D0A1 /* SyncAlertObject.swift in Sources */,
+ 				1D841AAD24577EE10069DBFF /* AlertSoundPlayer.swift in Sources */,
+ 				C19E776B2A61FD8A003F06C5 /* RetrospectiveCorrection.swift in Sources */,
++				DD545A692B8BCF8E00915F95 /* Guardrail+Preferences.swift in Sources */,
+ 				C187339A29B9488300519CDF /* UUID.swift in Sources */,
+ 				C1CAB9E926A3254800A57273 /* StoredInsulinModel.swift in Sources */,
+ 				43CACE0E2247F89100F90AF5 /* WeakSynchronizedSet.swift in Sources */,
+diff --git a/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
+new file mode 100644
+index 00000000..e413f7b5
+--- /dev/null
++++ b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
+@@ -0,0 +1,18 @@
++//
++//  Guardrail+Preferences.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++
++public extension Guardrail where Value == HKQuantity {
++    static let basalLockThreshold = Guardrail(
++        absoluteBounds: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 200)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 300),
++        recommendedBounds: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 220)...HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 300),
++        startingSuggestion: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: 250)
++    )
++}
+diff --git a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+index f4b8d44a..1151ff12 100644
+--- a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
++++ b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+@@ -231,7 +231,8 @@ extension Collection where Element: GlucoseValue {
+         at date: Date,
+         suspendThreshold: HKQuantity,
+         sensitivity: HKQuantity,
+-        model: InsulinModel
++        model: InsulinModel,
++        preferences: PreferencesProvider
+     ) -> InsulinCorrection? {
+         let effectDuration = model.effectDuration
+         let timeline = [AbsoluteScheduleValue(startDate: date, endDate: date.addingTimeInterval(effectDuration), value: sensitivity)]
+@@ -240,7 +241,8 @@ extension Collection where Element: GlucoseValue {
+             at: date,
+             suspendThreshold: suspendThreshold,
+             insulinSensitivityTimeline: timeline,
+-            model: model)
++            model: model,
++            preferences: preferences)
+     }
+ 
+     /// For a collection of glucose prediction, determine the least amount of insulin delivered at
+@@ -258,7 +260,8 @@ extension Collection where Element: GlucoseValue {
+         at date: Date,
+         suspendThreshold: HKQuantity,
+         insulinSensitivityTimeline: [AbsoluteScheduleValue<HKQuantity>],
+-        model: InsulinModel
++        model: InsulinModel,
++        preferences: PreferencesProvider
+     ) -> InsulinCorrection? {
+         var minGlucose: GlucoseValue?
+         var eventualGlucose: GlucoseValue?
+@@ -402,14 +405,16 @@ extension Collection where Element: GlucoseValue {
+         rateRounder: ((Double) -> Double)? = nil,
+         isBasalRateScheduleOverrideActive: Bool = false,
+         duration: TimeInterval = TimeInterval(30 * 60),
+-        continuationInterval: TimeInterval = TimeInterval(60 * 11)
++        continuationInterval: TimeInterval = TimeInterval(60 * 11),
++        preferences: PreferencesProvider
+     ) -> TempBasalRecommendation? {
+         let correction = self.insulinCorrection(
+             to: correctionRange,
+             at: date,
+             suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
+             sensitivity: sensitivity.quantity(at: date),
+-            model: model
++            model: model,
++            preferences: preferences
+         )
+ 
+         let scheduledBasalRate = basalRates.value(at: date)
+@@ -427,13 +432,22 @@ extension Collection where Element: GlucoseValue {
+             maxBasalRate = Swift.min(maxThirtyMinuteRateToKeepIOBBelowLimit, maxBasalRate)
+         }
+ 
+-        let temp = correction?.asTempBasal(
++        var temp = correction?.asTempBasal(
+             scheduledBasalRate: scheduledBasalRate,
+             maxBasalRate: maxBasalRate,
+             duration: duration,
+             rateRounder: rateRounder
+         )
+ 
++        if (preferences.isBasalLockEnabled && ( temp?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate  ||
++             lastTempBasal?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate
++             ) &&
++            self[0 as! Self.Index].quantity > preferences.basalLockThreshold)
++        {
++            print("####### Temp Basal Lock On #########")
++            temp = TempBasalRecommendation(unitsPerHour: scheduledBasalRate, duration: 1800)
++        }
++
+         return temp?.ifNecessary(
+             at: date,
+             scheduledBasalRate: scheduledBasalRate,
+@@ -475,14 +489,16 @@ extension Collection where Element: GlucoseValue {
+         rateRounder: ((Double) -> Double)? = nil,
+         isBasalRateScheduleOverrideActive: Bool = false,
+         duration: TimeInterval = TimeInterval(30 * 60),
+-        continuationInterval: TimeInterval = TimeInterval(11 * 60)
++        continuationInterval: TimeInterval = TimeInterval(11 * 60),
++        preferences: PreferencesProvider
+     ) -> AutomaticDoseRecommendation? {
+         guard let correction = self.insulinCorrection(
+             to: correctionRange,
+             at: date,
+             suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
+             sensitivity: sensitivity.quantity(at: date),
+-            model: model
++            model: model,
++            preferences: preferences
+         ) else {
+             return nil
+         }
+@@ -517,6 +533,15 @@ extension Collection where Element: GlucoseValue {
+             volumeRounder: volumeRounder
+         )
+ 
++        if (preferences.isBasalLockEnabled && (temp?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate ||
++              lastTempBasal?.unitsPerHour ?? scheduledBasalRate < scheduledBasalRate
++              ) &&
++            self[0 as! Self.Index].quantity > preferences.basalLockThreshold)
++        {
++            print("####### Temp Basal Lock On #########")
++            temp = TempBasalRecommendation(unitsPerHour: scheduledBasalRate, duration: 1800)
++        }
++
+         if temp != nil || bolusUnits > 0 {
+             return AutomaticDoseRecommendation(basalAdjustment: temp, bolusUnits: bolusUnits)
+         }
+@@ -545,14 +570,16 @@ extension Collection where Element: GlucoseValue {
+         model: InsulinModel,
+         pendingInsulin: Double,
+         maxBolus: Double,
+-        volumeRounder: ((Double) -> Double)? = nil
++        volumeRounder: ((Double) -> Double)? = nil,
++        preferences: PreferencesProvider
+     ) -> ManualBolusRecommendation {
+         guard let correction = self.insulinCorrection(
+             to: correctionRange,
+             at: date,
+             suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
+             sensitivity: sensitivity.quantity(at: date),
+-            model: model
++            model: model,
++            preferences: preferences
+         ) else {
+             return ManualBolusRecommendation(amount: 0, pendingInsulin: pendingInsulin)
+         }
+diff --git a/LoopKit/LoopKit/PreferencesProvider.swift b/LoopKit/LoopKit/PreferencesProvider.swift
+new file mode 100644
+index 00000000..a164defb
+--- /dev/null
++++ b/LoopKit/LoopKit/PreferencesProvider.swift
+@@ -0,0 +1,15 @@
++//
++//  PreferencesProvider.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import HealthKit
++
++public protocol PreferencesProvider {
++    var basalLockThreshold: HKQuantity { get set }
++    var isBasalLockEnabled: Bool { get set }
++}
+diff --git a/LoopKit/LoopKit/PreferencesSetting.swift b/LoopKit/LoopKit/PreferencesSetting.swift
+new file mode 100644
+index 00000000..0de6928d
+--- /dev/null
++++ b/LoopKit/LoopKit/PreferencesSetting.swift
+@@ -0,0 +1,60 @@
++//
++//  PreferencesSetting.swift
++//  LoopKit
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++public enum PreferencesSetting {
++    case basalLock
++}
++
++extension PreferencesSetting: Equatable { }
++
++public extension PreferencesSetting {
++    var title: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("Basal Lock", comment: "Title text for basal lock setting")
++        }
++    }
++    
++    var smallTitle: String {
++        return title
++    }
++    
++    func descriptiveText(appName: String) -> String {
++        switch self {
++        case .basalLock:
++            return String(format: LocalizedString("Basal Lock prevents the basal rate from being throttled if the blood glucose is above a certain level.", comment: "Descriptive text for basal lock (1: app name)"), appName)
++        }
++    }
++}
++
++// MARK: Guardrails
++public extension PreferencesSetting {
++    var guardrailCaptionForLowValue: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("The value you have entered is lower than what is typically recommended.", comment: "Descriptive text for guardrail low value warning for basal lock")
++        }
++    }
++    
++    var guardrailCaptionForHighValue: String {
++        switch self {
++        case .basalLock:
++            return LocalizedString("The value you have entered is higher than what is typically recommended.", comment: "Descriptive text for guardrail high value warning for basal lock")
++        }
++    }
++    
++    var guardrailCaptionForOutsideValues: String {
++        return LocalizedString("The value you have entered for Basal Lock is outside of the recommended range.", comment: "Descriptive text for guardrail outside value warning for basal lock")
++    }
++    
++    var guardrailSaveWarningCaption: String {
++        return LocalizedString("Please note that this value is outside of the recommended range.", comment: "Descriptive text for saving settings outside the recommended range for basal lock")
++    }
++}
+diff --git a/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
+new file mode 100644
+index 00000000..785a23f1
+--- /dev/null
++++ b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
+@@ -0,0 +1,34 @@
++//
++//  PreferencesViewModel.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import LoopKit
++import HealthKit
++
++public class PreferencesViewModel: ObservableObject {
++    @Published var basalLockThreshold: HKQuantity
++    @Published var isBasalLockEnabled: Bool
++    
++    private var preferencesProvider: PreferencesProvider
++    
++    public init(preferencesProvider: PreferencesProvider) {
++        self.preferencesProvider = preferencesProvider
++        self.basalLockThreshold = preferencesProvider.basalLockThreshold
++        self.isBasalLockEnabled = preferencesProvider.isBasalLockEnabled
++    }
++    
++    func updateBasalLockThreshold(_ newValue: HKQuantity) {
++        preferencesProvider.basalLockThreshold = newValue
++        self.basalLockThreshold = newValue
++    }
++    
++    func updateBasalLockEnabled(_ newValue: Bool) {
++        preferencesProvider.isBasalLockEnabled = newValue
++        self.isBasalLockEnabled = newValue
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift b/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift
+new file mode 100644
+index 00000000..c473fd51
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/GuardrailConstrainedTimeIntervalView.swift
+@@ -0,0 +1,122 @@
++//
++//  GuardrailConstrainedTimeIntervalView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import HealthKit
++import LoopKit
++
++
++public struct GuardrailConstrainedTimeIntervalView: View {
++    @Environment(\.guidanceColors) var guidanceColors
++    var value: TimeInterval?
++    var guardrail: Guardrail<TimeInterval>
++    var isEditing: Bool
++    var isSupportedValue: Bool
++    var formatter: DateComponentsFormatter
++    var iconSpacing: CGFloat
++    var isUnitLabelVisible: Bool
++    var forceDisableAnimations: Bool
++    
++    @State private var hasAppeared = false
++    
++    public init(
++        value: TimeInterval,
++        guardrail: Guardrail<TimeInterval>,
++        isEditing: Bool,
++        isSupportedValue: Bool = true,
++        iconSpacing: CGFloat = 8,
++        isUnitLabelVisible: Bool = true,
++        forceDisableAnimations: Bool = false
++    ) {
++        self.value = value
++        self.guardrail = guardrail
++        self.isEditing = isEditing
++        self.isSupportedValue = isSupportedValue
++        self.iconSpacing = iconSpacing
++        self.isUnitLabelVisible = isUnitLabelVisible
++        self.forceDisableAnimations = forceDisableAnimations
++        
++        
++        self.formatter = {
++            let formatter = DateComponentsFormatter()
++            formatter.allowedUnits = [.hour, .minute]
++            formatter.unitsStyle = .short
++            formatter.zeroFormattingBehavior = [.dropLeading, .dropTrailing]
++            
++            return formatter
++        }()
++    }
++    
++    public var body: some View {
++        HStack {
++            HStack(spacing: iconSpacing) {
++                if value != nil {
++                    if guardrail.classification(for: value!) != .withinRecommendedRange {
++                        Image(systemName: "exclamationmark.triangle.fill")
++                            .foregroundColor(warningColor)
++                            .transition(.springInDisappear)
++                    }
++                    
++                    Text(formatter.string(from: value!) ?? "")
++                        .foregroundColor(warningColor)
++                        .fixedSize(horizontal: true, vertical: false)
++                } else {
++                    Text("–")
++                        .foregroundColor(.secondary)
++                }
++            }
++            
++/*            if isUnitLabelVisible {
++                Text(unit.shortLocalizedUnitString())
++                    .foregroundColor(Color(.secondaryLabel))
++            }*/
++        }
++        .accessibilityElement(children: .combine)
++        .onAppear { self.hasAppeared = true }
++        .animation(animation)
++    }
++    
++    private var animation: Animation? {
++        // A conditional implicit animation seems to behave funky on first appearance.
++        // Disable animations until the view has appeared.
++        if forceDisableAnimations || !hasAppeared {
++            return nil
++        }
++        
++        // While editing, the text width is liable to change, which can cause a slow-feeling animation
++        // of the guardrail warning icon. Disable animations while editing.
++        return isEditing ? nil : .default
++    }
++    
++    private var warningColor: Color {
++        guard let value = value else {
++            return .primary
++        }
++        
++        guard isSupportedValue else { return guidanceColors.critical }
++        
++        switch guardrail.classification(for: value) {
++        case .withinRecommendedRange:
++            return isEditing ? .accentColor : guidanceColors.acceptable
++        case .outsideRecommendedRange(let threshold):
++            switch threshold {
++            case .minimum, .maximum:
++                return guidanceColors.critical
++            case .belowRecommended, .aboveRecommended:
++                return guidanceColors.warning
++            }
++        }
++    }
++}
++
++fileprivate extension AnyTransition {
++    static let springInDisappear = asymmetric(
++        insertion: AnyTransition.scale.animation(.spring(dampingFraction: 0.5)),
++        removal: .identity
++    )
++}
+diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift
+new file mode 100644
+index 00000000..dc313a9c
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift	
+@@ -0,0 +1,209 @@
++//
++//  BasalLockEditor.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import HealthKit
++import LoopKit
++
++public struct BasalLockEditor: View {
++    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
++    
++    @Environment(\.dismissAction) var dismiss
++    @Environment(\.authenticate) var authenticate
++    @Environment(\.appName) private var appName
++    
++    let viewModel: PreferencesViewModel
++    let didSave: (() -> Void)?
++    
++    @State private var userDidTap: Bool = false
++    @State private var isBasalLockEnabled: Bool
++    @State private var threshold: HKQuantity
++    @State private var isEditing = false
++    @State private var showingConfirmationAlert = false
++    
++    private var initialValue: HKQuantity {
++        viewModel.basalLockThreshold
++    }
++    
++    public init(preferencesViewModel: PreferencesViewModel, didSave: (() -> Void)? = nil) {
++        self.viewModel = preferencesViewModel
++        self._isBasalLockEnabled = State(initialValue: preferencesViewModel.isBasalLockEnabled)
++        self._threshold = State(initialValue: preferencesViewModel.basalLockThreshold)
++        self.didSave = didSave
++    }
++    
++    public var body: some View {
++        contentWithCancel
++            .navigationBarTitle("", displayMode: .inline)
++    }
++    
++    private var contentWithCancel: some View {
++        content
++            .navigationBarBackButtonHidden(isBasalLockEnabled != viewModel.isBasalLockEnabled || threshold != viewModel.basalLockThreshold)
++            .toolbar {
++                ToolbarItem(placement: .navigationBarLeading) {
++                    leadingNavigationBarItem
++                }
++            }
++    }
++    
++    @ViewBuilder
++    private var leadingNavigationBarItem: some View {
++        if isBasalLockEnabled != viewModel.isBasalLockEnabled || threshold != viewModel.basalLockThreshold {
++            cancelButton
++        } else {
++            EmptyView()
++        }
++    }
++    
++    private var cancelButton: some View {
++        Button(action: { self.dismiss() }) {
++            Text(LocalizedString("Cancel", comment: "Cancel editing settings button title"))
++        }
++    }
++    
++    private var picker: GlucoseValuePicker {
++        GlucoseValuePicker(
++            value: self.$threshold.animation(),
++            unit: displayGlucosePreference.unit,
++            guardrail: .basalLockThreshold,
++            bounds: Guardrail.basalLockThreshold.absoluteBounds.lowerBound...Guardrail.basalLockThreshold.absoluteBounds.upperBound
++        )
++    }
++    
++    private var content: some View {
++        ConfigurationPage(
++            title: Text(LocalizedString("Basal Lock Threshold", comment: "Title for basal lock threshold setting")),
++            actionButtonTitle: Text(LocalizedString("Save", comment: "Save button title")),
++            actionButtonState: saveButtonState,
++            cards: {
++                Card {
++                    description
++                        .font(.callout)
++                        .foregroundColor(Color(.secondaryLabel))
++                        .fixedSize(horizontal: false, vertical: true)
++                    
++                    Toggle(isOn: $isBasalLockEnabled) {
++                        Text("Enable Basal Lock")
++                    }
++                    .animation(.default, value: isBasalLockEnabled)
++                    
++                    ExpandableSetting(
++                        isEditing: $isEditing,
++                        valueContent: {
++                            GuardrailConstrainedQuantityView(
++                                value: threshold,
++                                unit: displayGlucosePreference.unit,
++                                guardrail: .basalLockThreshold,
++                                isEditing: isEditing,
++                                // Workaround for strange animation behavior on appearance
++                                forceDisableAnimations: true
++                            )
++                        },
++                        expandedContent: {
++                            // Prevent the picker from expanding the card's width on small devices
++                            picker.frame(maxWidth: 200)
++                        }
++                    )
++                    .transition(.slide)
++                }
++            },
++            actionAreaContent: {
++                instructionalContentIfNecessary
++                if isBasalLockEnabled && warningThreshold != nil && userDidTap {
++                    PreferencesGuardrailWarning(preferencesSetting: .basalLock, title: basalLockTitle, threshold: warningThreshold!)
++                        .transition(.slide)
++                }
++            },
++            action: {
++                if self.warningThreshold == nil {
++                    self.startSaving()
++                } else {
++                    self.showingConfirmationAlert = true
++                }
++            }
++        )
++        .alert(isPresented: $showingConfirmationAlert, content: confirmationAlert)
++        .simultaneousGesture(TapGesture().onEnded {
++            withAnimation {
++                self.userDidTap = true
++            }
++        })
++    }
++    
++    private var basalLockTitle: Text {
++        Text(LocalizedString("Basal Lock Threshold", comment: "Title for basal lock threshold setting"))
++    }
++    
++    private var description: Text {
++        Text(LocalizedString("Basal Lock prevents the basal rate from being throttled if the blood glucose is above a certain level.", comment: "Description for basal lock threshold setting"))
++    }
++    
++    private var instructionalContentIfNecessary: some View {
++        Group {
++            if !userDidTap {
++                instructionalContent
++            }
++        }
++    }
++    
++    private var instructionalContent: some View {
++        HStack {
++            Text(LocalizedString("You can edit the setting by tapping into the line item.", comment: "Description of how to edit setting"))
++                .foregroundColor(.secondary)
++                .font(.subheadline)
++            Spacer()
++        }
++    }
++    
++    private var saveButtonState: ConfigurationPageActionButtonState {
++        let selectableValues = picker.selectableValues
++        let adjustedBounds = (selectableValues.first!)...(selectableValues.last!)
++        guard adjustedBounds.contains(threshold.doubleValue(for: displayGlucosePreference.unit)) else {
++            return .disabled
++        }
++        return (isBasalLockEnabled != viewModel.isBasalLockEnabled || threshold != viewModel.basalLockThreshold) ? .enabled : .disabled
++    }
++    
++    private var warningThreshold: SafetyClassification.Threshold? {
++        switch Guardrail.basalLockThreshold.classification(for: threshold) {
++        case .withinRecommendedRange:
++            return nil
++        case .outsideRecommendedRange(let threshold):
++            return threshold
++        }
++    }
++    
++    private func confirmationAlert() -> SwiftUI.Alert {
++        SwiftUI.Alert(
++            title: Text(LocalizedString("Save Basal Lock Threshold?", comment: "Alert title for confirming a basal lock threshold outside the recommended range")),
++            message: Text(LocalizedString("Your setting for basal lock is outside the recommended range.", comment: "Descriptive text for saving settings outside the recommended range for basal lock")),
++            primaryButton: .cancel(Text(LocalizedString("Go Back", comment: "Text for go back action on confirmation alert"))),
++            secondaryButton: .default(
++                Text(LocalizedString("Continue", comment: "Text for continue action on confirmation alert")),
++                action: startSaving
++            )
++        )
++    }
++    
++    private func startSaving() {
++        authenticate(LocalizedString("Authentication is required to save this setting.", comment: "Authentication challenge description for basal lock threshold")) {
++            switch $0 {
++            case .success: self.continueSaving()
++            case .failure: break
++            }
++        }
++    }
++    
++    private func continueSaving() {
++        viewModel.updateBasalLockEnabled(self.isBasalLockEnabled)
++        viewModel.updateBasalLockThreshold(self.threshold)
++        didSave?()
++        self.dismiss()
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesGuardrailWarning.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesGuardrailWarning.swift
+new file mode 100644
+index 00000000..3a7dd0ad
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesGuardrailWarning.swift	
+@@ -0,0 +1,101 @@
++//
++//  PreferencesGuardrailWarning.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import LoopKit
++
++public struct PreferencesGuardrailWarning: View {
++    private enum CrossedThresholds {
++        case one(SafetyClassification.Threshold)
++        case oneOrMore([SafetyClassification.Threshold])
++    }
++    
++    private var title: Text
++    private var crossedThresholds: CrossedThresholds
++    private var captionOverride: Text?
++    private var preferencesSetting: PreferencesSetting
++    
++    public init(
++        preferencesSetting: PreferencesSetting,
++        title: Text,
++        threshold: SafetyClassification.Threshold,
++        caption: Text? = nil
++    ) {
++        self.preferencesSetting = preferencesSetting
++        self.title = title
++        self.crossedThresholds = .one(threshold)
++        self.captionOverride = caption
++    }
++    
++    public init(
++        preferencesSetting: PreferencesSetting,
++        title: Text,
++        thresholds: [SafetyClassification.Threshold],
++        caption: Text? = nil
++    ) {
++        precondition(!thresholds.isEmpty)
++        self.preferencesSetting = preferencesSetting
++        self.title = title
++        self.crossedThresholds = .oneOrMore(thresholds)
++        self.captionOverride = caption
++    }
++    
++    public var body: some View {
++        WarningView(title: title, caption: caption, severity: severity)
++    }
++    
++    private var severity: WarningSeverity {
++        switch crossedThresholds {
++        case .one(let threshold):
++            return threshold.severity
++        case .oneOrMore(let thresholds):
++            return thresholds.lazy.map({ $0.severity }).max()!
++        }
++    }
++    
++    private var caption: Text {
++        if let caption = captionOverride {
++            return caption
++        }
++        
++        switch crossedThresholds {
++        case .one(let threshold):
++            return captionForThreshold(threshold)
++        case .oneOrMore(let thresholds):
++            if thresholds.count == 1, let threshold = thresholds.first {
++                return captionForThreshold(threshold)
++            } else {
++                return captionForThresholds()
++            }
++        }
++    }
++    
++    private func captionForThreshold(_ threshold: SafetyClassification.Threshold) -> Text {
++        switch threshold {
++        case .minimum, .belowRecommended:
++            return Text(preferencesSetting.guardrailCaptionForLowValue)
++        case .aboveRecommended, .maximum:
++            return Text(preferencesSetting.guardrailCaptionForHighValue)
++        }
++    }
++    
++    private func captionForThresholds() -> Text {
++        return Text(preferencesSetting.guardrailCaptionForOutsideValues)
++    }
++}
++
++fileprivate extension SafetyClassification.Threshold {
++    var severity: WarningSeverity {
++        switch self {
++        case .belowRecommended, .aboveRecommended:
++            return .default
++        case .minimum, .maximum:
++            return .critical
++        }
++    }
++}
+diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift
+new file mode 100644
+index 00000000..41476c35
+--- /dev/null
++++ b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift	
+@@ -0,0 +1,141 @@
++//
++//  PreferencesView.swift
++//  LoopKitUI
++//
++//  Created by Jonas Björkert on 2024-02-25.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import LoopKit
++import HealthKit
++
++public struct PreferencesView: View {
++    @Environment(\.dismissAction) private var dismiss
++    @Environment(\.appName) private var appName
++    @EnvironmentObject var displayGlucosePreference: DisplayGlucosePreference
++    
++    @ObservedObject var viewModel: PreferencesViewModel
++    
++    public init(viewModel: PreferencesViewModel) {
++        self.viewModel = viewModel
++    }
++    
++    private static func createFormatter(for unit: HKUnit) -> NumberFormatter {
++        let quantityFormatter = QuantityFormatter(for: unit)
++        return quantityFormatter.numberFormatter
++    }
++    
++    public var body: some View {
++        navigationViewWrappedContent
++    }
++    
++    private var formatter: NumberFormatter {
++        let quantityFormatter = QuantityFormatter(for: displayGlucosePreference.unit)
++        return quantityFormatter.numberFormatter
++    }
++}
++
++extension PreferencesView {
++    private var navigationViewWrappedContent: some View {
++        NavigationView {
++            ZStack {
++                Color(.systemGroupedBackground)
++                    .edgesIgnoringSafeArea(.all)
++                content
++                    .toolbar {
++                        ToolbarItem(placement: .navigationBarTrailing) {
++                            dismissButton
++                        }
++                    }
++                    .navigationBarTitle(preferencesTitle, displayMode: .large)
++            }
++        }
++    }
++    
++    private var dismissButton: some View {
++        Button(action: dismiss) {
++            Text("Done")
++        }
++    }
++    
++    private var preferencesTitle: String {
++        return "Preferences"
++    }
++    
++    private var content: some View {
++        CardList(title: nil, style: .sectioned(cardListSections)) //, trailer: cardListTrailer
++    }
++    
++    private var cardListSections: [CardListSection] {
++        var cardListSections: [CardListSection] = []
++        
++        cardListSections.append(preferencesCardListSection)
++        
++        return cardListSections
++    }
++    
++    private var preferencesCardListSection: CardListSection {
++        CardListSection {
++            preferencesCardStack
++                .spacing(20)
++        }
++    }
++    
++    private var preferencesCardStack: CardStack {
++        var cards: [Card] = []
++        
++        cards.append(basalLockSection)
++        
++        return CardStack(cards: cards)
++    }
++    
++    @ViewBuilder
++    func screen(for setting: PreferencesSetting, dismiss: @escaping () -> Void) -> some View {
++        switch setting {
++        case .basalLock:
++            BasalLockEditor(preferencesViewModel: viewModel, didSave: dismiss)
++        }
++    }
++    
++    private func card<Content>(for preferencesSetting: PreferencesSetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
++        Card {
++            SectionWithTapToEdit(
++                isEnabled: true,
++                title: preferencesSetting.title,
++                descriptiveText: preferencesSetting.descriptiveText(appName: appName),
++                destination: { dismiss in
++                    screen(for: preferencesSetting, dismiss: dismiss)
++                        .environment(\.dismissAction, dismiss)
++                },
++                content: content
++            )
++        }
++    }
++    
++    private var basalLockSection: Card {
++        card(for: .basalLock) {
++            SectionDivider()
++            HStack {
++                Spacer()
++                if viewModel.isBasalLockEnabled {
++                    HStack(alignment: .firstTextBaseline) {
++                        Text(formatter.string(for: viewModel.basalLockThreshold.doubleValue(for: displayGlucosePreference.unit)) ?? "")
++                        Text(displayGlucosePreference.unit.shortLocalizedUnitString())
++                            .foregroundColor(Color(.secondaryLabel))
++                    }
++                } else {
++                    Text("Off")
++                        .foregroundColor(Color(.secondaryLabel))
++                }
++            }
++        }
++    }
++}
++
++fileprivate struct SectionDivider: View {
++    var body: some View {
++        Divider()
++            .padding(.trailing, -16)
++    }
++}
