@@ -1,14 +1,14 @@
 Submodule Loop contains modified content
-diff --git a/Loop/Loop/View Controllers/CarbEntryViewController.swift b/Loop/Loop/View Controllers/CarbEntryViewController.swift
-index 31f65e00..f87fdbbc 100644
---- a/Loop/Loop/View Controllers/CarbEntryViewController.swift	
-+++ b/Loop/Loop/View Controllers/CarbEntryViewController.swift	
-@@ -405,7 +405,7 @@ final class CarbEntryViewController: LoopChartsTableViewController, Identifiable
-                         cell.datePicker.preferredDatePickerStyle = .wheels
-                     }
-                 #endif
--                cell.datePicker.maximumDate = date.addingTimeInterval(.hours(1))
-+                cell.datePicker.maximumDate = date.addingTimeInterval(.hours(4))
-                 cell.datePicker.minimumDate = date.addingTimeInterval(.hours(-12))
-                 cell.datePicker.minuteInterval = 1
-                 cell.date = date
+diff --git a/Loop/Loop/Models/LoopConstants.swift b/Loop/Loop/Models/LoopConstants.swift
+index a62fc138..795c5a6e 100644
+--- a/Loop/Loop/Models/LoopConstants.swift
++++ b/Loop/Loop/Models/LoopConstants.swift
+@@ -25,7 +25,7 @@ enum LoopConstants {
+     static let maxCarbAbsorptionTime = TimeInterval(hours: 8)
+     
+     static let maxCarbEntryPastTime = TimeInterval(hours: (-12))
+-    static let maxCarbEntryFutureTime = TimeInterval(hours: 1)
++    static let maxCarbEntryFutureTime = TimeInterval(hours: 4)
+ 
+     static let maxOverrideDurationTime = TimeInterval(hours: 24)
+     
