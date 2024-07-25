@@ -1,0 +1,484 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop Widget Extension/LoopWidgets.swift b/Loop/Loop Widget Extension/LoopWidgets.swift
+index 26f92edb..684bf073 100644
+--- a/Loop/Loop Widget Extension/LoopWidgets.swift	
++++ b/Loop/Loop Widget Extension/LoopWidgets.swift	
+@@ -14,5 +14,6 @@ struct LoopWidgets: WidgetBundle {
+     @WidgetBundleBuilder
+     var body: some Widget {
+         SystemStatusWidget()
++        GlucoseLiveActivityConfiguration()
+     }
+ }
+diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
+index 11819516..606155f7 100644
+--- a/Loop/Loop.xcodeproj/project.pbxproj
++++ b/Loop/Loop.xcodeproj/project.pbxproj
+@@ -401,6 +401,19 @@
+ 		B4E96D5D248A82A2002DABAD /* StatusBarHUDView.xib in Resources */ = {isa = PBXBuildFile; fileRef = B4E96D5C248A82A2002DABAD /* StatusBarHUDView.xib */; };
+ 		B4F3D25124AF890C0095CE44 /* BluetoothStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F3D25024AF890C0095CE44 /* BluetoothStateManager.swift */; };
+ 		B4FEEF7D24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FEEF7C24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift */; };
++		B851FFC52C37221800D738C1 /* LiveActivityManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B851FFC42C37221800D738C1 /* LiveActivityManagementView.swift */; };
++		B851FFCA2C3731DE00D738C1 /* LiveActivitySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B851FFC62C37271E00D738C1 /* LiveActivitySettings.swift */; };
++		B851FFCB2C3731DE00D738C1 /* LiveActivitySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B851FFC62C37271E00D738C1 /* LiveActivitySettings.swift */; };
++		B87539C92C2B06CE0085A975 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87539C82C2B06CE0085A975 /* LocalizedString.swift */; };
++		B87539CB2C2B08430085A975 /* Bootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87539CA2C2B08430085A975 /* Bootstrap.swift */; };
++		B87539CD2C2B46950085A975 /* ChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87539CC2C2B46950085A975 /* ChartView.swift */; };
++		B87539CF2C2DCB770085A975 /* BasalViewActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87539CE2C2DCB770085A975 /* BasalViewActivity.swift */; };
++		B87D411D2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87D411C2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift */; };
++		B87D411F2C28A85F00120877 /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B87D411E2C28A85F00120877 /* ActivityKit.framework */; };
++		B8A937B82C29BA5900E38645 /* GlucoseActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */; };
++		B8A937C32C29C3B400E38645 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */; };
++		B8A937C42C29C43B00E38645 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */; };
++		B8FD0B522C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FD0B512C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift */; };
+ 		C1004DF22981F5B700B8CF94 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF02981F5B700B8CF94 /* InfoPlist.strings */; };
+ 		C1004DF52981F5B700B8CF94 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF32981F5B700B8CF94 /* Localizable.strings */; };
+ 		C1004DF82981F5B700B8CF94 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF62981F5B700B8CF94 /* InfoPlist.strings */; };
+@@ -1325,6 +1338,17 @@
+ 		B4E96D5C248A82A2002DABAD /* StatusBarHUDView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = StatusBarHUDView.xib; sourceTree = "<group>"; };
+ 		B4F3D25024AF890C0095CE44 /* BluetoothStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothStateManager.swift; sourceTree = "<group>"; };
+ 		B4FEEF7C24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeviceDataManager+DeviceStatus.swift"; sourceTree = "<group>"; };
++		B851FFC42C37221800D738C1 /* LiveActivityManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManagementView.swift; sourceTree = "<group>"; };
++		B851FFC62C37271E00D738C1 /* LiveActivitySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivitySettings.swift; sourceTree = "<group>"; };
++		B87539C82C2B06CE0085A975 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
++		B87539CA2C2B08430085A975 /* Bootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bootstrap.swift; sourceTree = "<group>"; };
++		B87539CC2C2B46950085A975 /* ChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartView.swift; sourceTree = "<group>"; };
++		B87539CE2C2DCB770085A975 /* BasalViewActivity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasalViewActivity.swift; sourceTree = "<group>"; };
++		B87D411C2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseLiveActivityConfiguration.swift; sourceTree = "<group>"; };
++		B87D411E2C28A85F00120877 /* ActivityKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
++		B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseActivityManager.swift; sourceTree = "<group>"; };
++		B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseActivityAttributes.swift; sourceTree = "<group>"; };
++		B8FD0B512C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityBottomRowManagerView.swift; sourceTree = "<group>"; };
+ 		C1004DEF2981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+ 		C1004DF12981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+ 		C1004DF42981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
+@@ -1727,6 +1751,7 @@
+ 				1419606928D9554E00BA86E0 /* LoopKitUI.framework in Frameworks */,
+ 				1419606A28D955BC00BA86E0 /* MockKitUI.framework in Frameworks */,
+ 				1481F9BB28DA26F4004C5AEB /* LoopUI.framework in Frameworks */,
++				B87D411F2C28A85F00120877 /* ActivityKit.framework in Frameworks */,
+ 				1419606428D9550400BA86E0 /* LoopKitUI.framework in Frameworks */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+@@ -1836,6 +1861,7 @@
+ 				84AA81D12A4A2778000B658B /* Components */,
+ 				84AA81D92A4A2966000B658B /* Helpers */,
+ 				84AA81DE2A4A2B3D000B658B /* Timeline */,
++				B87D41192C28A61900120877 /* Live Activity */,
+ 				84AA81DF2A4A2B7A000B658B /* Widgets */,
+ 				84AA81D22A4A27A3000B658B /* LoopWidgets.swift */,
+ 			);
+@@ -2163,6 +2189,7 @@
+ 				43DE92581C5479E4001FFDE1 /* PotentialCarbEntryUserInfo.swift */,
+ 				43C05CB721EBEA54006FB252 /* HKUnit.swift */,
+ 				434FF1E91CF26C29000DB779 /* IdentifiableClass.swift */,
++				E9C00EEF24C620EF00628F35 /* LoopSettings.swift */,
+ 				C19E96DD23D2733F003F79B0 /* LoopCompletionFreshness.swift */,
+ 				430B29892041F54A00BA9F93 /* NSUserDefaults.swift */,
+ 				431E73471FF95A900069B5F7 /* PersistenceController.swift */,
+@@ -2170,10 +2197,10 @@
+ 				43D9FFD121EAE05D00AF44BF /* LoopCore.h */,
+ 				43D9FFD221EAE05D00AF44BF /* Info.plist */,
+ 				4B60626A287E286000BF8BBB /* Localizable.strings */,
+-				E9C00EEF24C620EF00628F35 /* LoopSettings.swift */,
+ 				C16575742539FD60004AE16E /* LoopCoreConstants.swift */,
+ 				E9B3551B292844010076AB04 /* MissedMealNotification.swift */,
+ 				C1D0B62F2986D4D90098D215 /* LocalizedString.swift */,
++				B851FFC62C37271E00D738C1 /* LiveActivitySettings.swift */,
+ 			);
+ 			path = LoopCore;
+ 			sourceTree = "<group>";
+@@ -2276,6 +2303,8 @@
+ 				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
+ 				DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */,
+ 				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
++				B851FFC42C37221800D738C1 /* LiveActivityManagementView.swift */,
++				B8FD0B512C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift */,
+ 			);
+ 			path = Views;
+ 			sourceTree = "<group>";
+@@ -2315,6 +2344,7 @@
+ 				1DA6499D2441266400F61E75 /* Alerts */,
+ 				E95D37FF24EADE68005E2F50 /* Store Protocols */,
+ 				E9B355232935906B0076AB04 /* Missed Meal Detection */,
++				B8A937C52C29C44600E38645 /* Live Activity */,
+ 				C1F2075B26D6F9B0007AB7EB /* AppExpirationAlerter.swift */,
+ 				A96DAC2B2838F31200D94E38 /* SharedLogging.swift */,
+ 				7E69CFFB2A16A77E00203CBD /* ResetLoopManager.swift */,
+@@ -2525,6 +2555,7 @@
+ 				C11613472983096D00777E7C /* InfoPlist.strings */,
+ 				14B1736D28AEDA63006CCD7C /* LoopWidgetExtension.entitlements */,
+ 				14B1736628AED9EE006CCD7C /* Info.plist */,
++				B87539CA2C2B08430085A975 /* Bootstrap.swift */,
+ 			);
+ 			path = Bootstrap;
+ 			sourceTree = "<group>";
+@@ -2535,6 +2566,7 @@
+ 				84AA81DA2A4A2973000B658B /* Date.swift */,
+ 				84AA81D52A4A28AF000B658B /* WidgetBackground.swift */,
+ 				84D2879E2AC756C8007ED283 /* ContentMargin.swift */,
++				B87539C82C2B06CE0085A975 /* LocalizedString.swift */,
+ 			);
+ 			path = Helpers;
+ 			sourceTree = "<group>";
+@@ -2663,6 +2695,7 @@
+ 		968DCD53F724DE56FFE51920 /* Frameworks */ = {
+ 			isa = PBXGroup;
+ 			children = (
++				B87D411E2C28A85F00120877 /* ActivityKit.framework */,
+ 				C159C82E286787EF00A86EC0 /* LoopKit.framework */,
+ 				C159C8212867859800A86EC0 /* MockKitUI.framework */,
+ 				C159C8192867857000A86EC0 /* LoopKitUI.framework */,
+@@ -2760,6 +2793,25 @@
+ 			path = LoopCore;
+ 			sourceTree = "<group>";
+ 		};
++		B87D41192C28A61900120877 /* Live Activity */ = {
++			isa = PBXGroup;
++			children = (
++				B87D411C2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift */,
++				B87539CC2C2B46950085A975 /* ChartView.swift */,
++				B87539CE2C2DCB770085A975 /* BasalViewActivity.swift */,
++			);
++			path = "Live Activity";
++			sourceTree = "<group>";
++		};
++		B8A937C52C29C44600E38645 /* Live Activity */ = {
++			isa = PBXGroup;
++			children = (
++				B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */,
++				B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */,
++			);
++			path = "Live Activity";
++			sourceTree = "<group>";
++		};
+ 		C13072B82A76AF0A009A7C58 /* live_capture */ = {
+ 			isa = PBXGroup;
+ 			children = (
+@@ -3623,12 +3675,15 @@
+ 			isa = PBXSourcesBuildPhase;
+ 			buildActionMask = 2147483647;
+ 			files = (
++				B87539CB2C2B08430085A975 /* Bootstrap.swift in Sources */,
+ 				14B1738128AEDC70006CCD7C /* StatusExtensionContext.swift in Sources */,
+ 				14B1737628AEDC6C006CCD7C /* HKUnit.swift in Sources */,
+ 				14B1737728AEDC6C006CCD7C /* NSBundle.swift in Sources */,
+ 				84AA81D62A4A28AF000B658B /* WidgetBackground.swift in Sources */,
+ 				84AA81D82A4A2910000B658B /* StatusWidgetTimelimeEntry.swift in Sources */,
+ 				84AA81D32A4A27A3000B658B /* LoopWidgets.swift in Sources */,
++				B87539CF2C2DCB770085A975 /* BasalViewActivity.swift in Sources */,
++				B87539CD2C2B46950085A975 /* ChartView.swift in Sources */,
+ 				84AA81E32A4A36FB000B658B /* SystemActionLink.swift in Sources */,
+ 				14B1737828AEDC6C006CCD7C /* NSTimeInterval.swift in Sources */,
+ 				14B1737928AEDC6C006CCD7C /* NSUserDefaults+StatusExtension.swift in Sources */,
+@@ -3639,7 +3694,10 @@
+ 				14B1737E28AEDC6C006CCD7C /* FeatureFlags.swift in Sources */,
+ 				84AA81E72A4A4DEF000B658B /* PumpView.swift in Sources */,
+ 				14B1737F28AEDC6C006CCD7C /* PluginManager.swift in Sources */,
++				B87D411D2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift in Sources */,
++				B87539C92C2B06CE0085A975 /* LocalizedString.swift in Sources */,
+ 				14B1738028AEDC6C006CCD7C /* Debug.swift in Sources */,
++				B8A937C42C29C43B00E38645 /* GlucoseActivityAttributes.swift in Sources */,
+ 				84AA81DB2A4A2973000B658B /* Date.swift in Sources */,
+ 				14B1737228AEDBF6006CCD7C /* BasalView.swift in Sources */,
+ 				14B1737428AEDBF6006CCD7C /* GlucoseView.swift in Sources */,
+@@ -3725,6 +3783,7 @@
+ 				B4E202302661063E009421B5 /* AutomaticDosingStatus.swift in Sources */,
+ 				C191D2A125B3ACAA00C26C0B /* DosingStrategySelectionView.swift in Sources */,
+ 				A977A2F424ACFECF0059C207 /* CriticalEventLogExportManager.swift in Sources */,
++				B8FD0B522C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift in Sources */,
+ 				89CA2B32226C18B8004D9350 /* TestingScenariosTableViewController.swift in Sources */,
+ 				43E93FB71E469A5100EAB8DB /* HKUnit.swift in Sources */,
+ 				43C05CAF21EB2C24006FB252 /* NSBundle.swift in Sources */,
+@@ -3732,6 +3791,7 @@
+ 				A967D94C24F99B9300CDDF8A /* OutputStream.swift in Sources */,
+ 				1DB1065124467E18005542BD /* AlertManager.swift in Sources */,
+ 				1D9650C82523FBA100A1370B /* DeviceDataManager+BolusEntryViewModelDelegate.swift in Sources */,
++				B851FFC52C37221800D738C1 /* LiveActivityManagementView.swift in Sources */,
+ 				43C0944A1CACCC73001F6403 /* NotificationManager.swift in Sources */,
+ 				149A28E42A8A63A700052EDF /* FavoriteFoodDetailView.swift in Sources */,
+ 				1DDE274024AEA4F200796622 /* NotificationsCriticalAlertPermissionsView.swift in Sources */,
+@@ -3818,6 +3878,7 @@
+ 				A97F250825E056D500F0EE19 /* OnboardingManager.swift in Sources */,
+ 				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
+ 				892A5D692230C41D008961AB /* RangeReplaceableCollection.swift in Sources */,
++				B8A937B82C29BA5900E38645 /* GlucoseActivityManager.swift in Sources */,
+ 				DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */,
+ 				4F70C2101DE8FAC5006380B7 /* ExtensionDataManager.swift in Sources */,
+ 				43DFB62320D4CAE7008A7BAE /* PumpManager.swift in Sources */,
+@@ -3835,6 +3896,7 @@
+ 				439706E622D2E84900C81566 /* PredictionSettingTableViewCell.swift in Sources */,
+ 				430D85891F44037000AF2D4F /* HUDViewTableViewCell.swift in Sources */,
+ 				43A51E211EB6DBDD000736CC /* LoopChartsTableViewController.swift in Sources */,
++				B8A937C32C29C3B400E38645 /* GlucoseActivityAttributes.swift in Sources */,
+ 				8968B1122408B3520074BB48 /* UIFont.swift in Sources */,
+ 				1452F4A92A851C9400F8B9E4 /* AddEditFavoriteFoodViewModel.swift in Sources */,
+ 				438D42FB1D7D11A4003244B0 /* PredictionInputEffectTableViewCell.swift in Sources */,
+@@ -3956,6 +4018,7 @@
+ 				C17DDC9D28AC33A1005FBF4C /* PersistedProperty.swift in Sources */,
+ 				43C05CA921EB2B26006FB252 /* PersistenceController.swift in Sources */,
+ 				A9CE912224CA032E00302A40 /* NSUserDefaults.swift in Sources */,
++				B851FFCB2C3731DE00D738C1 /* LiveActivitySettings.swift in Sources */,
+ 				43C05CAB21EB2B4A006FB252 /* NSBundle.swift in Sources */,
+ 				43C05CC721EC2ABC006FB252 /* IdentifiableClass.swift in Sources */,
+ 				E9B3552B293591E70076AB04 /* MissedMealNotification.swift in Sources */,
+@@ -3977,6 +4040,7 @@
+ 				C17DDC9C28AC339E005FBF4C /* PersistedProperty.swift in Sources */,
+ 				43C05CA821EB2B26006FB252 /* PersistenceController.swift in Sources */,
+ 				43C05CAA21EB2B49006FB252 /* NSBundle.swift in Sources */,
++				B851FFCA2C3731DE00D738C1 /* LiveActivitySettings.swift in Sources */,
+ 				43C05CC821EC2ABC006FB252 /* IdentifiableClass.swift in Sources */,
+ 				43C05CAD21EB2BBF006FB252 /* NSUserDefaults.swift in Sources */,
+ 				E9B3552A293591E70076AB04 /* MissedMealNotification.swift in Sources */,
+@@ -4832,6 +4896,7 @@
+ 				INFOPLIST_FILE = "Loop Widget Extension/Bootstrap/Info.plist";
+ 				INFOPLIST_KEY_CFBundleDisplayName = "Loop Widgets";
+ 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 LoopKit Authors. All rights reserved.";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -4880,6 +4945,7 @@
+ 				INFOPLIST_FILE = "Loop Widget Extension/Bootstrap/Info.plist";
+ 				INFOPLIST_KEY_CFBundleDisplayName = "Loop Widgets";
+ 				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 LoopKit Authors. All rights reserved.";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5138,6 +5204,7 @@
+ 				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
+ 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+ 				INFOPLIST_FILE = Loop/Info.plist;
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5167,6 +5234,7 @@
+ 				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
+ 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+ 				INFOPLIST_FILE = Loop/Info.plist;
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5423,6 +5491,7 @@
+ 				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5449,6 +5518,7 @@
+ 				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
+ 				ENABLE_BITCODE = NO;
+ 				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5516,6 +5586,7 @@
+ 				ENABLE_BITCODE = NO;
+ 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+ 				INFOPLIST_FILE = "Loop Intent Extension/Info.plist";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+@@ -5543,6 +5614,7 @@
+ 				ENABLE_BITCODE = NO;
+ 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+ 				INFOPLIST_FILE = "Loop Intent Extension/Info.plist";
++				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+ 				LD_RUNPATH_SEARCH_PATHS = (
+ 					"$(inherited)",
+ 					"@executable_path/Frameworks",
+diff --git a/Loop/Loop/Info.plist b/Loop/Loop/Info.plist
+index ddad5426..f9f4ca84 100644
+--- a/Loop/Loop/Info.plist
++++ b/Loop/Loop/Info.plist
+@@ -71,6 +71,10 @@
+ 	<string>Carbohydrate meal data entered in the app and on the watch is stored in the Health database. Glucose data retrieved from the CGM is stored securely in HealthKit.</string>
+ 	<key>NSSiriUsageDescription</key>
+ 	<string>Loop uses Siri to allow you to enact presets with your voice.</string>
++	<key>NSSupportsLiveActivities</key>
++	<true/>
++	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
++	<true/>
+ 	<key>NSUserActivityTypes</key>
+ 	<array>
+ 		<string>EnableOverridePresetIntent</string>
+diff --git a/Loop/Loop/Loop.entitlements b/Loop/Loop/Loop.entitlements
+index 50ba55d9..e6a2f9b9 100644
+--- a/Loop/Loop/Loop.entitlements
++++ b/Loop/Loop/Loop.entitlements
+@@ -8,6 +8,8 @@
+ 	<true/>
+ 	<key>com.apple.developer.healthkit.access</key>
+ 	<array/>
++	<key>com.apple.developer.healthkit.background-delivery</key>
++	<true/>
+ 	<key>com.apple.developer.nfc.readersession.formats</key>
+ 	<array>
+ 		<string>TAG</string>
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 2319f4ec..2bd6cf68 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -68,6 +68,8 @@ final class LoopDataManager {
+     private var timeBasedDoseApplicationFactor: Double = 1.0
+ 
+     private var insulinOnBoard: InsulinValue?
++    
++    private var liveActivityManager: GlucoseActivityManager?
+ 
+     deinit {
+         for observer in notificationObservers {
+@@ -124,6 +126,8 @@ final class LoopDataManager {
+         self.automaticDosingStatus = automaticDosingStatus
+ 
+         self.trustedTimeOffset = trustedTimeOffset
++        
++        self.liveActivityManager = GlucoseActivityManager(glucoseStore: self.glucoseStore, doseStore: self.doseStore)
+ 
+         overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
+             guard let name = change.newValue??.lowercased(), let appGroup = UserDefaults.appGroup else {
+@@ -167,6 +171,7 @@ final class LoopDataManager {
+             ) { (note) -> Void in
+                 self.dataAccessQueue.async {
+                     self.logger.default("Received notification of carb entries changing")
++                    self.liveActivityManager?.update()
+ 
+                     self.carbEffect = nil
+                     self.carbsOnBoard = nil
+@@ -182,7 +187,8 @@ final class LoopDataManager {
+             ) { (note) in
+                 self.dataAccessQueue.async {
+                     self.logger.default("Received notification of glucose samples changing")
+-
++                    self.liveActivityManager?.update()
++                    
+                     self.glucoseMomentumEffect = nil
+                     self.remoteRecommendationNeedsUpdating = true
+ 
+@@ -196,6 +202,7 @@ final class LoopDataManager {
+             ) { (note) in
+                 self.dataAccessQueue.async {
+                     self.logger.default("Received notification of dosing changing")
++                    self.liveActivityManager?.update()
+ 
+                     self.clearCachedInsulinEffects()
+                     self.remoteRecommendationNeedsUpdating = true
+diff --git a/Loop/Loop/Views/AlertManagementView.swift b/Loop/Loop/Views/AlertManagementView.swift
+index e9a38e72..94e542a6 100644
+--- a/Loop/Loop/Views/AlertManagementView.swift
++++ b/Loop/Loop/Views/AlertManagementView.swift
+@@ -7,8 +7,10 @@
+ //
+ 
+ import SwiftUI
++import LoopCore
+ import LoopKit
+ import LoopKitUI
++import HealthKit
+ 
+ struct AlertManagementView: View {
+     @Environment(\.appName) private var appName
+@@ -157,6 +159,11 @@ struct AlertManagementView: View {
+                     }
+                 }
+             }
++            
++            NavigationLink(destination: LiveActivityManagementView())
++            {
++                    Text(NSLocalizedString("Live activity", comment: "Alert Permissions live activity"))
++            }
+         }
+     }
+ 
+diff --git a/Loop/LoopCore/NSUserDefaults.swift b/Loop/LoopCore/NSUserDefaults.swift
+index 93fa7e17..dacf2ecd 100644
+--- a/Loop/LoopCore/NSUserDefaults.swift
++++ b/Loop/LoopCore/NSUserDefaults.swift
+@@ -23,6 +23,7 @@ extension UserDefaults {
+         case allowSimulators = "com.loopkit.Loop.allowSimulators"
+         case LastMissedMealNotification = "com.loopkit.Loop.lastMissedMealNotification"
+         case userRequestedLoopReset = "com.loopkit.Loop.userRequestedLoopReset"
++        case liveActivity = "com.loopkit.Loop.liveActivity"
+     }
+ 
+     public static let appGroup = UserDefaults(suiteName: Bundle.main.appGroupSuiteName)
+@@ -165,6 +166,29 @@ extension UserDefaults {
+             setValue(newValue, forKey: Key.userRequestedLoopReset.rawValue)
+         }
+     }
++    
++    public var liveActivity: LiveActivitySettings? {
++        get {
++            let decoder = JSONDecoder()
++            guard let data = object(forKey: Key.liveActivity.rawValue) as? Data else {
++                return nil
++            }
++            return try? decoder.decode(LiveActivitySettings.self, from: data)
++        }
++        set {
++            do {
++                if let newValue = newValue {
++                    let encoder = JSONEncoder()
++                    let data = try encoder.encode(newValue)
++                    set(data, forKey: Key.liveActivity.rawValue)
++                } else {
++                    set(nil, forKey: Key.liveActivity.rawValue)
++                }
++            } catch {
++                assertionFailure("Unable to encode MissedMealNotification")
++            }
++        }
++    }
+ 
+     public func removeLegacyLoopSettings() {
+         removeObject(forKey: "com.loudnate.Naterade.BasalRateSchedule")
+diff --git a/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved b/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
+index 20f167d..0b9e899 100644
+--- a/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
++++ b/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
+@@ -1,5 +1,5 @@
+ {
+-  "originHash" : "f8d1e9c237647ab612da7f2bd3ae26946f39410508314c00cf54509a673f147e",
++  "originHash" : "1de2b590d6f0431984f3fb5863223367a97a5a586bbc2d419c5e769be9322aba",
+   "pins" : [
+     {
+       "identity" : "amplitude-ios",
+@@ -46,15 +46,6 @@
+         "revision" : "c676a9737c76e127e3ae5776247b226bc6d7652d"
+       }
+     },
+-    {
+-      "identity" : "mkringprogressview",
+-      "kind" : "remoteSourceControl",
+-      "location" : "https://github.com/maxkonovalov/MKRingProgressView.git",
+-      "state" : {
+-        "branch" : "master",
+-        "revision" : "660888aab1d2ab0ed7eb9eb53caec12af4955fa7"
+-      }
+-    },
+     {
+       "identity" : "nightscoutkit",
+       "kind" : "remoteSourceControl",
+@@ -98,15 +89,6 @@
+         "branch" : "dev",
+         "revision" : "54045c2e7d720dcd8a0909037772dcd6f54f0158"
+       }
+-    },
+-    {
+-      "identity" : "zipfoundation",
+-      "kind" : "remoteSourceControl",
+-      "location" : "https://github.com/LoopKit/ZIPFoundation.git",
+-      "state" : {
+-        "branch" : "stream-entry",
+-        "revision" : "c67b7509ec82ee2b4b0ab3f97742b94ed9692494"
+-      }
+     }
+   ],
+   "version" : 3
