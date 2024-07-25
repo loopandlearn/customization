@@ -1,4 +1,727 @@
 Submodule Loop contains modified content
+diff --git a/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift b/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift
+new file mode 100644
+index 00000000..00823471
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift	
+@@ -0,0 +1,11 @@
++//
++//  Bootstrap.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 25/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++class Bootstrap{}
+diff --git a/Loop/Loop Widget Extension/Helpers/LocalizedString.swift b/Loop/Loop Widget Extension/Helpers/LocalizedString.swift
+new file mode 100644
+index 00000000..15818175
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Helpers/LocalizedString.swift	
+@@ -0,0 +1,21 @@
++//
++//  LocalizedString.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 25/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++private class FrameworkBundle {
++    static let main = Bundle(for: Bootstrap.self)
++}
++
++func LocalizedString(_ key: String, tableName: String? = nil, value: String? = nil, comment: String) -> String {
++    if let value = value {
++        return NSLocalizedString(key, tableName: tableName, bundle: FrameworkBundle.main, value: value, comment: comment)
++    } else {
++        return NSLocalizedString(key, tableName: tableName, bundle: FrameworkBundle.main, comment: comment)
++    }
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/BasalViewActivity.swift b/Loop/Loop Widget Extension/Live Activity/BasalViewActivity.swift
+new file mode 100644
+index 00000000..915335c5
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/BasalViewActivity.swift	
+@@ -0,0 +1,46 @@
++//
++//  BasalView.swift
++//  Loop
++//
++//  Created by Noah Brauner on 8/15/22.
++//  Copyright © 2022 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++
++struct BasalViewActivity: View {
++    let percent: Double
++    let rate: Double
++    
++    var body: some View {        
++        VStack(spacing: 1) {
++            BasalRateView(percent: percent)
++                .overlay(
++                    BasalRateView(percent: percent)
++                        .stroke(Color("insulin"), lineWidth: 2)
++                )
++                .foregroundColor(Color("insulin").opacity(0.5))
++                .frame(width: 44, height: 22)
++
++            if let rateString = decimalFormatter.string(from: NSNumber(value: rate)) {
++                Text("\(rateString)U")
++                    .font(.subheadline)
++            }
++            else {
++                Text("-U")
++                    .font(.subheadline)
++            }
++        }
++    }
++    
++    private let decimalFormatter: NumberFormatter = {
++        let formatter = NumberFormatter()
++        formatter.numberStyle = .decimal
++        formatter.minimumFractionDigits = 1
++        formatter.minimumIntegerDigits = 1
++        formatter.positiveFormat = "+0.0##"
++        formatter.negativeFormat = "-0.0##"
++
++        return formatter
++    }()
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/ChartValues.swift b/Loop/Loop Widget Extension/Live Activity/ChartValues.swift
+new file mode 100644
+index 00000000..8fca70de
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/ChartValues.swift	
+@@ -0,0 +1,43 @@
++//
++//  ChartValues.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 25/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++struct ChartValues: Identifiable {
++    public let id: UUID
++    public let x: Date
++    public let y: Double
++    
++    init(x: Date, y: Double) {
++        self.id = UUID()
++        self.x = x
++        self.y = y
++    }
++    
++    static func convert(data: [Double], startDate: Date, interval: TimeInterval) -> [ChartValues] {
++        let twoHours = Date.now.addingTimeInterval(.hours(2))
++        
++        return data.enumerated().filter { (index, item) in
++            return startDate.addingTimeInterval(interval * Double(index)) < twoHours
++        }.map { (index, item) in
++            return ChartValues(
++                x: startDate.addingTimeInterval(interval * Double(index)),
++                y: item
++            )
++        }
++    }
++    
++    static func convert(data: [GlucoseSampleAttributes]) -> [ChartValues] {
++        return data.map { item in
++            return ChartValues(
++                x: item.x,
++                y: item.y
++            )
++        }
++    }
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/ChartView.swift b/Loop/Loop Widget Extension/Live Activity/ChartView.swift
+new file mode 100644
+index 00000000..274c986d
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/ChartView.swift	
+@@ -0,0 +1,114 @@
++//
++//  ChartValues.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 25/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import Charts
++
++struct ChartView: View {
++    private let glucoseSampleData: [ChartValues]
++    private let predicatedData: [ChartValues]
++    
++    init(glucoseSamples: [GlucoseSampleAttributes], predicatedGlucose: [Double], predicatedStartDate: Date?, predicatedInterval: TimeInterval?, lowerLimit: Double, upperLimit: Double) {
++        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, lowerLimit: lowerLimit, upperLimit: upperLimit)
++        self.predicatedData = ChartValues.convert(
++            data: predicatedGlucose,
++            startDate: predicatedStartDate ?? Date.now,
++            interval: predicatedInterval ?? .minutes(5),
++            lowerLimit: lowerLimit,
++            upperLimit: upperLimit
++        )
++    }
++    
++    init(glucoseSamples: [GlucoseSampleAttributes], lowerLimit: Double, upperLimit: Double) {
++        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, lowerLimit: lowerLimit, upperLimit: upperLimit)
++        self.predicatedData = []
++    }
++    
++    var body: some View {
++        Chart {
++            ForEach(glucoseSampleData) { item in
++                PointMark (x: .value("Date", item.x),
++                          y: .value("Glucose level", item.y)
++                )
++                .symbolSize(20)
++                .foregroundStyle(by: .value("Color", item.color))
++            }
++            
++            ForEach(predicatedData) { item in
++                LineMark (x: .value("Date", item.x),
++                          y: .value("Glucose level", item.y)
++                )
++                .lineStyle(StrokeStyle(lineWidth: 3, dash: [2, 3]))
++            }
++        }
++            .chartForegroundStyleScale([
++                "Good": .green,
++                "High": .orange,
++                "Low": .red
++            ])
++            .chartPlotStyle { plotContent in
++                plotContent.background(.cyan.opacity(0.15))
++            }
++            .chartLegend(.hidden)
++            .chartYScale(domain: .automatic(includesZero: false))
++            .chartYAxis {
++                AxisMarks(position: .trailing) { _ in
++                    AxisValueLabel().foregroundStyle(Color.primary)
++                    AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3]))
++                        .foregroundStyle(Color.primary)
++                }
++            }
++            .chartXAxis {
++                AxisMarks(position: .automatic, values: .stride(by: .hour)) { _ in
++                    AxisValueLabel(format: .dateTime.hour(.twoDigits(amPM: .narrow)), anchor: .top)
++                        .foregroundStyle(Color.primary)
++                    AxisGridLine(stroke: .init(lineWidth: 0.1, dash: [2, 3]))
++                        .foregroundStyle(Color.primary)
++                }
++            }
++    }
++}
++
++struct ChartValues: Identifiable {
++    public let id: UUID
++    public let x: Date
++    public let y: Double
++    public let color: String
++    
++    init(x: Date, y: Double, color: String) {
++        self.id = UUID()
++        self.x = x
++        self.y = y
++        self.color = color
++    }
++    
++    static func convert(data: [Double], startDate: Date, interval: TimeInterval, lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
++        let twoHours = Date.now.addingTimeInterval(.hours(4))
++        
++        return data.enumerated().filter { (index, item) in
++            return startDate.addingTimeInterval(interval * Double(index)) < twoHours
++        }.map { (index, item) in
++            return ChartValues(
++                x: startDate.addingTimeInterval(interval * Double(index)),
++                y: item,
++                color: item < lowerLimit ? "Low" : item > upperLimit ? "High" : "Good"
++            )
++        }
++    }
++    
++    static func convert(data: [GlucoseSampleAttributes], lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
++        return data.map { item in
++            return ChartValues(
++                x: item.x,
++                y: item.y,
++                color: item.y < lowerLimit ? "Low" : item.y > upperLimit ? "High" : "Good"
++            )
++        }
++    }
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift
+new file mode 100644
+index 00000000..2f5342e1
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift	
+@@ -0,0 +1,53 @@
++//
++//  ChartView.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 27/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import Charts
++import WidgetKit
++
++struct GlucoseChartLiveActivityConfiguration: Widget {
++    var body: some WidgetConfiguration {
++        ActivityConfiguration(for: GlucoseChartActivityAttributes.self) { context in
++            // Create the presentation that appears on the Lock Screen and as a
++            // banner on the Home Screen of devices that don't support the Dynamic Island.
++            HStack {
++                ChartView(
++                    glucoseSamples: context.state.glucoseSamples,
++                    predicatedGlucose: context.state.predicatedGlucose,
++                    predicatedStartDate: context.state.predicatedStartDate,
++                    predicatedInterval: context.state.predicatedInterval
++                )
++            }
++                .privacySensitive()
++                .padding(.all, 15)
++                .background(BackgroundStyle.background.opacity(0.4))
++                .activityBackgroundTint(Color.clear)
++        } dynamicIsland: { _ in
++            DynamicIsland {
++                DynamicIslandExpandedRegion(.leading) {
++                    HStack{}
++                }
++                DynamicIslandExpandedRegion(.trailing) {
++                    HStack{}
++                }
++                DynamicIslandExpandedRegion(.bottom) {
++                    HStack{}
++                }
++            } compactLeading: {
++                // Create the compact leading presentation.
++                HStack{}
++            } compactTrailing: {
++                // Create the compact trailing presentation.
++                HStack{}
++            } minimal: {
++                // Create the minimal presentation.
++                HStack{}
++            }
++        }
++    }
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift
+new file mode 100644
+index 00000000..f1b24aec
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift	
+@@ -0,0 +1,265 @@
++//
++//  LiveActivityConfiguration.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 23/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import ActivityKit
++import LoopKit
++import SwiftUI
++import LoopCore
++import WidgetKit
++import Charts
++import HealthKit
++
++@available(iOS 16.2, *)
++struct GlucoseLiveActivityConfiguration: Widget {
++    private let timeFormatter: DateFormatter = {
++        let dateFormatter = DateFormatter()
++        dateFormatter.dateStyle = .none
++        dateFormatter.timeStyle = .short
++        
++        return dateFormatter
++    }()
++    
++    var body: some WidgetConfiguration {
++        ActivityConfiguration(for: GlucoseActivityAttributes.self) { context in
++            // Create the presentation that appears on the Lock Screen and as a
++            // banner on the Home Screen of devices that don't support the Dynamic Island.
++            ZStack {
++                VStack {
++                    HStack(spacing: 15) {
++                        loopIcon(context)
++                        if context.attributes.addPredictiveLine {
++                            ChartView(
++                                glucoseSamples: context.state.glucoseSamples,
++                                predicatedGlucose: context.state.predicatedGlucose,
++                                predicatedStartDate: context.state.predicatedStartDate,
++                                predicatedInterval: context.state.predicatedInterval,
++                                lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                                upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg
++                            )
++                            .frame(height: 85)
++                        } else {
++                            ChartView(
++                                glucoseSamples: context.state.glucoseSamples,
++                                lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                                upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg
++                            )
++                            .frame(height: 85)
++                        }
++                    }
++                    
++                    HStack {
++                        bottomSpacer(border: false)
++                        
++                        let endIndex = context.state.bottomRow.endIndex - 1
++                        ForEach(Array(context.state.bottomRow.enumerated()), id: \.element) { (index, item) in
++                            switch (item.type) {
++                            case .generic:
++                                bottomItemGeneric(
++                                    title: item.label,
++                                    value: item.value,
++                                    unit: LocalizedString(item.unit, comment: "No comment")
++                                )
++                                
++                            case .basal:
++                                BasalViewActivity(percent: item.percentage, rate: item.rate)
++                                
++                            case .currentBg:
++                                bottomItemCurrentBG(
++                                    value: item.value,
++                                    trend: item.trend,
++                                    context: context
++                                )
++                            }
++                            
++                            if index != endIndex {
++                                bottomSpacer(border: true)
++                            }
++                        }
++                        
++                        bottomSpacer(border: false)
++                    }
++                }
++                if context.state.ended {
++                    VStack {
++                        Spacer()
++                        HStack {
++                            Spacer()
++                            Text(NSLocalizedString("Open the app to update the widget", comment: "No comment"))
++                            Spacer()
++                        }
++                        Spacer()
++                    }
++                    .background(.ultraThinMaterial.opacity(0.8))
++                    .padding(.all, -15)
++                }
++            }
++                .privacySensitive()
++                .padding(.all, 15)
++                .background(BackgroundStyle.background.opacity(0.4))
++                .activityBackgroundTint(Color.clear)
++        } dynamicIsland: { context in
++            let glucoseFormatter = NumberFormatter.glucoseFormatter(for: context.state.isMmol ? HKUnit.millimolesPerLiter : HKUnit.milligramsPerDeciliter)
++            
++            return DynamicIsland {
++                DynamicIslandExpandedRegion(.leading) {
++                    HStack(alignment: .center) {
++                        loopIcon(context)
++                            .frame(width: 40, height: 40, alignment: .trailing)
++                        Spacer()
++                        Text("\(glucoseFormatter.string(from: context.state.currentGlucose) ?? "??")\(getArrowImage(context.state.trendType))")
++                            .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
++                            .font(.title2)
++                            .fontWeight(.heavy)
++                    }
++                }
++                DynamicIslandExpandedRegion(.trailing) {
++                    HStack{
++                        Text(context.state.delta)
++                            .foregroundStyle(Color(white: 0.9))
++                            .font(.headline)
++                        Text(context.state.isMmol ? HKUnit.millimolesPerLiter.localizedShortUnitString : HKUnit.milligramsPerDeciliter.localizedShortUnitString)
++                            .foregroundStyle(Color(white: 0.7))
++                            .font(.subheadline)
++                    }
++                }
++                DynamicIslandExpandedRegion(.bottom) {
++                    if context.attributes.addPredictiveLine {
++                        ChartView(
++                            glucoseSamples: context.state.glucoseSamples,
++                            predicatedGlucose: context.state.predicatedGlucose,
++                            predicatedStartDate: context.state.predicatedStartDate,
++                            predicatedInterval: context.state.predicatedInterval,
++                            lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                            upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg
++                        )
++                            .frame(height: 75)
++                    } else {
++                        ChartView(
++                            glucoseSamples: context.state.glucoseSamples,
++                            lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                            upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg
++                        )
++                            .frame(height: 75)
++                    }
++                }
++            } compactLeading: {
++                Text("\(glucoseFormatter.string(from: context.state.currentGlucose) ?? "??")\(getArrowImage(context.state.trendType))")
++                    .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
++                    .minimumScaleFactor(0.1)
++            } compactTrailing: {
++                Text(context.state.delta)
++                    .foregroundStyle(Color(white: 0.9))
++                    .minimumScaleFactor(0.1)
++            } minimal: {
++                Text(glucoseFormatter.string(from: context.state.currentGlucose) ?? "??")
++                    .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
++                    .minimumScaleFactor(0.1)
++            }
++        }
++    }
++    
++    @ViewBuilder
++    private func loopIcon(_ context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
++        Circle()
++            .trim(from: context.state.isCloseLoop ? 0 : 0.2, to: 1)
++            .stroke(getLoopColor(context.state.lastCompleted), lineWidth: 8)
++            .rotationEffect(Angle(degrees: -126))
++            .frame(width: 36, height: 36)
++    }
++    
++    @ViewBuilder
++    private func bottomItemGeneric(title: String, value: String, unit: String) -> some View {
++        VStack(alignment: .center) {
++            Text("\(value)\(unit)")
++                .font(.headline)
++                .fontWeight(.heavy)
++                .font(Font.body.leading(.tight))
++            Text(title)
++                .font(.subheadline)
++        }
++    }
++    
++    @ViewBuilder
++    private func bottomItemCurrentBG(value: String, trend: GlucoseTrend?, context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
++        VStack(alignment: .center) {
++            HStack {
++                Text(value + getArrowImage(trend))
++                    .font(.title)
++                    .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
++                    .fontWeight(.heavy)
++                    .font(Font.body.leading(.tight))
++            }
++        }
++    }
++    
++    @ViewBuilder
++    private func bottomSpacer(border: Bool) -> some View {
++        Spacer()
++        if (border) {
++            Divider()
++                .background(.secondary)
++            Spacer()
++        }
++        
++    }
++    
++    private func getArrowImage(_ trendType: GlucoseTrend?) -> String {
++        switch trendType {
++        case .upUpUp:
++            return "\u{2191}\u{2191}" // ↑↑
++        case .upUp:
++            return "\u{2191}" // ↑
++        case .up:
++            return "\u{2197}" // ↗
++        case .flat:
++            return "\u{2192}" // →
++        case .down:
++            return "\u{2198}" // ↘
++        case .downDown:
++            return "\u{2193}" // ↓
++        case .downDownDown:
++            return "\u{2193}\u{2193}" // ↓↓
++        case .none:
++            return ""
++        }
++    }
++    
++    private func getLoopColor(_ age: Date?) -> Color {
++        var freshness: LoopCompletionFreshness = .stale
++        if let age = age {
++            freshness = LoopCompletionFreshness(age: abs(min(0, age.timeIntervalSinceNow)))
++        }
++        
++        switch freshness {
++        case .fresh:
++            return Color("fresh")
++        case .aging:
++            return Color("warning")
++        case .stale:
++            return .red
++        }
++    }
++    
++    private func getGlucoseColor(_ value: Double, context: ActivityViewContext<GlucoseActivityAttributes>) -> Color {
++        if
++            context.state.isMmol && value < context.attributes.lowerLimitChartMmol ||
++            !context.state.isMmol && value < context.attributes.lowerLimitChartMg
++        {
++            return .red
++        }
++        
++        if
++            context.state.isMmol && value > context.attributes.upperLimitChartMmol ||
++            !context.state.isMmol && value > context.attributes.upperLimitChartMg
++        {
++            return .orange
++        }
++        
++        return .green
++    }
++}
+diff --git a/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift
+new file mode 100644
+index 00000000..56a70b9d
+--- /dev/null
++++ b/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift	
+@@ -0,0 +1,122 @@
++//
++//  LiveActivityConfiguration.swift
++//  Loop Widget Extension
++//
++//  Created by Bastiaan Verhaar on 23/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import ActivityKit
++import LoopKit
++import SwiftUI
++import LoopCore
++import WidgetKit
++
++@available(iOS 16.2, *)
++struct LiveActivityConfiguration: Widget {
++    var body: some WidgetConfiguration {
++        ActivityConfiguration(for: GlucoseActivityAttributes.self) { context in
++            // Create the presentation that appears on the Lock Screen and as a
++            // banner on the Home Screen of devices that don't support the Dynamic Island.
++            HStack {
++                glucoseView(context)
++                Spacer()
++                pumpView(context)
++            }
++                .privacySensitive()
++                .padding(.all, 15)
++                .background(BackgroundStyle.background.opacity(0.4))
++                .activityBackgroundTint(Color.clear)
++        } dynamicIsland: { _ in
++            DynamicIsland {
++                DynamicIslandExpandedRegion(.leading) {
++                    HStack{}
++                }
++                DynamicIslandExpandedRegion(.trailing) {
++                    HStack{}
++                }
++                DynamicIslandExpandedRegion(.bottom) {
++                    HStack{}
++                }
++            } compactLeading: {
++                // Create the compact leading presentation.
++                HStack{}
++            } compactTrailing: {
++                // Create the compact trailing presentation.
++                HStack{}
++            } minimal: {
++                // Create the minimal presentation.
++                HStack{}
++            }
++        }
++    }
++    
++    @ViewBuilder
++    private func glucoseView(_ context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
++        HStack {
++            Circle()
++                .trim(from: context.state.isCloseLoop ? 0 : 0.2, to: 1)
++                .stroke(getLoopColor(context.state.lastCompleted), lineWidth: 4)
++                .rotationEffect(Angle(degrees: -126))
++                .frame(width: 18, height: 18)
++            
++            Text("\(context.state.glucose) \(context.state.unit)")
++                .font(.body)
++            Text(context.state.delta)
++                .font(.body)
++                .foregroundStyle(Color(UIColor.secondaryLabel))
++        }
++    }
++    
++    @ViewBuilder
++    private func pumpView(_ context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
++        HStack(spacing: 10) {
++            if let pumpHighlight = context.state.pumpHighlight {
++                HStack {
++                    Image(systemName: pumpHighlight.imageName)
++                        .foregroundColor(pumpHighlight.state == .critical ? .critical : .warning)
++                    Text(pumpHighlight.localizedMessage)
++                        .fontWeight(.heavy)
++                }
++            }
++            else if let netBasal = context.state.netBasal {
++                BasalView(netBasal:
++                    NetBasalContext(
++                        rate: netBasal.rate,
++                        percentage: netBasal.percentage,
++                        start: netBasal.start,
++                        end: netBasal.end
++                    ),
++                  isOld: false
++                )
++                
++                VStack {
++                    Text(LocalizedString("Eventual", comment: "No comment"))
++                        .font(.footnote)
++                        .foregroundColor(Color(UIColor.secondaryLabel))
++                    
++                    Text("\(context.state.eventualGlucose) \(context.state.unit)")
++                        .font(.subheadline)
++                        .fontWeight(.heavy)
++                }
++            }
++
++        }
++    }
++    
++     func getLoopColor(_ age: Date?) -> Color {
++         var freshness: LoopCompletionFreshness = .stale
++         if let age = age {
++             freshness = LoopCompletionFreshness(age: abs(min(0, age.timeIntervalSinceNow)))
++         }
++         
++         switch freshness {
++         case .fresh:
++             return Color("fresh")
++         case .aging:
++             return Color("warning")
++         case .stale:
++             return Color.red
++         }
++     }
++}
 diff --git a/Loop/Loop Widget Extension/LoopWidgets.swift b/Loop/Loop Widget Extension/LoopWidgets.swift
 index 26f92edb..684bf073 100644
 --- a/Loop/Loop Widget Extension/LoopWidgets.swift	
@@ -322,6 +1045,490 @@ index 50ba55d9..e6a2f9b9 100644
  	<key>com.apple.developer.nfc.readersession.formats</key>
  	<array>
  		<string>TAG</string>
+diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift
+new file mode 100644
+index 00000000..d47534ab
+--- /dev/null
++++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift	
+@@ -0,0 +1,104 @@
++//
++//  LiveActivityAttributes.swift
++//  LoopUI
++//
++//  Created by Bastiaan Verhaar on 23/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import ActivityKit
++import Foundation
++import LoopKit
++import LoopCore
++
++public struct GlucoseActivityAttributes: ActivityAttributes {
++    public struct ContentState: Codable, Hashable {
++        // Meta data
++        public let date: Date
++        public let ended: Bool
++        
++        // Dynamic island data
++        public let currentGlucose: Double
++        public let trendType: GlucoseTrend?
++        public let delta: String
++        public let isMmol: Bool
++        
++        // Loop circle
++        public let isCloseLoop: Bool
++        public let lastCompleted: Date?
++        
++        // Bottom row
++        public let bottomRow: [BottomRowItem]
++        
++        // Chart view
++        public let glucoseSamples: [GlucoseSampleAttributes]
++        public let predicatedGlucose: [Double]
++        public let predicatedStartDate: Date?
++        public let predicatedInterval: TimeInterval?
++    }
++    
++    public let addPredictiveLine: Bool
++    public let upperLimitChartMmol: Double
++    public let lowerLimitChartMmol: Double
++    public let upperLimitChartMg: Double
++    public let lowerLimitChartMg: Double
++}
++
++public struct BottomRowItem: Codable, Hashable {
++    public enum BottomRowType: Codable, Hashable {
++        case generic
++        case basal
++        case currentBg
++    }
++    
++    public let type: BottomRowType
++    
++    // Generic properties
++    public let label: String
++    public let value: String
++    public let unit: String
++    
++    public let trend: GlucoseTrend?
++
++    // Basal properties
++    public let rate: Double
++    public let percentage: Double
++    
++    init(label: String, value: String, unit: String) {
++        self.type = .generic
++        self.label = label
++        self.value = value
++        self.unit = unit
++        
++        self.trend = nil
++        self.rate = 0
++        self.percentage = 0
++    }
++    
++    init(label: String, value: String, trend: GlucoseTrend?) {
++        self.type = .currentBg
++        self.label = label
++        self.value = value
++        self.trend = trend
++        
++        self.unit = ""
++        self.rate = 0
++        self.percentage = 0
++    }
++    
++    init(rate: Double, percentage: Double) {
++        self.type = .basal
++        self.rate = rate
++        self.percentage = percentage
++        
++        self.label = ""
++        self.value = ""
++        self.unit = ""
++        self.trend = nil
++    }
++}
++
++public struct GlucoseSampleAttributes: Codable, Hashable {
++    public let x: Date
++    public let y: Double
++}
+diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
+new file mode 100644
+index 00000000..d9cf083a
+--- /dev/null
++++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
+@@ -0,0 +1,368 @@
++//
++//  LiveActivityManaer.swift
++//  Loop
++//
++//  Created by Bastiaan Verhaar on 24/06/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import LoopKitUI
++import LoopKit
++import LoopCore
++import Foundation
++import HealthKit
++import ActivityKit
++
++extension Notification.Name {
++    static let LiveActivitySettingsChanged = Notification.Name(rawValue:  "com.loopKit.notification.LiveActivitySettingsChanged")
++}
++
++@available(iOS 16.2, *)
++class GlucoseActivityManager {
++    private let activityInfo = ActivityAuthorizationInfo()
++    private var activity: Activity<GlucoseActivityAttributes>?
++    private let healthStore = HKHealthStore()
++    
++    private let glucoseStore: GlucoseStoreProtocol
++    private let doseStore: DoseStoreProtocol
++    
++    private var startDate: Date = Date.now
++    private var settings: LiveActivitySettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++    
++    private let cobFormatter: NumberFormatter =  {
++        let numberFormatter = NumberFormatter()
++        numberFormatter.numberStyle = .none
++        return numberFormatter
++    }()
++    private let iobFormatter: NumberFormatter =  {
++        let numberFormatter = NumberFormatter()
++        numberFormatter.numberStyle = .none
++        numberFormatter.maximumFractionDigits = 1
++        numberFormatter.minimumFractionDigits = 1
++        return numberFormatter
++    }()
++    private let timeFormatter: DateFormatter = {
++        let dateFormatter = DateFormatter()
++        dateFormatter.dateStyle = .none
++        dateFormatter.timeStyle = .short
++        
++        return dateFormatter
++    }()
++    
++    init?(glucoseStore: GlucoseStoreProtocol, doseStore: DoseStoreProtocol) {
++        guard self.activityInfo.areActivitiesEnabled else {
++            return nil
++        }
++        
++        self.glucoseStore = glucoseStore
++        self.doseStore = doseStore
++        
++        // Ensure settings exist
++        if UserDefaults.standard.liveActivity == nil {
++            self.settings = LiveActivitySettings()
++        }
++        
++        let nc = NotificationCenter.default
++        nc.addObserver(self, selector: #selector(self.appMovedToForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
++        nc.addObserver(self, selector: #selector(self.settingsChanged), name: .LiveActivitySettingsChanged, object: nil)
++        guard self.settings.enabled else {
++            return
++        }
++        
++        initEmptyActivity(settings: self.settings)
++        
++        Task {
++            await self.endUnknownActivities()
++        }
++    }
++    
++    public func update() {
++        Task {
++            if self.needsRecreation(), await UIApplication.shared.applicationState == .active {
++                // activity is no longer visible or old. End it and try to push the update again
++                await endActivity()
++                update()
++                return
++            }
++            
++            guard let unit = await self.healthStore.cachedPreferredUnits(for: .bloodGlucose) else {
++                return
++            }
++            
++            await self.endUnknownActivities()
++
++            let statusContext = UserDefaults.appGroup?.statusExtensionContext
++            let glucoseFormatter = NumberFormatter.glucoseFormatter(for: unit)
++            
++            let glucoseSamples = self.getGlucoseSample(unit: unit)
++            guard let currentGlucose = glucoseSamples.last else {
++                return
++            }
++            
++            let current = currentGlucose.quantity.doubleValue(for: unit)
++            
++            var delta: String = "+\(glucoseFormatter.string(from: Double(0)) ?? "")"
++            if glucoseSamples.count > 1 {
++                let prevSample = glucoseSamples[glucoseSamples.count - 2]
++                let deltaValue = current - (prevSample.quantity.doubleValue(for: unit))
++                delta = "\(deltaValue < 0 ? "-" : "+")\(glucoseFormatter.string(from: abs(deltaValue)) ?? "??")"
++            }
++            
++            
++            let bottomRow = self.getBottomRow(
++                currentGlucose: current,
++                delta: delta,
++                statusContext: statusContext,
++                glucoseFormatter: glucoseFormatter
++            )
++            
++            var predicatedGlucose: [Double] = []
++            if let samples = statusContext?.predictedGlucose?.values, settings.addPredictiveLine {
++                predicatedGlucose = samples
++            }
++
++            let state = GlucoseActivityAttributes.ContentState(
++                date: currentGlucose.startDate,
++                ended: false,
++                currentGlucose: current,
++                trendType: statusContext?.glucoseDisplay?.trendType,
++                delta: delta,
++                isMmol: unit == HKUnit.millimolesPerLiter,
++                isCloseLoop: statusContext?.isClosedLoop ?? false,
++                lastCompleted: statusContext?.lastLoopCompleted,
++                bottomRow: bottomRow,
++                // In order to prevent maxSize errors, only allow the last 100 samples to be sent
++                // Will most likely not be an issue, might be an issue for debugging/CGM simulator with 5sec interval
++                glucoseSamples: glucoseSamples.suffix(100).map { item in
++                    return GlucoseSampleAttributes(x: item.startDate, y: item.quantity.doubleValue(for: unit))
++                },
++                predicatedGlucose: predicatedGlucose,
++                predicatedStartDate: statusContext?.predictedGlucose?.startDate,
++                predicatedInterval: statusContext?.predictedGlucose?.interval
++            )
++            
++            await self.activity?.update(ActivityContent(
++                state: state,
++                staleDate: Date.now.addingTimeInterval(.hours(1))
++            ))
++        }
++    }
++    
++    @objc private func settingsChanged() {
++        Task {
++            let newSettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++            
++            // Update live activity if needed
++            if !newSettings.enabled, let activity = self.activity {
++                await activity.end(nil, dismissalPolicy: .immediate)
++                self.activity = nil
++                
++                return
++            } else if newSettings.enabled && self.activity == nil {
++                initEmptyActivity(settings: newSettings)
++                
++            } else if
++                newSettings.addPredictiveLine != self.settings.addPredictiveLine ||
++                newSettings.lowerLimitChartMmol != self.settings.lowerLimitChartMmol ||
++                newSettings.upperLimitChartMmol != self.settings.upperLimitChartMmol ||
++                newSettings.lowerLimitChartMg != self.settings.lowerLimitChartMg ||
++                newSettings.upperLimitChartMg != self.settings.upperLimitChartMg
++            {
++                await self.activity?.end(nil, dismissalPolicy: .immediate)
++                self.activity = nil
++                
++                initEmptyActivity(settings: newSettings)
++            }
++            
++            self.settings = newSettings
++            update()
++        }
++    }
++    
++    @objc private func appMovedToForeground() {
++        guard let activity = self.activity else {
++            return
++        }
++        
++        Task {
++            await activity.end(nil, dismissalPolicy: .immediate)
++            await self.endUnknownActivities()
++            self.activity = nil
++            
++            initEmptyActivity(settings: self.settings)
++            update()
++        }
++    }
++    
++    private func endUnknownActivities() async {
++        for unknownActivity in Activity<GlucoseActivityAttributes>.activities
++            .filter({ self.activity?.id != $0.id })
++        {
++            await unknownActivity.end(nil, dismissalPolicy: .immediate)
++        }
++    }
++    
++    private func endActivity() async {
++        let dynamicState = self.activity?.content.state
++        
++        await self.activity?.end(nil, dismissalPolicy: .immediate)
++        for unknownActivity in Activity<GlucoseActivityAttributes>.activities {
++            await unknownActivity.end(nil, dismissalPolicy: .immediate)
++        }
++        
++        do {
++            if let dynamicState = dynamicState {
++                self.activity = try Activity.request(
++                    attributes: GlucoseActivityAttributes(
++                        addPredictiveLine: self.settings.addPredictiveLine,
++                        upperLimitChartMmol: self.settings.upperLimitChartMmol,
++                        lowerLimitChartMmol: self.settings.lowerLimitChartMmol,
++                        upperLimitChartMg: self.settings.upperLimitChartMg,
++                        lowerLimitChartMg: self.settings.lowerLimitChartMg
++                    ),
++                    content: .init(state: dynamicState, staleDate: nil),
++                    pushType: .token
++                )
++            }
++            self.startDate = Date.now
++        } catch {}
++
++    }
++    
++    private func needsRecreation() -> Bool {
++        if !self.settings.enabled {
++            return false
++        }
++        
++        switch activity?.activityState {
++        case .dismissed,
++             .ended,
++             .stale:
++            return true
++        case .active:
++            return -startDate.timeIntervalSinceNow > .hours(1)
++        default:
++            return true
++        }
++    }
++    
++    private func getInsulinOnBoard() -> String {
++        let updateGroup = DispatchGroup()
++        var iob = "??"
++        
++        updateGroup.enter()
++        self.doseStore.insulinOnBoard(at: Date.now) { result in
++            switch (result) {
++            case .failure:
++                break
++            case .success(let iobValue):
++                iob = self.iobFormatter.string(from: iobValue.value) ?? "??"
++                break
++            }
++            
++            updateGroup.leave()
++        }
++        
++        _ = updateGroup.wait(timeout: .distantFuture)
++        return iob
++    }
++    
++    private func getGlucoseSample(unit: HKUnit) -> [StoredGlucoseSample] {
++        let updateGroup = DispatchGroup()
++        var samples: [StoredGlucoseSample] = []
++        
++        updateGroup.enter()
++        
++        // When in spacious mode, we want to show the predictive line
++        // In compact mode, we only want to show the history
++        let timeInterval: TimeInterval = self.settings.addPredictiveLine ? .hours(-2) : .hours(-6)
++        self.glucoseStore.getGlucoseSamples(
++            start: Date.now.addingTimeInterval(timeInterval),
++            end: Date.now
++        ) { result in
++            switch (result) {
++            case .failure:
++                break
++            case .success(let data):
++                samples = data
++                break
++            }
++            
++            updateGroup.leave()
++        }
++        
++        _ = updateGroup.wait(timeout: .distantFuture)
++        return samples
++    }
++    
++    private func getBottomRow(currentGlucose: Double, delta: String, statusContext: StatusExtensionContext?, glucoseFormatter: NumberFormatter) -> [BottomRowItem] {
++        return self.settings.bottomRowConfiguration.map { type in
++            switch(type) {
++            case .iob:
++                return BottomRowItem(label: type.name(), value: getInsulinOnBoard(), unit: "U")
++                
++            case .cob:
++                var cob: String = "0"
++                if let cobValue = statusContext?.carbsOnBoard {
++                    cob = self.cobFormatter.string(from: cobValue) ?? "??"
++                }
++                return BottomRowItem(label: type.name(), value: cob, unit: "g")
++                
++            case .basal:
++                guard let netBasalContext = statusContext?.netBasal else {
++                    return BottomRowItem(rate: 0, percentage: 0)
++                }
++
++                return BottomRowItem(rate: netBasalContext.rate, percentage: netBasalContext.percentage)
++                
++            case .currentBg:
++                return BottomRowItem(label: type.name(), value: "\(glucoseFormatter.string(from: currentGlucose) ?? "??")", trend: statusContext?.glucoseDisplay?.trendType)
++                
++            case .eventualBg:
++                guard let eventual = statusContext?.predictedGlucose?.values.last else {
++                    return BottomRowItem(label: type.name(), value: "??", unit: "")
++                }
++                
++                return BottomRowItem(label: type.name(), value: glucoseFormatter.string(from: eventual) ?? "??", unit: "")
++                
++            case .deltaBg:
++                return BottomRowItem(label: type.name(), value: delta, unit: "")
++                
++            case .updatedAt:
++                return BottomRowItem(label: type.name(), value: timeFormatter.string(from: Date.now), unit: "")
++            }
++       }
++    }
++    
++    private func initEmptyActivity(settings: LiveActivitySettings) {
++        do {
++            let dynamicState = GlucoseActivityAttributes.ContentState(
++                date: Date.now,
++                ended: true,
++                currentGlucose: 0,
++                trendType: nil,
++                delta: "",
++                isMmol: true,
++                isCloseLoop: false,
++                lastCompleted: nil,
++                bottomRow: [],
++                glucoseSamples: [],
++                predicatedGlucose: [],
++                predicatedStartDate: nil,
++                predicatedInterval: nil
++            )
++            
++            self.activity = try Activity.request(
++                attributes: GlucoseActivityAttributes(
++                    addPredictiveLine: settings.addPredictiveLine,
++                    upperLimitChartMmol: self.settings.upperLimitChartMmol,
++                    lowerLimitChartMmol: self.settings.lowerLimitChartMmol,
++                    upperLimitChartMg: self.settings.upperLimitChartMg,
++                    lowerLimitChartMg: self.settings.lowerLimitChartMg
++                ),
++                content: .init(state: dynamicState, staleDate: nil),
++                pushType: .token
++            )
++        } catch {}
++    }
++}
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
 index 2319f4ec..2bd6cf68 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
@@ -397,6 +1604,382 @@ index e9a38e72..94e542a6 100644
          }
      }
  
+diff --git a/Loop/Loop/Views/LiveActivityBottomRowManagerView.swift b/Loop/Loop/Views/LiveActivityBottomRowManagerView.swift
+new file mode 100644
+index 00000000..49e50caa
+--- /dev/null
++++ b/Loop/Loop/Views/LiveActivityBottomRowManagerView.swift
+@@ -0,0 +1,117 @@
++//
++//  LiveActivityBottomRowManagerView.swift
++//  Loop
++//
++//  Created by Bastiaan Verhaar on 06/07/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import LoopKitUI
++import LoopCore
++import SwiftUI
++
++struct LiveActivityBottomRowManagerView: View {
++    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
++
++    // The maximum items in the bottom row
++    private let maxSize = 4
++    
++    @State var showAdd: Bool = false
++    @State var configuration: [BottomRowConfiguration] = (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).bottomRowConfiguration
++    
++    var addItem: ActionSheet {
++        var buttons: [ActionSheet.Button] = BottomRowConfiguration.all.map { item in
++            ActionSheet.Button.default(Text(item.description())) {
++                configuration.append(item)
++            }
++        }
++        buttons.append(.cancel(Text(NSLocalizedString("Cancel", comment: "Button text to cancel"))))
++        
++        return ActionSheet(title: Text(NSLocalizedString("Add item to bottom row", comment: "Title for Add item")), buttons: buttons)
++    }
++    
++    var body: some View {
++        List {
++            ForEach($configuration, id: \.self) { item in
++                HStack {
++                    deleteButton
++                        .onTapGesture {
++                            onDelete(item.wrappedValue)
++                        }
++                    Text(item.wrappedValue.description())
++                    
++                    Spacer()
++                    editBars
++                }
++            }
++                .onMove(perform: onReorder)
++                .deleteDisabled(true)
++            
++            Section {
++                Button(action: onSave) {
++                    Text(NSLocalizedString("Save", comment: ""))
++                }
++                .buttonStyle(ActionButtonStyle())
++                .listRowInsets(EdgeInsets())
++            }
++        }
++            .toolbar {
++                ToolbarItem(placement: .navigationBarTrailing) {
++                    Button(
++                        action: { showAdd = true },
++                        label: { Image(systemName: "plus") }
++                    )
++                    .disabled(configuration.count >= self.maxSize)
++                }
++            }
++            .actionSheet(isPresented: $showAdd, content: { addItem })
++            .insetGroupedListStyle()
++            .navigationBarTitle(Text(NSLocalizedString("Bottom row", comment: "Live activity Bottom row configuration title")))
++    }
++    
++    @ViewBuilder
++    private var deleteButton: some View {
++        ZStack {
++            Color.red
++                .clipShape(RoundedRectangle(cornerRadius: 12.5))
++                .frame(width: 20, height: 20)
++            
++            Image(systemName: "minus")
++                .foregroundColor(.white)
++        }
++        .contentShape(Rectangle())
++    }
++    
++    @ViewBuilder
++    private var editBars: some View {
++        Image(systemName: "line.3.horizontal")
++            .foregroundColor(Color(UIColor.tertiaryLabel))
++            .font(.title2)
++    }
++    
++    private func onSave() {
++        var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++        settings.bottomRowConfiguration = configuration
++        
++        UserDefaults.standard.liveActivity = settings
++        NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++        
++        self.presentationMode.wrappedValue.dismiss()
++    }
++    
++    func onReorder(from: IndexSet, to: Int) {
++        withAnimation {
++            configuration.move(fromOffsets: from, toOffset: to)
++        }
++    }
++    
++    func onDelete(_ item: BottomRowConfiguration) {
++        withAnimation {
++            _ = configuration.remove(item)
++        }
++    }
++}
++
++#Preview {
++    LiveActivityBottomRowManagerView()
++}
+diff --git a/Loop/Loop/Views/LiveActivityManagementView.swift b/Loop/Loop/Views/LiveActivityManagementView.swift
+new file mode 100644
+index 00000000..6e8a6c4d
+--- /dev/null
++++ b/Loop/Loop/Views/LiveActivityManagementView.swift
+@@ -0,0 +1,135 @@
++//
++//  LiveActivityManagementView.swift
++//  Loop
++//
++//  Created by Bastiaan Verhaar on 04/07/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import SwiftUI
++import LoopKitUI
++import LoopCore
++import HealthKit
++
++struct LiveActivityManagementView: View {
++    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
++    
++    private var enabled: Binding<Bool> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).enabled },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.enabled = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++            }
++        )
++
++    private var addPredictiveLine: Binding<Bool> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).addPredictiveLine },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.addPredictiveLine = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++            }
++        )
++    
++    private var upperLimitMmol: Binding<Double> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).upperLimitChartMmol },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.upperLimitChartMmol = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++
++            }
++        )
++    
++    private var lowerLimitMmol: Binding<Double> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).lowerLimitChartMmol },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.lowerLimitChartMmol = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++
++            }
++        )
++    
++    private var upperLimitMg: Binding<Double> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).upperLimitChartMg },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.upperLimitChartMg = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++
++            }
++        )
++    
++    private var lowerLimitMg: Binding<Double> =
++        Binding(
++            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).lowerLimitChartMg },
++            set: { newValue in
++                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++                settings.lowerLimitChartMg = newValue
++                
++                UserDefaults.standard.liveActivity = settings
++                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++
++            }
++        )
++    
++    var body: some View {
++        List {
++            Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: enabled)
++            Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: addPredictiveLine)
++            if self.displayGlucosePreference.unit == .millimolesPerLiter {
++                TextInput(label: "Upper limit chart", value: upperLimitMmol)
++                TextInput(label: "Lower limit chart", value: lowerLimitMmol)
++            } else {
++                TextInput(label: "Upper limit chart", value: upperLimitMg)
++                TextInput(label: "Lower limit chart", value: lowerLimitMg)
++            }
++            
++            Section {
++                NavigationLink(
++                    destination: LiveActivityBottomRowManagerView(),
++                    label: { Text(NSLocalizedString("Bottom row configuration", comment: "Title for Bottom row configuration")) }
++                )
++            }
++        }
++            .insetGroupedListStyle()
++            .navigationBarTitle(Text(NSLocalizedString("Live activity", comment: "Live activity screen title")))
++    }
++    
++    @ViewBuilder
++    private func TextInput(label: String, value: Binding<Double>) -> some View {
++        HStack {
++            Text(NSLocalizedString(label, comment: "no comment"))
++            Spacer()
++            TextField("", value: value, format: .number)
++                .multilineTextAlignment(.trailing)
++            Text(self.displayGlucosePreference.unit.localizedShortUnitString)
++        }
++    }
++    
++    private func mutate(_ updater: (inout LiveActivitySettings) -> Void) {
++        var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++        
++        updater(&settings)
++        
++        UserDefaults.standard.liveActivity = settings
++        NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
++    }
++}
+diff --git a/Loop/LoopCore/LiveActivitySettings.swift b/Loop/LoopCore/LiveActivitySettings.swift
+new file mode 100644
+index 00000000..0218db42
+--- /dev/null
++++ b/Loop/LoopCore/LiveActivitySettings.swift
+@@ -0,0 +1,106 @@
++//
++//  LiveActivitySettings.swift
++//  LoopCore
++//
++//  Created by Bastiaan Verhaar on 04/07/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++
++public enum BottomRowConfiguration: Codable {
++    case iob
++    case cob
++    case basal
++    case currentBg
++    case eventualBg
++    case deltaBg
++    case updatedAt
++    
++    static let defaults: [BottomRowConfiguration] =  [.currentBg, .iob, .cob, .updatedAt]
++    public static let all: [BottomRowConfiguration] = [.iob, .cob, .basal, .currentBg, .eventualBg, .deltaBg, .updatedAt]
++    
++    public func name() -> String {
++        switch self {
++        case .iob:
++            return NSLocalizedString("IOB", comment: "")
++        case .cob:
++            return NSLocalizedString("COB", comment: "")
++        case .basal:
++            return NSLocalizedString("Basal", comment: "")
++        case .currentBg:
++            return NSLocalizedString("Current BG", comment: "")
++        case .eventualBg:
++            return NSLocalizedString("Event", comment: "")
++        case .deltaBg:
++            return NSLocalizedString("Delta", comment: "")
++        case .updatedAt:
++            return NSLocalizedString("Updated", comment: "")
++        }
++    }
++    
++    public func description() -> String {
++        switch self {
++        case .iob:
++            return NSLocalizedString("Active Insulin", comment: "")
++        case .cob:
++            return NSLocalizedString("Active Carbohydrates", comment: "")
++        case .basal:
++            return NSLocalizedString("Basal", comment: "")
++        case .currentBg:
++            return NSLocalizedString("Current Glucose", comment: "")
++        case .eventualBg:
++            return NSLocalizedString("Eventually", comment: "")
++        case .deltaBg:
++            return NSLocalizedString("Delta", comment: "")
++        case .updatedAt:
++            return NSLocalizedString("Updated at", comment: "")
++        }
++    }
++}
++
++public struct LiveActivitySettings: Codable {
++    public var enabled: Bool
++    public var addPredictiveLine: Bool
++    public var upperLimitChartMmol: Double
++    public var lowerLimitChartMmol: Double
++    public var upperLimitChartMg: Double
++    public var lowerLimitChartMg: Double
++    public var bottomRowConfiguration: [BottomRowConfiguration]
++    
++    private enum CodingKeys: String, CodingKey {
++        case enabled
++        case addPredictiveLine
++        case bottomRowConfiguration
++        case upperLimitChartMmol
++        case lowerLimitChartMmol
++        case upperLimitChartMg
++        case lowerLimitChartMg
++    }
++    
++    private static let defaultUpperLimitMmol = Double(10)
++    private static let defaultLowerLimitMmol = Double(4)
++    private static let defaultUpperLimitMg = Double(180)
++    private static let defaultLowerLimitMg = Double(72)
++    
++    public init(from decoder:Decoder) throws {
++        let values = try decoder.container(keyedBy: CodingKeys.self)
++        enabled = try values.decode(Bool.self, forKey: .enabled)
++        addPredictiveLine = try values.decode(Bool.self, forKey: .addPredictiveLine)
++        upperLimitChartMmol = try values.decode(Double?.self, forKey: .upperLimitChartMmol) ?? LiveActivitySettings.defaultUpperLimitMmol
++        lowerLimitChartMmol = try values.decode(Double?.self, forKey: .lowerLimitChartMmol) ?? LiveActivitySettings.defaultLowerLimitMmol
++        upperLimitChartMg = try values.decode(Double?.self, forKey: .upperLimitChartMg) ?? LiveActivitySettings.defaultUpperLimitMg
++        lowerLimitChartMg = try values.decode(Double?.self, forKey: .lowerLimitChartMg) ?? LiveActivitySettings.defaultLowerLimitMg
++        bottomRowConfiguration = try values.decode([BottomRowConfiguration].self, forKey: .bottomRowConfiguration)
++    }
++    
++    public init() {
++        self.enabled = true
++        self.addPredictiveLine = true
++        self.upperLimitChartMmol = LiveActivitySettings.defaultUpperLimitMmol
++        self.lowerLimitChartMmol = LiveActivitySettings.defaultLowerLimitMmol
++        self.upperLimitChartMg = LiveActivitySettings.defaultUpperLimitMg
++        self.lowerLimitChartMg = LiveActivitySettings.defaultLowerLimitMg
++        self.bottomRowConfiguration = BottomRowConfiguration.defaults
++    }
++}
 diff --git a/Loop/LoopCore/NSUserDefaults.swift b/Loop/LoopCore/NSUserDefaults.swift
 index 93fa7e17..dacf2ecd 100644
 --- a/Loop/LoopCore/NSUserDefaults.swift
@@ -439,46 +2022,3 @@ index 93fa7e17..dacf2ecd 100644
  
      public func removeLegacyLoopSettings() {
          removeObject(forKey: "com.loudnate.Naterade.BasalRateSchedule")
-diff --git a/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved b/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
-index 20f167d..0b9e899 100644
---- a/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
-+++ b/LoopWorkspace.xcworkspace/xcshareddata/swiftpm/Package.resolved
-@@ -1,5 +1,5 @@
- {
--  "originHash" : "f8d1e9c237647ab612da7f2bd3ae26946f39410508314c00cf54509a673f147e",
-+  "originHash" : "1de2b590d6f0431984f3fb5863223367a97a5a586bbc2d419c5e769be9322aba",
-   "pins" : [
-     {
-       "identity" : "amplitude-ios",
-@@ -46,15 +46,6 @@
-         "revision" : "c676a9737c76e127e3ae5776247b226bc6d7652d"
-       }
-     },
--    {
--      "identity" : "mkringprogressview",
--      "kind" : "remoteSourceControl",
--      "location" : "https://github.com/maxkonovalov/MKRingProgressView.git",
--      "state" : {
--        "branch" : "master",
--        "revision" : "660888aab1d2ab0ed7eb9eb53caec12af4955fa7"
--      }
--    },
-     {
-       "identity" : "nightscoutkit",
-       "kind" : "remoteSourceControl",
-@@ -98,15 +89,6 @@
-         "branch" : "dev",
-         "revision" : "54045c2e7d720dcd8a0909037772dcd6f54f0158"
-       }
--    },
--    {
--      "identity" : "zipfoundation",
--      "kind" : "remoteSourceControl",
--      "location" : "https://github.com/LoopKit/ZIPFoundation.git",
--      "state" : {
--        "branch" : "stream-entry",
--        "revision" : "c67b7509ec82ee2b4b0ab3f97742b94ed9692494"
--      }
-     }
-   ],
-   "version" : 3
