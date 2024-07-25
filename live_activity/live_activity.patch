@@ -325,7 +325,7 @@ index 00000000..2f5342e1
 +}
 diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift
 new file mode 100644
-index 00000000..f1b24aec
+index 00000000..a66fa0b2
 --- /dev/null
 +++ b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift	
 @@ -0,0 +1,265 @@
@@ -444,7 +444,7 @@ index 00000000..f1b24aec
 +                        Spacer()
 +                        Text("\(glucoseFormatter.string(from: context.state.currentGlucose) ?? "??")\(getArrowImage(context.state.trendType))")
 +                            .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
-+                            .font(.title2)
++                            .font(.headline)
 +                            .fontWeight(.heavy)
 +                    }
 +                }
