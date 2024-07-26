@@ -21,7 +21,7 @@ index fc770192..0b85b4c2 100644
  
          let midnight = Calendar.current.startOfDay(for: Date())
 -        let listStart = min(midnight, chartStartDate, Date(timeIntervalSinceNow: -deviceManager.carbStore.maximumAbsorptionTimeInterval))
-+        let earliestMidnight = midnight - .hours(6*24)
++        let previousMidnight = midnight - .hours(6*24)
  
          let reloadGroup = DispatchGroup()
          let shouldUpdateGlucose = currentContext.contains(.glucose)
@@ -30,8 +30,8 @@ index fc770192..0b85b4c2 100644
                  insulinCounteractionEffects = allInsulinCounteractionEffects.filterDateRange(chartStartDate, nil)
  
 +                let earliestCounteractionEffect = allInsulinCounteractionEffects.first?.startDate ?? Date()
-+                // Show carb entries back through midnight a week ago, or only as far back as counteraction effects are available
-+                let boundOnCarbList = max(earliestMidnight, earliestCounteractionEffect)
++                // Show carb entries as far back as previous midnight, or only as far back as counteraction effects are available
++                let boundOnCarbList = max(previousMidnight, earliestCounteractionEffect)
 +                // If counteraction effects are missing, at least show all the entries for today and those on the chart
 +                let displayListStart = min(boundOnCarbList, midnight, chartStartDate)
 +                // To estimate dynamic carb absorption for the entry at the start of the list, we need to fetch samples that might still be absorbing
