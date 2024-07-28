@@ -146,7 +146,7 @@ index 00000000..8fca70de
 +}
 diff --git a/Loop/Loop Widget Extension/Live Activity/ChartView.swift b/Loop/Loop Widget Extension/Live Activity/ChartView.swift
 new file mode 100644
-index 00000000..4480c5b2
+index 00000000..2d48d1dd
 --- /dev/null
 +++ b/Loop/Loop Widget Extension/Live Activity/ChartView.swift	
 @@ -0,0 +1,151 @@
@@ -191,9 +191,9 @@ index 00000000..4480c5b2
 +    var body: some View {
 +        ZStack(alignment: Alignment(horizontal: .trailing, vertical: .top)){
 +            Chart {
-+                if let preset = self.preset, predicatedData.count > 0, preset.endDate > Date.now.addingTimeInterval(.hours(-6)) {
++                if let preset = self.preset, predicatedData.count > 0 {
 +                    RectangleMark(
-+                        xStart: .value("Start", preset.startDate),
++                        xStart: .value("Start", Date.now),
 +                        xEnd: .value("End", preset.endDate),
 +                        yStart: .value("Preset override", preset.minValue),
 +                        yEnd: .value("Preset override", preset.maxValue)
@@ -254,11 +254,11 @@ index 00000000..4480c5b2
 +                }
 +            }
 +            
-+            if let preset = self.preset, preset.endDate > Date.now {
++            if let preset = self.preset {
 +                Text(preset.title)
 +                    .font(.footnote)
 +                    .padding(.trailing, 5)
-+                    .padding(.top, 2)
++                    .padding(.top, 5)
 +            }
 +        }
 +    }
@@ -1092,10 +1092,10 @@ index 50ba55d9..e6a2f9b9 100644
  		<string>TAG</string>
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift
 new file mode 100644
-index 00000000..90329be9
+index 00000000..c6d161bf
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift	
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,121 @@
 +//
 +//  LiveActivityAttributes.swift
 +//  LoopUI
@@ -1146,7 +1146,6 @@ index 00000000..90329be9
 +
 +public struct Preset: Codable, Hashable {
 +    public let title: String
-+    public let startDate: Date
 +    public let endDate: Date
 +    public let minValue: Double
 +    public let maxValue: Double
@@ -1220,10 +1219,10 @@ index 00000000..90329be9
 +}
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
 new file mode 100644
-index 00000000..38ca1ab7
+index 00000000..af89d87d
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
-@@ -0,0 +1,472 @@
+@@ -0,0 +1,430 @@
 +//
 +//  LiveActivityManaer.swift
 +//  Loop
@@ -1253,7 +1252,6 @@ index 00000000..38ca1ab7
 +    private let doseStore: DoseStoreProtocol
 +    private let glucoseRangeSchedule: GlucoseRangeSchedule?
 +    private var preset: TemporaryScheduleOverride?
-+    private var presetStartDate: Date?
 +    
 +    private var startDate: Date = Date.now
 +    private var settings: LiveActivitySettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
@@ -1287,7 +1285,6 @@ index 00000000..38ca1ab7
 +        self.doseStore = doseStore
 +        self.glucoseRangeSchedule = glucoseRangeSchedule
 +        self.preset = preset
-+        self.presetStartDate = preset != nil ? Date.now : nil
 +        
 +        // Ensure settings exist
 +        if UserDefaults.standard.liveActivity == nil {
@@ -1302,7 +1299,6 @@ index 00000000..38ca1ab7
 +        }
 +        
 +        initEmptyActivity(settings: self.settings)
-+        update()
 +        
 +        Task {
 +            await self.endUnknownActivities()
@@ -1362,13 +1358,9 @@ index 00000000..38ca1ab7
 +            }
 +            
 +            var presetContext: Preset? = nil
-+            if let preset = self.preset,
-+               let endDateChart = endDateChart,
-+               let startDate = presetStartDate
-+            {
++            if let preset = self.preset, let endDateChart = endDateChart {
 +                presetContext = Preset(
 +                    title: preset.getTitle(),
-+                    startDate: startDate,
 +                    endDate: preset.duration.isInfinite ? endDateChart : min(Date.now + preset.duration.timeInterval, endDateChart),
 +                    minValue: preset.settings.targetRange?.lowerBound.doubleValue(for: unit) ?? 0,
 +                    maxValue: preset.settings.targetRange?.upperBound.doubleValue(for: unit) ?? 0
@@ -1378,47 +1370,13 @@ index 00000000..38ca1ab7
 +            var glucoseRanges: [GlucoseRangeValue] = []
 +            if let glucoseRangeSchedule = self.glucoseRangeSchedule, let start = glucoseSamples.first?.startDate, let end = endDateChart {
 +                for item in glucoseRangeSchedule.quantityBetween(start: start, end: end) {
-+                    let minValue = item.value.lowerBound.doubleValue(for: unit)
-+                    let maxValue = item.value.upperBound.doubleValue(for: unit)
-+                    let startDate = max(item.startDate, start)
-+                    let endDate = min(item.endDate, end)
-+                    
-+                    if let presetContext = presetContext {
-+                        if presetContext.startDate > startDate, presetContext.endDate < endDate {
-+                            // A preset is active during this schedule
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: startDate,
-+                                endDate: presetContext.startDate
-+                            ))
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: presetContext.endDate,
-+                                endDate: endDate
-+                            ))
-+                        } else {
-+                            // No preset is active in this schedule
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: startDate,
-+                                endDate: endDate
-+                            ))
-+                        }
-+                    } else {
-+                        glucoseRanges.append(GlucoseRangeValue(
-+                            id: UUID(),
-+                            minValue: minValue,
-+                            maxValue: maxValue,
-+                            startDate: startDate,
-+                            endDate: endDate
-+                        ))
-+                    }
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: item.value.lowerBound.doubleValue(for: unit),
++                        maxValue: item.value.upperBound.doubleValue(for: unit),
++                        startDate: max(item.startDate, start),
++                        endDate: min(item.endDate, end)
++                    ))
 +                }
 +            }
 +
@@ -1672,7 +1630,6 @@ index 00000000..38ca1ab7
 +    
 +    func presetActivated(preset: TemporaryScheduleOverride) {
 +        self.preset = preset
-+        self.presetStartDate = Date.now
 +        self.update()
 +    }
 +    
@@ -1697,7 +1654,7 @@ index 00000000..38ca1ab7
 +    }
 +}
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2319f4ec..39a2fc4e 100644
+index 2319f4ec..795d2bd4 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -68,6 +68,8 @@ final class LoopDataManager {
@@ -1718,7 +1675,7 @@ index 2319f4ec..39a2fc4e 100644
 +            glucoseStore: self.glucoseStore,
 +            doseStore: self.doseStore,
 +            glucoseRangeSchedule: settings.glucoseTargetRangeSchedule,
-+            preset: self.settings.scheduleOverride ?? self.settings.preMealOverride
++            preset: self.settings.scheduleOverride
 +        )
  
          overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
@@ -1767,20 +1724,7 @@ index 2319f4ec..39a2fc4e 100644
  
                      self.clearCachedInsulinEffects()
                      self.remoteRecommendationNeedsUpdating = true
-@@ -247,6 +263,12 @@ final class LoopDataManager {
-         if newValue.preMealOverride != oldValue.preMealOverride {
-             // The prediction isn't actually invalid, but a target range change requires recomputing recommended doses
-             predictedGlucose = nil
-+            
-+            if let preMeal = newValue.preMealOverride {
-+                self.liveActivityManager?.presetActivated(preset: preMeal)
-+            } else {
-+                self.liveActivityManager?.presetDeactivated()
-+            }
-         }
- 
-         if newValue.scheduleOverride != oldValue.scheduleOverride {
-@@ -256,12 +278,14 @@ final class LoopDataManager {
+@@ -256,12 +272,14 @@ final class LoopDataManager {
                  for observer in self.presetActivationObservers {
                      observer.presetDeactivated(context: oldPreset.context)
                  }
