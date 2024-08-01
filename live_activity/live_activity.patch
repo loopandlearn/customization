@@ -95,55 +95,6 @@ index 00000000..915335c5
 +        return formatter
 +    }()
 +}
-diff --git a/Loop/Loop Widget Extension/Live Activity/ChartValues.swift b/Loop/Loop Widget Extension/Live Activity/ChartValues.swift
-new file mode 100644
-index 00000000..8fca70de
---- /dev/null
-+++ b/Loop/Loop Widget Extension/Live Activity/ChartValues.swift	
-@@ -0,0 +1,43 @@
-+//
-+//  ChartValues.swift
-+//  Loop Widget Extension
-+//
-+//  Created by Bastiaan Verhaar on 25/06/2024.
-+//  Copyright © 2024 LoopKit Authors. All rights reserved.
-+//
-+
-+import Foundation
-+
-+struct ChartValues: Identifiable {
-+    public let id: UUID
-+    public let x: Date
-+    public let y: Double
-+    
-+    init(x: Date, y: Double) {
-+        self.id = UUID()
-+        self.x = x
-+        self.y = y
-+    }
-+    
-+    static func convert(data: [Double], startDate: Date, interval: TimeInterval) -> [ChartValues] {
-+        let twoHours = Date.now.addingTimeInterval(.hours(2))
-+        
-+        return data.enumerated().filter { (index, item) in
-+            return startDate.addingTimeInterval(interval * Double(index)) < twoHours
-+        }.map { (index, item) in
-+            return ChartValues(
-+                x: startDate.addingTimeInterval(interval * Double(index)),
-+                y: item
-+            )
-+        }
-+    }
-+    
-+    static func convert(data: [GlucoseSampleAttributes]) -> [ChartValues] {
-+        return data.map { item in
-+            return ChartValues(
-+                x: item.x,
-+                y: item.y
-+            )
-+        }
-+    }
-+}
 diff --git a/Loop/Loop Widget Extension/Live Activity/ChartView.swift b/Loop/Loop Widget Extension/Live Activity/ChartView.swift
 new file mode 100644
 index 00000000..4480c5b2
@@ -298,65 +249,6 @@ index 00000000..4480c5b2
 +                y: item.y,
 +                color: item.y < lowerLimit ? "Low" : item.y > upperLimit ? "High" : "Good"
 +            )
-+        }
-+    }
-+}
-diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift
-new file mode 100644
-index 00000000..2f5342e1
---- /dev/null
-+++ b/Loop/Loop Widget Extension/Live Activity/GlucoseChartLiveActivityConfiguration.swift	
-@@ -0,0 +1,53 @@
-+//
-+//  ChartView.swift
-+//  Loop Widget Extension
-+//
-+//  Created by Bastiaan Verhaar on 27/06/2024.
-+//  Copyright © 2024 LoopKit Authors. All rights reserved.
-+//
-+
-+import SwiftUI
-+import Charts
-+import WidgetKit
-+
-+struct GlucoseChartLiveActivityConfiguration: Widget {
-+    var body: some WidgetConfiguration {
-+        ActivityConfiguration(for: GlucoseChartActivityAttributes.self) { context in
-+            // Create the presentation that appears on the Lock Screen and as a
-+            // banner on the Home Screen of devices that don't support the Dynamic Island.
-+            HStack {
-+                ChartView(
-+                    glucoseSamples: context.state.glucoseSamples,
-+                    predicatedGlucose: context.state.predicatedGlucose,
-+                    predicatedStartDate: context.state.predicatedStartDate,
-+                    predicatedInterval: context.state.predicatedInterval
-+                )
-+            }
-+                .privacySensitive()
-+                .padding(.all, 15)
-+                .background(BackgroundStyle.background.opacity(0.4))
-+                .activityBackgroundTint(Color.clear)
-+        } dynamicIsland: { _ in
-+            DynamicIsland {
-+                DynamicIslandExpandedRegion(.leading) {
-+                    HStack{}
-+                }
-+                DynamicIslandExpandedRegion(.trailing) {
-+                    HStack{}
-+                }
-+                DynamicIslandExpandedRegion(.bottom) {
-+                    HStack{}
-+                }
-+            } compactLeading: {
-+                // Create the compact leading presentation.
-+                HStack{}
-+            } compactTrailing: {
-+                // Create the compact trailing presentation.
-+                HStack{}
-+            } minimal: {
-+                // Create the minimal presentation.
-+                HStack{}
-+            }
 +        }
 +    }
 +}
@@ -638,134 +530,6 @@ index 00000000..3e6fce02
 +        
 +        return .green
 +    }
-+}
-diff --git a/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift
-new file mode 100644
-index 00000000..56a70b9d
---- /dev/null
-+++ b/Loop/Loop Widget Extension/Live Activity/LiveActivityConfiguration.swift	
-@@ -0,0 +1,122 @@
-+//
-+//  LiveActivityConfiguration.swift
-+//  Loop Widget Extension
-+//
-+//  Created by Bastiaan Verhaar on 23/06/2024.
-+//  Copyright © 2024 LoopKit Authors. All rights reserved.
-+//
-+
-+import ActivityKit
-+import LoopKit
-+import SwiftUI
-+import LoopCore
-+import WidgetKit
-+
-+@available(iOS 16.2, *)
-+struct LiveActivityConfiguration: Widget {
-+    var body: some WidgetConfiguration {
-+        ActivityConfiguration(for: GlucoseActivityAttributes.self) { context in
-+            // Create the presentation that appears on the Lock Screen and as a
-+            // banner on the Home Screen of devices that don't support the Dynamic Island.
-+            HStack {
-+                glucoseView(context)
-+                Spacer()
-+                pumpView(context)
-+            }
-+                .privacySensitive()
-+                .padding(.all, 15)
-+                .background(BackgroundStyle.background.opacity(0.4))
-+                .activityBackgroundTint(Color.clear)
-+        } dynamicIsland: { _ in
-+            DynamicIsland {
-+                DynamicIslandExpandedRegion(.leading) {
-+                    HStack{}
-+                }
-+                DynamicIslandExpandedRegion(.trailing) {
-+                    HStack{}
-+                }
-+                DynamicIslandExpandedRegion(.bottom) {
-+                    HStack{}
-+                }
-+            } compactLeading: {
-+                // Create the compact leading presentation.
-+                HStack{}
-+            } compactTrailing: {
-+                // Create the compact trailing presentation.
-+                HStack{}
-+            } minimal: {
-+                // Create the minimal presentation.
-+                HStack{}
-+            }
-+        }
-+    }
-+    
-+    @ViewBuilder
-+    private func glucoseView(_ context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
-+        HStack {
-+            Circle()
-+                .trim(from: context.state.isCloseLoop ? 0 : 0.2, to: 1)
-+                .stroke(getLoopColor(context.state.lastCompleted), lineWidth: 4)
-+                .rotationEffect(Angle(degrees: -126))
-+                .frame(width: 18, height: 18)
-+            
-+            Text("\(context.state.glucose) \(context.state.unit)")
-+                .font(.body)
-+            Text(context.state.delta)
-+                .font(.body)
-+                .foregroundStyle(Color(UIColor.secondaryLabel))
-+        }
-+    }
-+    
-+    @ViewBuilder
-+    private func pumpView(_ context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
-+        HStack(spacing: 10) {
-+            if let pumpHighlight = context.state.pumpHighlight {
-+                HStack {
-+                    Image(systemName: pumpHighlight.imageName)
-+                        .foregroundColor(pumpHighlight.state == .critical ? .critical : .warning)
-+                    Text(pumpHighlight.localizedMessage)
-+                        .fontWeight(.heavy)
-+                }
-+            }
-+            else if let netBasal = context.state.netBasal {
-+                BasalView(netBasal:
-+                    NetBasalContext(
-+                        rate: netBasal.rate,
-+                        percentage: netBasal.percentage,
-+                        start: netBasal.start,
-+                        end: netBasal.end
-+                    ),
-+                  isOld: false
-+                )
-+                
-+                VStack {
-+                    Text(LocalizedString("Eventual", comment: "No comment"))
-+                        .font(.footnote)
-+                        .foregroundColor(Color(UIColor.secondaryLabel))
-+                    
-+                    Text("\(context.state.eventualGlucose) \(context.state.unit)")
-+                        .font(.subheadline)
-+                        .fontWeight(.heavy)
-+                }
-+            }
-+
-+        }
-+    }
-+    
-+     func getLoopColor(_ age: Date?) -> Color {
-+         var freshness: LoopCompletionFreshness = .stale
-+         if let age = age {
-+             freshness = LoopCompletionFreshness(age: abs(min(0, age.timeIntervalSinceNow)))
-+         }
-+         
-+         switch freshness {
-+         case .fresh:
-+             return Color("fresh")
-+         case .aging:
-+             return Color("warning")
-+         case .stale:
-+             return Color.red
-+         }
-+     }
 +}
 diff --git a/Loop/Loop Widget Extension/LoopWidgets.swift b/Loop/Loop Widget Extension/LoopWidgets.swift
 index 26f92edb..684bf073 100644
@@ -1220,10 +984,10 @@ index 00000000..90329be9
 +}
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
 new file mode 100644
-index 00000000..38ca1ab7
+index 00000000..8f1d122d
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
-@@ -0,0 +1,472 @@
+@@ -0,0 +1,493 @@
 +//
 +//  LiveActivityManaer.swift
 +//  Loop
@@ -1251,9 +1015,7 @@ index 00000000..38ca1ab7
 +    
 +    private let glucoseStore: GlucoseStoreProtocol
 +    private let doseStore: DoseStoreProtocol
-+    private let glucoseRangeSchedule: GlucoseRangeSchedule?
-+    private var preset: TemporaryScheduleOverride?
-+    private var presetStartDate: Date?
++    private var loopSettings: LoopSettings
 +    
 +    private var startDate: Date = Date.now
 +    private var settings: LiveActivitySettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
@@ -1278,16 +1040,15 @@ index 00000000..38ca1ab7
 +        return dateFormatter
 +    }()
 +    
-+    init?(glucoseStore: GlucoseStoreProtocol, doseStore: DoseStoreProtocol, glucoseRangeSchedule: GlucoseRangeSchedule?, preset: TemporaryScheduleOverride?) {
++    init?(glucoseStore: GlucoseStoreProtocol, doseStore: DoseStoreProtocol, loopSettings: LoopSettings) {
 +        guard self.activityInfo.areActivitiesEnabled else {
++            print("ERROR: Live Activities are not enabled...")
 +            return nil
 +        }
 +        
 +        self.glucoseStore = glucoseStore
 +        self.doseStore = doseStore
-+        self.glucoseRangeSchedule = glucoseRangeSchedule
-+        self.preset = preset
-+        self.presetStartDate = preset != nil ? Date.now : nil
++        self.loopSettings = loopSettings
 +        
 +        // Ensure settings exist
 +        if UserDefaults.standard.liveActivity == nil {
@@ -1309,16 +1070,23 @@ index 00000000..38ca1ab7
 +        }
 +    }
 +    
-+    public func update() {
++    public func update(loopSettings: LoopSettings) {
++        self.loopSettings = loopSettings
++        update()
++    }
++    
++    private func update() {
 +        Task {
 +            if self.needsRecreation(), await UIApplication.shared.applicationState == .active {
 +                // activity is no longer visible or old. End it and try to push the update again
++                print("INFO: Live Activities needs recreation")
 +                await endActivity()
 +                update()
 +                return
 +            }
 +            
 +            guard let unit = await self.healthStore.cachedPreferredUnits(for: .bloodGlucose) else {
++                print("ERROR: No unit found...")
 +                return
 +            }
 +            
@@ -1329,6 +1097,7 @@ index 00000000..38ca1ab7
 +            
 +            let glucoseSamples = self.getGlucoseSample(unit: unit)
 +            guard let currentGlucose = glucoseSamples.last else {
++                print("ERROR: No glucose sample found...")
 +                return
 +            }
 +            
@@ -1361,27 +1130,28 @@ index 00000000..38ca1ab7
 +                endDateChart = predictedGlucose.startDate.addingTimeInterval(.hours(4))
 +            }
 +            
++            guard let endDateChart = endDateChart else {
++                return
++            }
++            
 +            var presetContext: Preset? = nil
-+            if let preset = self.preset,
-+               let endDateChart = endDateChart,
-+               let startDate = presetStartDate
-+            {
++            if let override = self.loopSettings.preMealOverride ?? self.loopSettings.scheduleOverride, let start = glucoseSamples.first?.startDate {
 +                presetContext = Preset(
-+                    title: preset.getTitle(),
-+                    startDate: startDate,
-+                    endDate: preset.duration.isInfinite ? endDateChart : min(Date.now + preset.duration.timeInterval, endDateChart),
-+                    minValue: preset.settings.targetRange?.lowerBound.doubleValue(for: unit) ?? 0,
-+                    maxValue: preset.settings.targetRange?.upperBound.doubleValue(for: unit) ?? 0
++                    title: override.getTitle(),
++                    startDate: max(override.startDate, start),
++                    endDate: override.duration.isInfinite ? endDateChart : min(Date.now + override.duration.timeInterval, endDateChart),
++                    minValue: override.settings.targetRange?.lowerBound.doubleValue(for: unit) ?? 0,
++                    maxValue: override.settings.targetRange?.upperBound.doubleValue(for: unit) ?? 0
 +                )
 +            }
 +            
 +            var glucoseRanges: [GlucoseRangeValue] = []
-+            if let glucoseRangeSchedule = self.glucoseRangeSchedule, let start = glucoseSamples.first?.startDate, let end = endDateChart {
-+                for item in glucoseRangeSchedule.quantityBetween(start: start, end: end) {
++            if let glucoseRangeSchedule = self.loopSettings.glucoseTargetRangeSchedule, let start = glucoseSamples.first?.startDate {
++                for item in glucoseRangeSchedule.quantityBetween(start: start, end: endDateChart) {
 +                    let minValue = item.value.lowerBound.doubleValue(for: unit)
 +                    let maxValue = item.value.upperBound.doubleValue(for: unit)
 +                    let startDate = max(item.startDate, start)
-+                    let endDate = min(item.endDate, end)
++                    let endDate = min(item.endDate, endDateChart)
 +                    
 +                    if let presetContext = presetContext {
 +                        if presetContext.startDate > startDate, presetContext.endDate < endDate {
@@ -1400,8 +1170,29 @@ index 00000000..38ca1ab7
 +                                startDate: presetContext.endDate,
 +                                endDate: endDate
 +                            ))
++                        } else if presetContext.endDate > startDate, presetContext.endDate < endDate {
++                            // Cut off the start of the glucose target
++                            glucoseRanges.append(GlucoseRangeValue(
++                                id: UUID(),
++                                minValue: minValue,
++                                maxValue: maxValue,
++                                startDate: presetContext.endDate,
++                                endDate: endDate
++                            ))
++                        } else if presetContext.startDate < endDate, presetContext.startDate > startDate {
++                            // Cut off the end of the glucose target
++                            glucoseRanges.append(GlucoseRangeValue(
++                                id: UUID(),
++                                minValue: minValue,
++                                maxValue: maxValue,
++                                startDate: startDate,
++                                endDate: presetContext.startDate
++                            ))
++                            if presetContext.endDate == endDateChart {
++                                break
++                            }
 +                        } else {
-+                            // No preset is active in this schedule
++                            // No overlap with target and override
 +                            glucoseRanges.append(GlucoseRangeValue(
 +                                id: UUID(),
 +                                minValue: minValue,
@@ -1484,6 +1275,7 @@ index 00000000..38ca1ab7
 +    
 +    @objc private func appMovedToForeground() {
 +        guard let activity = self.activity else {
++            print("ERROR: appMovedToForeground: No Live activity found...")
 +            return
 +        }
 +        
@@ -1528,7 +1320,9 @@ index 00000000..38ca1ab7
 +                )
 +            }
 +            self.startDate = Date.now
-+        } catch {}
++        } catch {
++            print("ERROR: Error while ending live activity: \(error.localizedDescription)")
++        }
 +    }
 +    
 +    private func needsRecreation() -> Bool {
@@ -1667,18 +1461,9 @@ index 00000000..38ca1ab7
 +                content: .init(state: dynamicState, staleDate: nil),
 +                pushType: .token
 +            )
-+        } catch {}
-+    }
-+    
-+    func presetActivated(preset: TemporaryScheduleOverride) {
-+        self.preset = preset
-+        self.presetStartDate = Date.now
-+        self.update()
-+    }
-+    
-+    func presetDeactivated() {
-+        self.preset = nil
-+        self.update()
++        } catch {
++            print("ERROR: Error while creating empty live activity: \(error.localizedDescription)")
++        }
 +    }
 +}
 +
@@ -1697,7 +1482,7 @@ index 00000000..38ca1ab7
 +    }
 +}
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2319f4ec..39a2fc4e 100644
+index 2319f4ec..c5220cb0 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -68,6 +68,8 @@ final class LoopDataManager {
@@ -1709,7 +1494,7 @@ index 2319f4ec..39a2fc4e 100644
  
      deinit {
          for observer in notificationObservers {
-@@ -124,6 +126,13 @@ final class LoopDataManager {
+@@ -124,6 +126,12 @@ final class LoopDataManager {
          self.automaticDosingStatus = automaticDosingStatus
  
          self.trustedTimeOffset = trustedTimeOffset
@@ -1717,82 +1502,74 @@ index 2319f4ec..39a2fc4e 100644
 +        self.liveActivityManager = GlucoseActivityManager(
 +            glucoseStore: self.glucoseStore,
 +            doseStore: self.doseStore,
-+            glucoseRangeSchedule: settings.glucoseTargetRangeSchedule,
-+            preset: self.settings.scheduleOverride ?? self.settings.preMealOverride
++            loopSettings: self.settings
 +        )
  
          overrideIntentObserver = UserDefaults.appGroup?.observe(\.intentExtensionOverrideToSet, options: [.new], changeHandler: {[weak self] (defaults, change) in
              guard let name = change.newValue??.lowercased(), let appGroup = UserDefaults.appGroup else {
-@@ -143,6 +152,7 @@ final class LoopDataManager {
-                             observer.presetDeactivated(context: oldPreset.context)
+@@ -144,12 +152,14 @@ final class LoopDataManager {
                          }
                      }
-+                    self?.liveActivityManager?.presetDeactivated()
                  }
++                
                  settings.scheduleOverride = preset.createOverride(enactTrigger: .remote("Siri"))
                  if let observers = self?.presetActivationObservers {
-@@ -150,6 +160,9 @@ final class LoopDataManager {
+                     for observer in observers {
                          observer.presetActivated(context: .preset(preset), duration: preset.duration)
                      }
                  }
-+                if let override = settings.scheduleOverride {
-+                    self?.liveActivityManager?.presetActivated(preset: override)
-+                }
++                self?.liveActivityManager?.update(loopSettings: settings)
              }
              // Remove the override from UserDefaults so we don't set it multiple times
              appGroup.intentExtensionOverrideToSet = nil
-@@ -167,6 +180,7 @@ final class LoopDataManager {
+@@ -167,6 +177,7 @@ final class LoopDataManager {
              ) { (note) -> Void in
                  self.dataAccessQueue.async {
                      self.logger.default("Received notification of carb entries changing")
-+                    self.liveActivityManager?.update()
++                    self.liveActivityManager?.update(loopSettings: self.settings)
  
                      self.carbEffect = nil
                      self.carbsOnBoard = nil
-@@ -182,7 +196,8 @@ final class LoopDataManager {
+@@ -182,7 +193,8 @@ final class LoopDataManager {
              ) { (note) in
                  self.dataAccessQueue.async {
                      self.logger.default("Received notification of glucose samples changing")
 -
-+                    self.liveActivityManager?.update()
++                    self.liveActivityManager?.update(loopSettings: self.settings)
 +                    
                      self.glucoseMomentumEffect = nil
                      self.remoteRecommendationNeedsUpdating = true
  
-@@ -196,6 +211,7 @@ final class LoopDataManager {
+@@ -196,6 +208,7 @@ final class LoopDataManager {
              ) { (note) in
                  self.dataAccessQueue.async {
                      self.logger.default("Received notification of dosing changing")
-+                    self.liveActivityManager?.update()
++                    self.liveActivityManager?.update(loopSettings: self.settings)
  
                      self.clearCachedInsulinEffects()
                      self.remoteRecommendationNeedsUpdating = true
-@@ -247,6 +263,12 @@ final class LoopDataManager {
+@@ -247,6 +260,8 @@ final class LoopDataManager {
          if newValue.preMealOverride != oldValue.preMealOverride {
              // The prediction isn't actually invalid, but a target range change requires recomputing recommended doses
              predictedGlucose = nil
 +            
-+            if let preMeal = newValue.preMealOverride {
-+                self.liveActivityManager?.presetActivated(preset: preMeal)
-+            } else {
-+                self.liveActivityManager?.presetDeactivated()
-+            }
++            self.liveActivityManager?.update(loopSettings: newValue)
          }
  
          if newValue.scheduleOverride != oldValue.scheduleOverride {
-@@ -256,12 +278,14 @@ final class LoopDataManager {
+@@ -256,12 +271,14 @@ final class LoopDataManager {
                  for observer in self.presetActivationObservers {
                      observer.presetDeactivated(context: oldPreset.context)
                  }
 -
-+                self.liveActivityManager?.presetDeactivated()
++                self.liveActivityManager?.update(loopSettings: newValue)
              }
              if let newPreset = newValue.scheduleOverride {
                  for observer in self.presetActivationObservers {
                      observer.presetActivated(context: newPreset.context, duration: newPreset.duration)
                  }
 +                
-+                self.liveActivityManager?.presetActivated(preset: newPreset)
++                self.liveActivityManager?.update(loopSettings: newValue)
              }
  
              // Invalidate cached effects affected by the override
