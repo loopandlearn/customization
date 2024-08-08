@@ -1,4 +1,3 @@
-Submodule Loop contains modified content
 diff --git a/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift b/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift
 new file mode 100644
 index 00000000..00823471
@@ -97,10 +96,10 @@ index 00000000..915335c5
 +}
 diff --git a/Loop/Loop Widget Extension/Live Activity/ChartView.swift b/Loop/Loop Widget Extension/Live Activity/ChartView.swift
 new file mode 100644
-index 00000000..4480c5b2
+index 00000000..237ddebd
 --- /dev/null
 +++ b/Loop/Loop Widget Extension/Live Activity/ChartView.swift	
-@@ -0,0 +1,151 @@
+@@ -0,0 +1,153 @@
 +//
 +//  ChartValues.swift
 +//  Loop Widget Extension
@@ -119,12 +118,13 @@ index 00000000..4480c5b2
 +    private let glucoseRanges: [GlucoseRangeValue]
 +    private let preset: Preset?
 +    
-+    init(glucoseSamples: [GlucoseSampleAttributes], predicatedGlucose: [Double], predicatedStartDate: Date?, predicatedInterval: TimeInterval?, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?) {
-+        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, lowerLimit: lowerLimit, upperLimit: upperLimit)
++    init(glucoseSamples: [GlucoseSampleAttributes], predicatedGlucose: [Double], predicatedStartDate: Date?, predicatedInterval: TimeInterval?, useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?) {
++        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, useLimits: useLimits, lowerLimit: lowerLimit, upperLimit: upperLimit)
 +        self.predicatedData = ChartValues.convert(
 +            data: predicatedGlucose,
 +            startDate: predicatedStartDate ?? Date.now,
 +            interval: predicatedInterval ?? .minutes(5),
++            useLimits: useLimits,
 +            lowerLimit: lowerLimit,
 +            upperLimit: upperLimit
 +        )
@@ -132,8 +132,8 @@ index 00000000..4480c5b2
 +        self.glucoseRanges = glucoseRanges
 +    }
 +    
-+    init(glucoseSamples: [GlucoseSampleAttributes], lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?) {
-+        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, lowerLimit: lowerLimit, upperLimit: upperLimit)
++    init(glucoseSamples: [GlucoseSampleAttributes], useLimits: Bool, lowerLimit: Double, upperLimit: Double, glucoseRanges: [GlucoseRangeValue], preset: Preset?) {
++        self.glucoseSampleData = ChartValues.convert(data: glucoseSamples, useLimits: useLimits, lowerLimit: lowerLimit, upperLimit: upperLimit)
 +        self.predicatedData = []
 +        self.preset = preset
 +        self.glucoseRanges = glucoseRanges
@@ -182,7 +182,8 @@ index 00000000..4480c5b2
 +            .chartForegroundStyleScale([
 +                "Good": .green,
 +                "High": .orange,
-+                "Low": .red
++                "Low": .red,
++                "Default": .blue
 +            ])
 +            .chartPlotStyle { plotContent in
 +                plotContent.background(.cyan.opacity(0.15))
@@ -228,7 +229,7 @@ index 00000000..4480c5b2
 +        self.color = color
 +    }
 +    
-+    static func convert(data: [Double], startDate: Date, interval: TimeInterval, lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
++    static func convert(data: [Double], startDate: Date, interval: TimeInterval, useLimits: Bool, lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
 +        let twoHours = Date.now.addingTimeInterval(.hours(4))
 +        
 +        return data.enumerated().filter { (index, item) in
@@ -237,27 +238,27 @@ index 00000000..4480c5b2
 +            return ChartValues(
 +                x: startDate.addingTimeInterval(interval * Double(index)),
 +                y: item,
-+                color: item < lowerLimit ? "Low" : item > upperLimit ? "High" : "Good"
++                color: !useLimits ? "Default" : item < lowerLimit ? "Low" : item > upperLimit ? "High" : "Good"
 +            )
 +        }
 +    }
 +    
-+    static func convert(data: [GlucoseSampleAttributes], lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
++    static func convert(data: [GlucoseSampleAttributes], useLimits: Bool, lowerLimit: Double, upperLimit: Double) -> [ChartValues] {
 +        return data.map { item in
 +            return ChartValues(
 +                x: item.x,
 +                y: item.y,
-+                color: item.y < lowerLimit ? "Low" : item.y > upperLimit ? "High" : "Good"
++                color: !useLimits ? "Default" : item.y < lowerLimit ? "Low" : item.y > upperLimit ? "High" : "Good"
 +            )
 +        }
 +    }
 +}
 diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift
 new file mode 100644
-index 00000000..3e6fce02
+index 00000000..2baeb90b
 --- /dev/null
 +++ b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift	
-@@ -0,0 +1,273 @@
+@@ -0,0 +1,290 @@
 +//
 +//  LiveActivityConfiguration.swift
 +//  Loop Widget Extension
@@ -290,29 +291,33 @@ index 00000000..3e6fce02
 +            // banner on the Home Screen of devices that don't support the Dynamic Island.
 +            ZStack {
 +                VStack {
-+                    HStack(spacing: 15) {
-+                        loopIcon(context)
-+                        if context.attributes.addPredictiveLine {
-+                            ChartView(
-+                                glucoseSamples: context.state.glucoseSamples,
-+                                predicatedGlucose: context.state.predicatedGlucose,
-+                                predicatedStartDate: context.state.predicatedStartDate,
-+                                predicatedInterval: context.state.predicatedInterval,
-+                                lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
-+                                upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
-+                                glucoseRanges: context.state.glucoseRanges,
-+                                preset: context.state.preset
-+                            )
-+                            .frame(height: 85)
-+                        } else {
-+                            ChartView(
-+                                glucoseSamples: context.state.glucoseSamples,
-+                                lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
-+                                upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
-+                                glucoseRanges: context.state.glucoseRanges,
-+                                preset: context.state.preset
-+                            )
-+                            .frame(height: 85)
++                    if context.attributes.mode == .large {
++                        HStack(spacing: 15) {
++                            loopIcon(context)
++                            if context.attributes.addPredictiveLine {
++                                ChartView(
++                                    glucoseSamples: context.state.glucoseSamples,
++                                    predicatedGlucose: context.state.predicatedGlucose,
++                                    predicatedStartDate: context.state.predicatedStartDate,
++                                    predicatedInterval: context.state.predicatedInterval,
++                                    useLimits: context.attributes.useLimits,
++                                    lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                                    upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
++                                    glucoseRanges: context.state.glucoseRanges,
++                                    preset: context.state.preset
++                                )
++                                .frame(height: 85)
++                            } else {
++                                ChartView(
++                                    glucoseSamples: context.state.glucoseSamples,
++                                    useLimits: context.attributes.useLimits,
++                                    lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
++                                    upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
++                                    glucoseRanges: context.state.glucoseRanges,
++                                    preset: context.state.preset
++                                )
++                                .frame(height: 85)
++                            }
 +                        }
 +                    }
 +                    
@@ -338,6 +343,9 @@ index 00000000..3e6fce02
 +                                    trend: item.trend,
 +                                    context: context
 +                                )
++                                
++                            case .loopCircle:
++                                bottomItemLoopCircle(context: context)
 +                            }
 +                            
 +                            if index != endIndex {
@@ -398,6 +406,7 @@ index 00000000..3e6fce02
 +                            predicatedGlucose: context.state.predicatedGlucose,
 +                            predicatedStartDate: context.state.predicatedStartDate,
 +                            predicatedInterval: context.state.predicatedInterval,
++                            useLimits: context.attributes.useLimits,
 +                            lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
 +                            upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
 +                            glucoseRanges: context.state.glucoseRanges,
@@ -407,6 +416,7 @@ index 00000000..3e6fce02
 +                    } else {
 +                        ChartView(
 +                            glucoseSamples: context.state.glucoseSamples,
++                            useLimits: context.attributes.useLimits,
 +                            lowerLimit: context.state.isMmol ? context.attributes.lowerLimitChartMmol : context.attributes.lowerLimitChartMg,
 +                            upperLimit: context.state.isMmol ? context.attributes.upperLimitChartMmol : context.attributes.upperLimitChartMg,
 +                            glucoseRanges: context.state.glucoseRanges,
@@ -445,6 +455,7 @@ index 00000000..3e6fce02
 +        VStack(alignment: .center) {
 +            Text("\(value)\(unit)")
 +                .font(.headline)
++                .foregroundStyle(.primary)
 +                .fontWeight(.heavy)
 +                .font(Font.body.leading(.tight))
 +            Text(title)
@@ -458,10 +469,17 @@ index 00000000..3e6fce02
 +            HStack {
 +                Text(value + getArrowImage(trend))
 +                    .font(.title)
-+                    .foregroundStyle(getGlucoseColor(context.state.currentGlucose, context: context))
++                    .foregroundStyle(!context.attributes.useLimits ? .primary : getGlucoseColor(context.state.currentGlucose, context: context))
 +                    .fontWeight(.heavy)
 +                    .font(Font.body.leading(.tight))
 +            }
++        }
++    }
++    
++    @ViewBuilder
++    private func bottomItemLoopCircle(context: ActivityViewContext<GlucoseActivityAttributes>) -> some View {
++        VStack(alignment: .center) {
++            loopIcon(context)
 +        }
 +    }
 +    
@@ -856,10 +874,10 @@ index 50ba55d9..e6a2f9b9 100644
  		<string>TAG</string>
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift
 new file mode 100644
-index 00000000..90329be9
+index 00000000..4efa8b76
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityAttributes.swift	
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,150 @@
 +//
 +//  LiveActivityAttributes.swift
 +//  LoopUI
@@ -901,7 +919,9 @@ index 00000000..90329be9
 +        public let predicatedInterval: TimeInterval?
 +    }
 +    
++    public let mode: LiveActivityMode
 +    public let addPredictiveLine: Bool
++    public let useLimits: Bool
 +    public let upperLimitChartMmol: Double
 +    public let lowerLimitChartMmol: Double
 +    public let upperLimitChartMg: Double
@@ -929,6 +949,7 @@ index 00000000..90329be9
 +        case generic
 +        case basal
 +        case currentBg
++        case loopCircle
 +    }
 +    
 +    public let type: BottomRowType
@@ -944,37 +965,62 @@ index 00000000..90329be9
 +    public let rate: Double
 +    public let percentage: Double
 +    
-+    init(label: String, value: String, unit: String) {
-+        self.type = .generic
-+        self.label = label
-+        self.value = value
-+        self.unit = unit
-+        
-+        self.trend = nil
-+        self.rate = 0
-+        self.percentage = 0
-+    }
-+    
-+    init(label: String, value: String, trend: GlucoseTrend?) {
-+        self.type = .currentBg
-+        self.label = label
-+        self.value = value
++    private init(type: BottomRowType, label: String?, value: String?, unit: String?, trend: GlucoseTrend?, rate: Double?, percentage: Double?) {
++        self.type = type
++        self.label = label ?? ""
++        self.value = value ?? ""
 +        self.trend = trend
-+        
-+        self.unit = ""
-+        self.rate = 0
-+        self.percentage = 0
++        self.unit = unit ?? ""
++        self.rate = rate ?? 0
++        self.percentage = percentage ?? 0
 +    }
 +    
-+    init(rate: Double, percentage: Double) {
-+        self.type = .basal
-+        self.rate = rate
-+        self.percentage = percentage
-+        
-+        self.label = ""
-+        self.value = ""
-+        self.unit = ""
-+        self.trend = nil
++    static func generic(label: String, value: String, unit: String) -> BottomRowItem  {
++        return BottomRowItem(
++            type: .generic,
++            label: label,
++            value: value,
++            unit: unit,
++            trend: nil,
++            rate: nil,
++            percentage: nil
++        )
++    }
++    
++    static func basal(rate: Double, percentage: Double) -> BottomRowItem {
++        return BottomRowItem(
++            type: .basal,
++            label: nil,
++            value: nil,
++            unit: nil,
++            trend: nil,
++            rate: rate,
++            percentage: percentage
++        )
++    }
++    
++    static func currentBg(label: String, value: String, trend: GlucoseTrend?) -> BottomRowItem {
++        return BottomRowItem(
++            type: .currentBg,
++            label: label,
++            value: value,
++            unit: nil,
++            trend: trend,
++            rate: nil,
++            percentage: nil
++        )
++    }
++    
++    static func loopIcon() -> BottomRowItem {
++        return BottomRowItem(
++            type: .loopCircle,
++            label: nil,
++            value: nil,
++            unit: nil,
++            trend: nil,
++            rate: nil,
++            percentage: nil
++        )
 +    }
 +}
 +
@@ -984,10 +1030,10 @@ index 00000000..90329be9
 +}
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
 new file mode 100644
-index 00000000..8f1d122d
+index 00000000..79635198
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
-@@ -0,0 +1,493 @@
+@@ -0,0 +1,515 @@
 +//
 +//  LiveActivityManaer.swift
 +//  Loop
@@ -1004,7 +1050,7 @@ index 00000000..8f1d122d
 +import ActivityKit
 +
 +extension Notification.Name {
-+    static let LiveActivitySettingsChanged = Notification.Name(rawValue:  "com.loopKit.notification.LiveActivitySettingsChanged")
++    static let LiveActivitySettingsChanged = Notification.Name(rawValue: "com.loopKit.notification.LiveActivitySettingsChanged")
 +}
 +
 +@available(iOS 16.2, *)
@@ -1147,70 +1193,13 @@ index 00000000..8f1d122d
 +            
 +            var glucoseRanges: [GlucoseRangeValue] = []
 +            if let glucoseRangeSchedule = self.loopSettings.glucoseTargetRangeSchedule, let start = glucoseSamples.first?.startDate {
-+                for item in glucoseRangeSchedule.quantityBetween(start: start, end: endDateChart) {
-+                    let minValue = item.value.lowerBound.doubleValue(for: unit)
-+                    let maxValue = item.value.upperBound.doubleValue(for: unit)
-+                    let startDate = max(item.startDate, start)
-+                    let endDate = min(item.endDate, endDateChart)
-+                    
-+                    if let presetContext = presetContext {
-+                        if presetContext.startDate > startDate, presetContext.endDate < endDate {
-+                            // A preset is active during this schedule
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: startDate,
-+                                endDate: presetContext.startDate
-+                            ))
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: presetContext.endDate,
-+                                endDate: endDate
-+                            ))
-+                        } else if presetContext.endDate > startDate, presetContext.endDate < endDate {
-+                            // Cut off the start of the glucose target
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: presetContext.endDate,
-+                                endDate: endDate
-+                            ))
-+                        } else if presetContext.startDate < endDate, presetContext.startDate > startDate {
-+                            // Cut off the end of the glucose target
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: startDate,
-+                                endDate: presetContext.startDate
-+                            ))
-+                            if presetContext.endDate == endDateChart {
-+                                break
-+                            }
-+                        } else {
-+                            // No overlap with target and override
-+                            glucoseRanges.append(GlucoseRangeValue(
-+                                id: UUID(),
-+                                minValue: minValue,
-+                                maxValue: maxValue,
-+                                startDate: startDate,
-+                                endDate: endDate
-+                            ))
-+                        }
-+                    } else {
-+                        glucoseRanges.append(GlucoseRangeValue(
-+                            id: UUID(),
-+                            minValue: minValue,
-+                            maxValue: maxValue,
-+                            startDate: startDate,
-+                            endDate: endDate
-+                        ))
-+                    }
-+                }
++                glucoseRanges = getGlucoseRanges(
++                    glucoseRangeSchedule: glucoseRangeSchedule,
++                    presetContext: presetContext,
++                    start: start,
++                    end: endDateChart,
++                    unit: unit
++                )
 +            }
 +
 +            let state = GlucoseActivityAttributes.ContentState(
@@ -1256,7 +1245,9 @@ index 00000000..8f1d122d
 +                initEmptyActivity(settings: newSettings)
 +                
 +            } else if
++                newSettings.mode != self.settings.mode ||
 +                newSettings.addPredictiveLine != self.settings.addPredictiveLine ||
++                newSettings.useLimits != self.settings.useLimits ||
 +                newSettings.lowerLimitChartMmol != self.settings.lowerLimitChartMmol ||
 +                newSettings.upperLimitChartMmol != self.settings.upperLimitChartMmol ||
 +                newSettings.lowerLimitChartMg != self.settings.lowerLimitChartMg ||
@@ -1309,7 +1300,9 @@ index 00000000..8f1d122d
 +            if let dynamicState = dynamicState {
 +                self.activity = try Activity.request(
 +                    attributes: GlucoseActivityAttributes(
++                        mode: self.settings.mode,
 +                        addPredictiveLine: self.settings.addPredictiveLine,
++                        useLimits: self.settings.useLimits,
 +                        upperLimitChartMmol: self.settings.upperLimitChartMmol,
 +                        lowerLimitChartMmol: self.settings.lowerLimitChartMmol,
 +                        upperLimitChartMg: self.settings.upperLimitChartMg,
@@ -1391,41 +1384,114 @@ index 00000000..8f1d122d
 +        return samples
 +    }
 +    
++    private func getGlucoseRanges(glucoseRangeSchedule: GlucoseRangeSchedule, presetContext: Preset?, start: Date, end: Date, unit: HKUnit) -> [GlucoseRangeValue] {
++        var glucoseRanges: [GlucoseRangeValue] = []
++        for item in glucoseRangeSchedule.quantityBetween(start: start, end: end) {
++            let minValue = item.value.lowerBound.doubleValue(for: unit)
++            let maxValue = item.value.upperBound.doubleValue(for: unit)
++            let startDate = max(item.startDate, start)
++            let endDate = min(item.endDate, end)
++            
++            if let presetContext = presetContext {
++                if presetContext.startDate > startDate, presetContext.endDate < endDate {
++                    // A preset is active during this schedule
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: minValue,
++                        maxValue: maxValue,
++                        startDate: startDate,
++                        endDate: presetContext.startDate
++                    ))
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: minValue,
++                        maxValue: maxValue,
++                        startDate: presetContext.endDate,
++                        endDate: endDate
++                    ))
++                } else if presetContext.endDate > startDate, presetContext.endDate < endDate {
++                    // Cut off the start of the glucose target
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: minValue,
++                        maxValue: maxValue,
++                        startDate: presetContext.endDate,
++                        endDate: endDate
++                    ))
++                } else if presetContext.startDate < endDate, presetContext.startDate > startDate {
++                    // Cut off the end of the glucose target
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: minValue,
++                        maxValue: maxValue,
++                        startDate: startDate,
++                        endDate: presetContext.startDate
++                    ))
++                    if presetContext.endDate == end {
++                        break
++                    }
++                } else {
++                    // No overlap with target and override
++                    glucoseRanges.append(GlucoseRangeValue(
++                        id: UUID(),
++                        minValue: minValue,
++                        maxValue: maxValue,
++                        startDate: startDate,
++                        endDate: endDate
++                    ))
++                }
++            } else {
++                glucoseRanges.append(GlucoseRangeValue(
++                    id: UUID(),
++                    minValue: minValue,
++                    maxValue: maxValue,
++                    startDate: startDate,
++                    endDate: endDate
++                ))
++            }
++        }
++        
++        return glucoseRanges
++    }
++    
 +    private func getBottomRow(currentGlucose: Double, delta: String, statusContext: StatusExtensionContext?, glucoseFormatter: NumberFormatter) -> [BottomRowItem] {
 +        return self.settings.bottomRowConfiguration.map { type in
 +            switch(type) {
 +            case .iob:
-+                return BottomRowItem(label: type.name(), value: getInsulinOnBoard(), unit: "U")
++                return BottomRowItem.generic(label: type.name(), value: getInsulinOnBoard(), unit: "U")
 +                
 +            case .cob:
 +                var cob: String = "0"
 +                if let cobValue = statusContext?.carbsOnBoard {
 +                    cob = self.cobFormatter.string(from: cobValue) ?? "??"
 +                }
-+                return BottomRowItem(label: type.name(), value: cob, unit: "g")
++                return BottomRowItem.generic(label: type.name(), value: cob, unit: "g")
 +                
 +            case .basal:
 +                guard let netBasalContext = statusContext?.netBasal else {
-+                    return BottomRowItem(rate: 0, percentage: 0)
++                    return BottomRowItem.basal(rate: 0, percentage: 0)
 +                }
 +
-+                return BottomRowItem(rate: netBasalContext.rate, percentage: netBasalContext.percentage)
++                return BottomRowItem.basal(rate: netBasalContext.rate, percentage: netBasalContext.percentage)
 +                
 +            case .currentBg:
-+                return BottomRowItem(label: type.name(), value: "\(glucoseFormatter.string(from: currentGlucose) ?? "??")", trend: statusContext?.glucoseDisplay?.trendType)
++                return BottomRowItem.currentBg(label: type.name(), value: "\(glucoseFormatter.string(from: currentGlucose) ?? "??")", trend: statusContext?.glucoseDisplay?.trendType)
 +                
 +            case .eventualBg:
 +                guard let eventual = statusContext?.predictedGlucose?.values.last else {
-+                    return BottomRowItem(label: type.name(), value: "??", unit: "")
++                    return BottomRowItem.generic(label: type.name(), value: "??", unit: "")
 +                }
 +                
-+                return BottomRowItem(label: type.name(), value: glucoseFormatter.string(from: eventual) ?? "??", unit: "")
++                return BottomRowItem.generic(label: type.name(), value: glucoseFormatter.string(from: eventual) ?? "??", unit: "")
 +                
 +            case .deltaBg:
-+                return BottomRowItem(label: type.name(), value: delta, unit: "")
++                return BottomRowItem.generic(label: type.name(), value: delta, unit: "")
++                
++            case .loopCircle:
++                return BottomRowItem.loopIcon()
 +                
 +            case .updatedAt:
-+                return BottomRowItem(label: type.name(), value: timeFormatter.string(from: Date.now), unit: "")
++                return BottomRowItem.generic(label: type.name(), value: timeFormatter.string(from: Date.now), unit: "")
 +            }
 +       }
 +    }
@@ -1452,11 +1518,13 @@ index 00000000..8f1d122d
 +            
 +            self.activity = try Activity.request(
 +                attributes: GlucoseActivityAttributes(
++                    mode: settings.mode,
 +                    addPredictiveLine: settings.addPredictiveLine,
-+                    upperLimitChartMmol: self.settings.upperLimitChartMmol,
-+                    lowerLimitChartMmol: self.settings.lowerLimitChartMmol,
-+                    upperLimitChartMg: self.settings.upperLimitChartMg,
-+                    lowerLimitChartMg: self.settings.lowerLimitChartMg
++                    useLimits: settings.useLimits,
++                    upperLimitChartMmol: settings.upperLimitChartMmol,
++                    lowerLimitChartMmol: settings.lowerLimitChartMmol,
++                    upperLimitChartMg: settings.upperLimitChartMg,
++                    lowerLimitChartMg: settings.lowerLimitChartMg
 +                ),
 +                content: .init(state: dynamicState, staleDate: nil),
 +                pushType: .token
@@ -1482,7 +1550,7 @@ index 00000000..8f1d122d
 +    }
 +}
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2319f4ec..c5220cb0 100644
+index 2319f4ec..8a728813 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -68,6 +68,8 @@ final class LoopDataManager {
@@ -1573,6 +1641,82 @@ index 2319f4ec..c5220cb0 100644
              }
  
              // Invalidate cached effects affected by the override
+@@ -992,7 +1009,7 @@ extension LoopDataManager {
+ 
+         let retrospectiveStart = lastGlucoseDate.addingTimeInterval(-type(of: retrospectiveCorrection).retrospectionInterval)
+ 
+-        let earliestEffectDate = Date(timeInterval: .hours(-24), since: now())
++        let earliestEffectDate = Date(timeInterval: .days(-2), since: now())
+         let nextCounteractionEffectDate = insulinCounteractionEffects.last?.endDate ?? earliestEffectDate
+         let insulinEffectStartDate = nextCounteractionEffectDate.addingTimeInterval(.minutes(-5))
+ 
+diff --git a/Loop/Loop/View Controllers/CarbAbsorptionViewController.swift b/Loop/Loop/View Controllers/CarbAbsorptionViewController.swift
+index fc770192..45e031a7 100644
+--- a/Loop/Loop/View Controllers/CarbAbsorptionViewController.swift	
++++ b/Loop/Loop/View Controllers/CarbAbsorptionViewController.swift	
+@@ -139,7 +139,7 @@ final class CarbAbsorptionViewController: LoopChartsTableViewController, Identif
+         charts.updateEndDate(chartStartDate.addingTimeInterval(.hours(totalHours+1))) // When there is no data, this allows presenting current hour + 1
+ 
+         let midnight = Calendar.current.startOfDay(for: Date())
+-        let listStart = min(midnight, chartStartDate, Date(timeIntervalSinceNow: -deviceManager.carbStore.maximumAbsorptionTimeInterval))
++        let previousMidnight = midnight - .days(1)
+ 
+         let reloadGroup = DispatchGroup()
+         let shouldUpdateGlucose = currentContext.contains(.glucose)
+@@ -157,12 +157,20 @@ final class CarbAbsorptionViewController: LoopChartsTableViewController, Identif
+             if shouldUpdateGlucose || shouldUpdateCarbs {
+                 let allInsulinCounteractionEffects = state.insulinCounteractionEffects
+                 insulinCounteractionEffects = allInsulinCounteractionEffects.filterDateRange(chartStartDate, nil)
++                
++                let earliestCounteractionEffect = allInsulinCounteractionEffects.first?.startDate ?? Date()
++                // Show carb entries as far back as previous midnight, or only as far back as counteraction effects are available
++                let boundOnCarbList = max(previousMidnight, earliestCounteractionEffect)
++                // If counteraction effects are missing, at least show all the entries for today and those on the chart
++                let displayListStart = min(boundOnCarbList, midnight, chartStartDate)
++                // To estimate dynamic carb absorption for the entry at the start of the list, we need to fetch samples that might still be absorbing
++                let fetchEntriesStart = displayListStart.addingTimeInterval(-self.deviceManager.carbStore.maximumAbsorptionTimeInterval)
+ 
+                 reloadGroup.enter()
+-                self.deviceManager.carbStore.getCarbStatus(start: listStart, end: nil, effectVelocities: allInsulinCounteractionEffects) { (result) in
++                self.deviceManager.carbStore.getCarbStatus(start: fetchEntriesStart, end: nil, effectVelocities: allInsulinCounteractionEffects) { (result) in
+                     switch result {
+                     case .success(let status):
+-                        carbStatuses = status
++                        carbStatuses = status.filterDateRange(displayListStart, nil)
+                         carbsOnBoard = status.getClampedCarbsOnBoard()
+                     case .failure(let error):
+                         self.log.error("CarbStore failed to get carbStatus: %{public}@", String(describing: error))
+@@ -286,6 +294,14 @@ final class CarbAbsorptionViewController: LoopChartsTableViewController, Identif
+         formatter.timeStyle = .short
+         return formatter
+     }()
++    
++    private lazy var relativeTimeFormatter: DateFormatter = {
++        let formatter = DateFormatter()
++        formatter.dateStyle = .medium
++        formatter.doesRelativeDateFormatting = true
++        formatter.timeStyle = .short
++        return formatter
++    }()
+ 
+     override func numberOfSections(in tableView: UITableView) -> Int {
+         return Section.count
+@@ -343,7 +359,14 @@ final class CarbAbsorptionViewController: LoopChartsTableViewController, Identif
+             }
+ 
+             // Entry time
+-            let startTime = timeFormatter.string(from: status.entry.startDate)
++            let startTime: String
++            // Indicate if an entry is from the previous day to avoid potential confusion
++            let midnight = Calendar.current.startOfDay(for: Date())
++            if status.entry.startDate < midnight {
++                startTime = relativeTimeFormatter.string(from: status.entry.startDate)
++            } else {
++                startTime = timeFormatter.string(from: status.entry.startDate)
++            }
+             if  let absorptionTime = status.entry.absorptionTime,
+                 let duration = absorptionFormatter.string(from: absorptionTime)
+             {
 diff --git a/Loop/Loop/Views/AlertManagementView.swift b/Loop/Loop/Views/AlertManagementView.swift
 index e9a38e72..94e542a6 100644
 --- a/Loop/Loop/Views/AlertManagementView.swift
@@ -1725,10 +1869,10 @@ index 00000000..49e50caa
 +}
 diff --git a/Loop/Loop/Views/LiveActivityManagementView.swift b/Loop/Loop/Views/LiveActivityManagementView.swift
 new file mode 100644
-index 00000000..6e8a6c4d
+index 00000000..0a691a99
 --- /dev/null
 +++ b/Loop/Loop/Views/LiveActivityManagementView.swift
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,137 @@
 +//
 +//  LiveActivityManagementView.swift
 +//  Loop
@@ -1745,94 +1889,95 @@ index 00000000..6e8a6c4d
 +struct LiveActivityManagementView: View {
 +    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
 +    
-+    private var enabled: Binding<Bool> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).enabled },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.enabled = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+            }
-+        )
-+
-+    private var addPredictiveLine: Binding<Bool> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).addPredictiveLine },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.addPredictiveLine = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+            }
-+        )
++    @State private var enabled: Bool
++    @State private var mode: LiveActivityMode
++    @State var isEditingMode = false
++    @State private var addPredictiveLine: Bool
++    @State private var useLimits: Bool
++    @State private var upperLimitMmol: Double
++    @State private var lowerLimitMmol: Double
++    @State private var upperLimitMg: Double
++    @State private var lowerLimitMg: Double
 +    
-+    private var upperLimitMmol: Binding<Double> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).upperLimitChartMmol },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.upperLimitChartMmol = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+
-+            }
-+        )
-+    
-+    private var lowerLimitMmol: Binding<Double> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).lowerLimitChartMmol },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.lowerLimitChartMmol = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+
-+            }
-+        )
-+    
-+    private var upperLimitMg: Binding<Double> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).upperLimitChartMg },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.upperLimitChartMg = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+
-+            }
-+        )
-+    
-+    private var lowerLimitMg: Binding<Double> =
-+        Binding(
-+            get: { (UserDefaults.standard.liveActivity ?? LiveActivitySettings()).lowerLimitChartMg },
-+            set: { newValue in
-+                var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+                settings.lowerLimitChartMg = newValue
-+                
-+                UserDefaults.standard.liveActivity = settings
-+                NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+
-+            }
-+        )
-+    
++    init() {
++        let liveActivitySettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
++        
++        self.enabled = liveActivitySettings.enabled
++        self.mode = liveActivitySettings.mode
++        self.addPredictiveLine = liveActivitySettings.addPredictiveLine
++        self.useLimits = liveActivitySettings.useLimits
++        self.upperLimitMmol = liveActivitySettings.upperLimitChartMmol
++        self.lowerLimitMmol = liveActivitySettings.lowerLimitChartMmol
++        self.upperLimitMg = liveActivitySettings.upperLimitChartMg
++        self.lowerLimitMg = liveActivitySettings.lowerLimitChartMg
++    }
++   
 +    var body: some View {
 +        List {
-+            Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: enabled)
-+            Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: addPredictiveLine)
-+            if self.displayGlucosePreference.unit == .millimolesPerLiter {
-+                TextInput(label: "Upper limit chart", value: upperLimitMmol)
-+                TextInput(label: "Lower limit chart", value: lowerLimitMmol)
-+            } else {
-+                TextInput(label: "Upper limit chart", value: upperLimitMg)
-+                TextInput(label: "Lower limit chart", value: lowerLimitMg)
++            Section {
++                Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: $enabled)
++                    .onChange(of: enabled) { newValue in
++                        self.mutate { settings in
++                            settings.enabled = newValue
++                        }
++                    }
++                
++                ExpandableSetting(
++                    isEditing: $isEditingMode,
++                    leadingValueContent: {
++                        Text(NSLocalizedString("Mode", comment: "Title for mode live activity toggle"))
++                            .foregroundStyle(isEditingMode ? .blue : .primary)
++                    },
++                    trailingValueContent: {
++                        Text(self.mode.name())
++                            .foregroundStyle(isEditingMode ? .blue : .primary)
++                    },
++                    expandedContent: {
++                        ResizeablePicker(selection: self.$mode.animation(),
++                                         data: LiveActivityMode.all,
++                                         formatter: { $0.name() })
++                    }
++                )
++                .onChange(of: self.mode) { newValue in
++                    self.mutate { settings in
++                        settings.mode = newValue
++                    }
++                }
 +            }
 +            
++            if mode == .large {
++                Section {
++                    Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: $addPredictiveLine)
++                        .transition(.move(edge: mode == .large ? .top : .bottom))
++                        .onChange(of: addPredictiveLine) { newValue in
++                            self.mutate { settings in
++                                settings.addPredictiveLine = newValue
++                            }
++                        }
++                    Toggle(NSLocalizedString("Use BG coloring", comment: "Title for BG coloring"), isOn: $useLimits)
++                        .transition(.move(edge: mode == .large ? .top : .bottom))
++                        .onChange(of: useLimits) { newValue in
++                            self.mutate { settings in
++                                settings.useLimits = newValue
++                            }
++                        }
++                    
++                    if useLimits {
++                        if self.displayGlucosePreference.unit == .millimolesPerLiter {
++                            TextInput(label: "Upper limit chart", value: $upperLimitMmol)
++                                .transition(.move(edge: useLimits ? .top : .bottom))
++                            TextInput(label: "Lower limit chart", value: $lowerLimitMmol)
++                                .transition(.move(edge: useLimits ? .top : .bottom))
++                        } else {
++                            TextInput(label: "Upper limit chart", value: $upperLimitMg)
++                                .transition(.move(edge: useLimits ? .top : .bottom))
++                            TextInput(label: "Lower limit chart", value: $lowerLimitMg)
++                                .transition(.move(edge: useLimits ? .top : .bottom))
++                        }
++                    }
++                }
++            }
++                
 +            Section {
 +                NavigationLink(
 +                    destination: LiveActivityBottomRowManagerView(),
@@ -1840,6 +1985,7 @@ index 00000000..6e8a6c4d
 +                )
 +            }
 +        }
++            .animation(.easeInOut, value: UUID())
 +            .insetGroupedListStyle()
 +            .navigationBarTitle(Text(NSLocalizedString("Live activity", comment: "Live activity screen title")))
 +    }
@@ -1866,10 +2012,10 @@ index 00000000..6e8a6c4d
 +}
 diff --git a/Loop/LoopCore/LiveActivitySettings.swift b/Loop/LoopCore/LiveActivitySettings.swift
 new file mode 100644
-index 00000000..0218db42
+index 00000000..02a3fbb2
 --- /dev/null
 +++ b/Loop/LoopCore/LiveActivitySettings.swift
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,138 @@
 +//
 +//  LiveActivitySettings.swift
 +//  LoopCore
@@ -1887,10 +2033,11 @@ index 00000000..0218db42
 +    case currentBg
 +    case eventualBg
 +    case deltaBg
++    case loopCircle
 +    case updatedAt
 +    
 +    static let defaults: [BottomRowConfiguration] =  [.currentBg, .iob, .cob, .updatedAt]
-+    public static let all: [BottomRowConfiguration] = [.iob, .cob, .basal, .currentBg, .eventualBg, .deltaBg, .updatedAt]
++    public static let all: [BottomRowConfiguration] = [.iob, .cob, .basal, .currentBg, .eventualBg, .deltaBg, .loopCircle, .updatedAt]
 +    
 +    public func name() -> String {
 +        switch self {
@@ -1906,6 +2053,8 @@ index 00000000..0218db42
 +            return NSLocalizedString("Event", comment: "")
 +        case .deltaBg:
 +            return NSLocalizedString("Delta", comment: "")
++        case .loopCircle:
++            return NSLocalizedString("Loop", comment: "")
 +        case .updatedAt:
 +            return NSLocalizedString("Updated", comment: "")
 +        }
@@ -1925,15 +2074,38 @@ index 00000000..0218db42
 +            return NSLocalizedString("Eventually", comment: "")
 +        case .deltaBg:
 +            return NSLocalizedString("Delta", comment: "")
++        case .loopCircle:
++            return NSLocalizedString("Loop circle", comment: "")
 +        case .updatedAt:
 +            return NSLocalizedString("Updated at", comment: "")
 +        }
 +    }
 +}
 +
++public enum LiveActivityMode: Codable, CustomStringConvertible {
++    case large
++    case small
++    
++    public static let all: [LiveActivityMode] = [.large, .small]
++    public var description: String {
++        NSLocalizedString("In which mode do you want to render the Live Activity", comment: "")
++    }
++    
++    public func name() -> String {
++        switch self {
++        case .large:
++            return NSLocalizedString("Large", comment: "")
++        case .small:
++            return NSLocalizedString("Small", comment: "")
++        }
++    }
++}
++
 +public struct LiveActivitySettings: Codable {
 +    public var enabled: Bool
++    public var mode: LiveActivityMode
 +    public var addPredictiveLine: Bool
++    public var useLimits: Bool
 +    public var upperLimitChartMmol: Double
 +    public var lowerLimitChartMmol: Double
 +    public var upperLimitChartMg: Double
@@ -1942,8 +2114,10 @@ index 00000000..0218db42
 +    
 +    private enum CodingKeys: String, CodingKey {
 +        case enabled
++        case mode
 +        case addPredictiveLine
 +        case bottomRowConfiguration
++        case useLimits
 +        case upperLimitChartMmol
 +        case lowerLimitChartMmol
 +        case upperLimitChartMg
@@ -1958,7 +2132,9 @@ index 00000000..0218db42
 +    public init(from decoder:Decoder) throws {
 +        let values = try decoder.container(keyedBy: CodingKeys.self)
 +        enabled = try values.decode(Bool.self, forKey: .enabled)
++        mode = try values.decodeIfPresent(LiveActivityMode.self, forKey: .mode) ?? .large
 +        addPredictiveLine = try values.decode(Bool.self, forKey: .addPredictiveLine)
++        useLimits = try values.decodeIfPresent(Bool.self, forKey: .useLimits) ?? true
 +        upperLimitChartMmol = try values.decode(Double?.self, forKey: .upperLimitChartMmol) ?? LiveActivitySettings.defaultUpperLimitMmol
 +        lowerLimitChartMmol = try values.decode(Double?.self, forKey: .lowerLimitChartMmol) ?? LiveActivitySettings.defaultLowerLimitMmol
 +        upperLimitChartMg = try values.decode(Double?.self, forKey: .upperLimitChartMg) ?? LiveActivitySettings.defaultUpperLimitMg
@@ -1968,7 +2144,9 @@ index 00000000..0218db42
 +    
 +    public init() {
 +        self.enabled = true
++        self.mode = .large
 +        self.addPredictiveLine = true
++        self.useLimits = true
 +        self.upperLimitChartMmol = LiveActivitySettings.defaultUpperLimitMmol
 +        self.lowerLimitChartMmol = LiveActivitySettings.defaultLowerLimitMmol
 +        self.upperLimitChartMg = LiveActivitySettings.defaultUpperLimitMg
@@ -1976,6 +2154,19 @@ index 00000000..0218db42
 +        self.bottomRowConfiguration = BottomRowConfiguration.defaults
 +    }
 +}
+diff --git a/Loop/LoopCore/LoopCoreConstants.swift b/Loop/LoopCore/LoopCoreConstants.swift
+index d56f2ab9..42e9dfa3 100644
+--- a/Loop/LoopCore/LoopCoreConstants.swift
++++ b/Loop/LoopCore/LoopCoreConstants.swift
+@@ -16,7 +16,7 @@ public enum LoopCoreConstants {
+     /// The amount of time in the future a glucose value should be considered valid
+     public static let futureGlucoseDataInterval = TimeInterval(minutes: 5)
+ 
+-    public static let defaultCarbAbsorptionTimes: CarbStore.DefaultAbsorptionTimes = (fast: .minutes(30), medium: .hours(3), slow: .hours(5))
++    public static let defaultCarbAbsorptionTimes: CarbStore.DefaultAbsorptionTimes = (fast: .hours(2), medium: .hours(3), slow: .hours(5))
+ 
+     /// How much historical glucose to include in a dosing decision
+     /// Somewhat arbitrary, but typical maximum visible in bolus glucose preview
 diff --git a/Loop/LoopCore/NSUserDefaults.swift b/Loop/LoopCore/NSUserDefaults.swift
 index 93fa7e17..dacf2ecd 100644
 --- a/Loop/LoopCore/NSUserDefaults.swift
