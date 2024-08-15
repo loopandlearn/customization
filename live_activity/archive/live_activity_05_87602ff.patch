@@ -1,4 +1,3 @@
-Submodule Loop 1aaee2d..92fb65f:
 diff --git a/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift b/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift
 new file mode 100644
 index 00000000..00823471
@@ -256,10 +255,10 @@ index 00000000..237ddebd
 +}
 diff --git a/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift
 new file mode 100644
-index 00000000..eb70f560
+index 00000000..2baeb90b
 --- /dev/null
 +++ b/Loop/Loop Widget Extension/Live Activity/GlucoseLiveActivityConfiguration.swift	
-@@ -0,0 +1,294 @@
+@@ -0,0 +1,290 @@
 +//
 +//  LiveActivityConfiguration.swift
 +//  Loop Widget Extension
@@ -533,10 +532,6 @@ index 00000000..eb70f560
 +    }
 +    
 +    private func getGlucoseColor(_ value: Double, context: ActivityViewContext<GlucoseActivityAttributes>) -> Color {
-+        guard context.attributes.useLimits else {
-+            return .primary
-+        }
-+        
 +        if
 +            context.state.isMmol && value < context.attributes.lowerLimitChartMmol ||
 +            !context.state.isMmol && value < context.attributes.lowerLimitChartMg
@@ -1035,10 +1030,10 @@ index 00000000..4efa8b76
 +}
 diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
 new file mode 100644
-index 00000000..750dba00
+index 00000000..79635198
 --- /dev/null
 +++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
-@@ -0,0 +1,512 @@
+@@ -0,0 +1,515 @@
 +//
 +//  LiveActivityManaer.swift
 +//  Loop
@@ -1190,7 +1185,7 @@ index 00000000..750dba00
 +                presetContext = Preset(
 +                    title: override.getTitle(),
 +                    startDate: max(override.startDate, start),
-+                    endDate: override.duration.isInfinite ? endDateChart : min(override.actualEndDate, endDateChart),
++                    endDate: override.duration.isInfinite ? endDateChart : min(Date.now + override.duration.timeInterval, endDateChart),
 +                    minValue: override.settings.targetRange?.lowerBound.doubleValue(for: unit) ?? 0,
 +                    maxValue: override.settings.targetRange?.upperBound.doubleValue(for: unit) ?? 0
 +                )
@@ -1249,7 +1244,15 @@ index 00000000..750dba00
 +            } else if newSettings.enabled && self.activity == nil {
 +                initEmptyActivity(settings: newSettings)
 +                
-+            } else if newSettings != self.settings {
++            } else if
++                newSettings.mode != self.settings.mode ||
++                newSettings.addPredictiveLine != self.settings.addPredictiveLine ||
++                newSettings.useLimits != self.settings.useLimits ||
++                newSettings.lowerLimitChartMmol != self.settings.lowerLimitChartMmol ||
++                newSettings.upperLimitChartMmol != self.settings.upperLimitChartMmol ||
++                newSettings.lowerLimitChartMg != self.settings.lowerLimitChartMg ||
++                newSettings.upperLimitChartMg != self.settings.upperLimitChartMg
++            {
 +                await self.activity?.end(nil, dismissalPolicy: .immediate)
 +                self.activity = nil
 +                
@@ -1262,13 +1265,8 @@ index 00000000..750dba00
 +    }
 +    
 +    @objc private func appMovedToForeground() {
-+        guard self.settings.enabled else {
-+            return
-+        }
-+        
 +        guard let activity = self.activity else {
-+            initEmptyActivity(settings: self.settings)
-+            update()
++            print("ERROR: appMovedToForeground: No Live activity found...")
 +            return
 +        }
 +        
@@ -1551,9 +1549,8 @@ index 00000000..750dba00
 +        }
 +    }
 +}
-\ No newline at end of file
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2319f4ec..c5220cb0 100644
+index 2319f4ec..8a728813 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -68,6 +68,8 @@ final class LoopDataManager {
@@ -1796,10 +1793,10 @@ index 00000000..49e50caa
 +}
 diff --git a/Loop/Loop/Views/LiveActivityManagementView.swift b/Loop/Loop/Views/LiveActivityManagementView.swift
 new file mode 100644
-index 00000000..9482bfd0
+index 00000000..0a691a99
 --- /dev/null
 +++ b/Loop/Loop/Views/LiveActivityManagementView.swift
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,137 @@
 +//
 +//  LiveActivityManagementView.swift
 +//  Loop
@@ -1821,10 +1818,10 @@ index 00000000..9482bfd0
 +    @State var isEditingMode = false
 +    @State private var addPredictiveLine: Bool
 +    @State private var useLimits: Bool
-+    @State private var upperLimitChartMmol: Double
-+    @State private var lowerLimitChartMmol: Double
-+    @State private var upperLimitChartMg: Double
-+    @State private var lowerLimitChartMg: Double
++    @State private var upperLimitMmol: Double
++    @State private var lowerLimitMmol: Double
++    @State private var upperLimitMg: Double
++    @State private var lowerLimitMg: Double
 +    
 +    init() {
 +        let liveActivitySettings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
@@ -1833,79 +1830,87 @@ index 00000000..9482bfd0
 +        self.mode = liveActivitySettings.mode
 +        self.addPredictiveLine = liveActivitySettings.addPredictiveLine
 +        self.useLimits = liveActivitySettings.useLimits
-+        self.upperLimitChartMmol = liveActivitySettings.upperLimitChartMmol
-+        self.lowerLimitChartMmol = liveActivitySettings.lowerLimitChartMmol
-+        self.upperLimitChartMg = liveActivitySettings.upperLimitChartMg
-+        self.lowerLimitChartMg = liveActivitySettings.lowerLimitChartMg
++        self.upperLimitMmol = liveActivitySettings.upperLimitChartMmol
++        self.lowerLimitMmol = liveActivitySettings.lowerLimitChartMmol
++        self.upperLimitMg = liveActivitySettings.upperLimitChartMg
++        self.lowerLimitMg = liveActivitySettings.lowerLimitChartMg
 +    }
 +   
 +    var body: some View {
-+        VStack {
-+            List {
-+                Section {
-+                    Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: $enabled)
-+                    
-+                    ExpandableSetting(
-+                        isEditing: $isEditingMode,
-+                        leadingValueContent: {
-+                            Text(NSLocalizedString("Mode", comment: "Title for mode live activity toggle"))
-+                                .foregroundStyle(isEditingMode ? .blue : .primary)
-+                        },
-+                        trailingValueContent: {
-+                            Text(self.mode.name())
-+                                .foregroundStyle(isEditingMode ? .blue : .primary)
-+                        },
-+                        expandedContent: {
-+                            ResizeablePicker(selection: self.$mode.animation(),
-+                                             data: LiveActivityMode.all,
-+                                             formatter: { $0.name() })
++        List {
++            Section {
++                Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: $enabled)
++                    .onChange(of: enabled) { newValue in
++                        self.mutate { settings in
++                            settings.enabled = newValue
 +                        }
-+                    )
-+                }
-+                
-+                Section {
-+                    if mode == .large {
-+                        Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: $addPredictiveLine)
-+                            .transition(.move(edge: mode == .large ? .top : .bottom))
 +                    }
-+                    
++                
++                ExpandableSetting(
++                    isEditing: $isEditingMode,
++                    leadingValueContent: {
++                        Text(NSLocalizedString("Mode", comment: "Title for mode live activity toggle"))
++                            .foregroundStyle(isEditingMode ? .blue : .primary)
++                    },
++                    trailingValueContent: {
++                        Text(self.mode.name())
++                            .foregroundStyle(isEditingMode ? .blue : .primary)
++                    },
++                    expandedContent: {
++                        ResizeablePicker(selection: self.$mode.animation(),
++                                         data: LiveActivityMode.all,
++                                         formatter: { $0.name() })
++                    }
++                )
++                .onChange(of: self.mode) { newValue in
++                    self.mutate { settings in
++                        settings.mode = newValue
++                    }
++                }
++            }
++            
++            if mode == .large {
++                Section {
++                    Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: $addPredictiveLine)
++                        .transition(.move(edge: mode == .large ? .top : .bottom))
++                        .onChange(of: addPredictiveLine) { newValue in
++                            self.mutate { settings in
++                                settings.addPredictiveLine = newValue
++                            }
++                        }
 +                    Toggle(NSLocalizedString("Use BG coloring", comment: "Title for BG coloring"), isOn: $useLimits)
 +                        .transition(.move(edge: mode == .large ? .top : .bottom))
++                        .onChange(of: useLimits) { newValue in
++                            self.mutate { settings in
++                                settings.useLimits = newValue
++                            }
++                        }
 +                    
 +                    if useLimits {
 +                        if self.displayGlucosePreference.unit == .millimolesPerLiter {
-+                            TextInput(label: "Upper limit", value: $upperLimitChartMmol)
++                            TextInput(label: "Upper limit chart", value: $upperLimitMmol)
 +                                .transition(.move(edge: useLimits ? .top : .bottom))
-+                            TextInput(label: "Lower limit", value: $lowerLimitChartMmol)
++                            TextInput(label: "Lower limit chart", value: $lowerLimitMmol)
 +                                .transition(.move(edge: useLimits ? .top : .bottom))
 +                        } else {
-+                            TextInput(label: "Upper limit", value: $upperLimitChartMg)
++                            TextInput(label: "Upper limit chart", value: $upperLimitMg)
 +                                .transition(.move(edge: useLimits ? .top : .bottom))
-+                            TextInput(label: "Lower limit", value: $lowerLimitChartMg)
++                            TextInput(label: "Lower limit chart", value: $lowerLimitMg)
 +                                .transition(.move(edge: useLimits ? .top : .bottom))
 +                        }
 +                    }
 +                }
-+                
-+                Section {
-+                    NavigationLink(
-+                        destination: LiveActivityBottomRowManagerView(),
-+                        label: { Text(NSLocalizedString("Bottom row configuration", comment: "Title for Bottom row configuration")) }
-+                    )
-+                }
-+                
-+                
 +            }
++                
++            Section {
++                NavigationLink(
++                    destination: LiveActivityBottomRowManagerView(),
++                    label: { Text(NSLocalizedString("Bottom row configuration", comment: "Title for Bottom row configuration")) }
++                )
++            }
++        }
 +            .animation(.easeInOut, value: UUID())
 +            .insetGroupedListStyle()
-+            
-+            Spacer()
-+            Button(action: save) {
-+                Text(NSLocalizedString("Save", comment: ""))
-+            }
-+            .buttonStyle(ActionButtonStyle())
-+            .padding([.bottom, .horizontal])
-+        }
 +            .navigationBarTitle(Text(NSLocalizedString("Live activity", comment: "Live activity screen title")))
 +    }
 +    
@@ -1920,16 +1925,10 @@ index 00000000..9482bfd0
 +        }
 +    }
 +    
-+    private func save() {
++    private func mutate(_ updater: (inout LiveActivitySettings) -> Void) {
 +        var settings = UserDefaults.standard.liveActivity ?? LiveActivitySettings()
-+        settings.enabled = self.enabled
-+        settings.mode = self.mode
-+        settings.addPredictiveLine = self.addPredictiveLine
-+        settings.useLimits = self.useLimits
-+        settings.upperLimitChartMmol = self.upperLimitChartMmol
-+        settings.lowerLimitChartMmol = self.lowerLimitChartMmol
-+        settings.upperLimitChartMg = self.upperLimitChartMg
-+        settings.lowerLimitChartMg = self.lowerLimitChartMg
++        
++        updater(&settings)
 +        
 +        UserDefaults.standard.liveActivity = settings
 +        NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
@@ -1937,10 +1936,10 @@ index 00000000..9482bfd0
 +}
 diff --git a/Loop/LoopCore/LiveActivitySettings.swift b/Loop/LoopCore/LiveActivitySettings.swift
 new file mode 100644
-index 00000000..71807464
+index 00000000..02a3fbb2
 --- /dev/null
 +++ b/Loop/LoopCore/LiveActivitySettings.swift
-@@ -0,0 +1,159 @@
+@@ -0,0 +1,138 @@
 +//
 +//  LiveActivitySettings.swift
 +//  LoopCore
@@ -2026,7 +2025,7 @@ index 00000000..71807464
 +    }
 +}
 +
-+public struct LiveActivitySettings: Codable, Equatable {
++public struct LiveActivitySettings: Codable {
 +    public var enabled: Bool
 +    public var mode: LiveActivityMode
 +    public var addPredictiveLine: Bool
@@ -2056,16 +2055,15 @@ index 00000000..71807464
 +    
 +    public init(from decoder:Decoder) throws {
 +        let values = try decoder.container(keyedBy: CodingKeys.self)
-+
-+        self.enabled = try values.decode(Bool.self, forKey: .enabled)
-+        self.mode = try values.decodeIfPresent(LiveActivityMode.self, forKey: .mode) ?? .large
-+        self.addPredictiveLine = try values.decode(Bool.self, forKey: .addPredictiveLine)
-+        self.useLimits = try values.decodeIfPresent(Bool.self, forKey: .useLimits) ?? true
-+        self.upperLimitChartMmol = try values.decode(Double?.self, forKey: .upperLimitChartMmol) ?? LiveActivitySettings.defaultUpperLimitMmol
-+        self.lowerLimitChartMmol = try values.decode(Double?.self, forKey: .lowerLimitChartMmol) ?? LiveActivitySettings.defaultLowerLimitMmol
-+        self.upperLimitChartMg = try values.decode(Double?.self, forKey: .upperLimitChartMg) ?? LiveActivitySettings.defaultUpperLimitMg
-+        self.lowerLimitChartMg = try values.decode(Double?.self, forKey: .lowerLimitChartMg) ?? LiveActivitySettings.defaultLowerLimitMg
-+        self.bottomRowConfiguration = try values.decode([BottomRowConfiguration].self, forKey: .bottomRowConfiguration)
++        enabled = try values.decode(Bool.self, forKey: .enabled)
++        mode = try values.decodeIfPresent(LiveActivityMode.self, forKey: .mode) ?? .large
++        addPredictiveLine = try values.decode(Bool.self, forKey: .addPredictiveLine)
++        useLimits = try values.decodeIfPresent(Bool.self, forKey: .useLimits) ?? true
++        upperLimitChartMmol = try values.decode(Double?.self, forKey: .upperLimitChartMmol) ?? LiveActivitySettings.defaultUpperLimitMmol
++        lowerLimitChartMmol = try values.decode(Double?.self, forKey: .lowerLimitChartMmol) ?? LiveActivitySettings.defaultLowerLimitMmol
++        upperLimitChartMg = try values.decode(Double?.self, forKey: .upperLimitChartMg) ?? LiveActivitySettings.defaultUpperLimitMg
++        lowerLimitChartMg = try values.decode(Double?.self, forKey: .lowerLimitChartMg) ?? LiveActivitySettings.defaultLowerLimitMg
++        bottomRowConfiguration = try values.decode([BottomRowConfiguration].self, forKey: .bottomRowConfiguration)
 +    }
 +    
 +    public init() {
@@ -2079,28 +2077,7 @@ index 00000000..71807464
 +        self.lowerLimitChartMg = LiveActivitySettings.defaultLowerLimitMg
 +        self.bottomRowConfiguration = BottomRowConfiguration.defaults
 +    }
-+    
-+    public static func == (lhs: LiveActivitySettings, rhs: LiveActivitySettings) -> Bool {
-+        return lhs.addPredictiveLine == rhs.addPredictiveLine &&
-+            lhs.mode == rhs.mode &&
-+            lhs.useLimits == rhs.useLimits &&
-+            lhs.lowerLimitChartMmol == rhs.lowerLimitChartMmol &&
-+            lhs.upperLimitChartMmol == rhs.upperLimitChartMmol &&
-+            lhs.lowerLimitChartMg == rhs.lowerLimitChartMg &&
-+            lhs.upperLimitChartMg == rhs.upperLimitChartMg
-+    }
-+    
-+    public static func != (lhs: LiveActivitySettings, rhs: LiveActivitySettings) -> Bool {
-+        return lhs.addPredictiveLine != rhs.addPredictiveLine ||
-+            lhs.mode != rhs.mode ||
-+            lhs.useLimits != rhs.useLimits ||
-+            lhs.lowerLimitChartMmol != rhs.lowerLimitChartMmol ||
-+            lhs.upperLimitChartMmol != rhs.upperLimitChartMmol ||
-+            lhs.lowerLimitChartMg != rhs.lowerLimitChartMg ||
-+            lhs.upperLimitChartMg != rhs.upperLimitChartMg
-+    }
 +}
-\ No newline at end of file
 diff --git a/Loop/LoopCore/NSUserDefaults.swift b/Loop/LoopCore/NSUserDefaults.swift
 index 93fa7e17..dacf2ecd 100644
 --- a/Loop/LoopCore/NSUserDefaults.swift
