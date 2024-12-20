@@ -1,0 +1,1461 @@
+diff --git a/.github/workflows/build_loop.yml b/.github/workflows/build_loop.yml
+index 254c401..b7d230d 100644
+--- a/.github/workflows/build_loop.yml
++++ b/.github/workflows/build_loop.yml
+@@ -198,7 +198,7 @@ jobs:
+       )
+     steps:
+       - name: Select Xcode version
+-        run: "sudo xcode-select --switch /Applications/Xcode_15.4.app/Contents/Developer"
++        run: "sudo xcode-select --switch /Applications/Xcode_16.2.app/Contents/Developer"
+ 
+       - name: Checkout Repo for syncing
+         if: |
+diff --git a/Gemfile.lock b/Gemfile.lock
+index 8caeede..6196cbe 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -10,20 +10,20 @@ GEM
+     artifactory (3.0.17)
+     atomos (0.1.3)
+     aws-eventstream (1.3.0)
+-    aws-partitions (1.981.0)
+-    aws-sdk-core (3.209.1)
++    aws-partitions (1.1007.0)
++    aws-sdk-core (3.213.0)
+       aws-eventstream (~> 1, >= 1.3.0)
+-      aws-partitions (~> 1, >= 1.651.0)
++      aws-partitions (~> 1, >= 1.992.0)
+       aws-sigv4 (~> 1.9)
+       jmespath (~> 1, >= 1.6.1)
+-    aws-sdk-kms (1.94.0)
+-      aws-sdk-core (~> 3, >= 3.207.0)
++    aws-sdk-kms (1.95.0)
++      aws-sdk-core (~> 3, >= 3.210.0)
+       aws-sigv4 (~> 1.5)
+-    aws-sdk-s3 (1.166.0)
+-      aws-sdk-core (~> 3, >= 3.207.0)
++    aws-sdk-s3 (1.171.0)
++      aws-sdk-core (~> 3, >= 3.210.0)
+       aws-sdk-kms (~> 1)
+       aws-sigv4 (~> 1.5)
+-    aws-sigv4 (1.10.0)
++    aws-sigv4 (1.10.1)
+       aws-eventstream (~> 1, >= 1.0.2)
+     babosa (1.0.4)
+     base64 (0.2.0)
+@@ -69,7 +69,7 @@ GEM
+     faraday_middleware (1.2.1)
+       faraday (~> 1.0)
+     fastimage (2.3.1)
+-    fastlane (2.223.1)
++    fastlane (2.225.0)
+       CFPropertyList (>= 2.3, < 4.0.0)
+       addressable (>= 2.8, < 3.0.0)
+       artifactory (~> 3.0)
+@@ -85,6 +85,7 @@ GEM
+       faraday-cookie_jar (~> 0.0.6)
+       faraday_middleware (~> 1.0)
+       fastimage (>= 2.1.0, < 3.0.0)
++      fastlane-sirp (>= 1.0.0)
+       gh_inspector (>= 1.1.2, < 2.0.0)
+       google-apis-androidpublisher_v3 (~> 0.3)
+       google-apis-playcustomapp_v1 (~> 0.1)
+@@ -110,6 +111,8 @@ GEM
+       xcodeproj (>= 1.13.0, < 2.0.0)
+       xcpretty (~> 0.3.0)
+       xcpretty-travis-formatter (>= 0.0.3, < 2.0.0)
++    fastlane-sirp (1.0.0)
++      sysrandom (~> 1.0)
+     gh_inspector (1.1.3)
+     google-apis-androidpublisher_v3 (0.54.0)
+       google-apis-core (>= 0.11.0, < 2.a)
+@@ -152,17 +155,17 @@ GEM
+       domain_name (~> 0.5)
+     httpclient (2.8.3)
+     jmespath (1.6.2)
+-    json (2.7.2)
+-    jwt (2.9.1)
++    json (2.7.6)
++    jwt (2.9.3)
+       base64
+     mini_magick (4.13.2)
+     mini_mime (1.1.5)
+     multi_json (1.15.0)
+     multipart-post (2.4.1)
+-    nanaimo (0.3.0)
++    nanaimo (0.4.0)
+     naturally (2.2.1)
+     nkf (0.2.0)
+-    optparse (0.5.0)
++    optparse (0.6.0)
+     os (1.1.4)
+     plist (3.7.1)
+     public_suffix (5.1.1)
+@@ -172,7 +175,7 @@ GEM
+       trailblazer-option (>= 0.1.1, < 0.2.0)
+       uber (< 0.2.0)
+     retriable (3.1.2)
+-    rexml (3.3.7)
++    rexml (3.3.9)
+     rouge (2.0.7)
+     ruby2_keywords (0.0.5)
+     rubyzip (2.3.2)
+@@ -185,6 +188,7 @@ GEM
+     simctl (1.6.10)
+       CFPropertyList
+       naturally
++    sysrandom (1.0.5)
+     terminal-notifier (2.0.0)
+     terminal-table (3.0.2)
+       unicode-display_width (>= 1.1.1, < 3)
+@@ -197,13 +201,13 @@ GEM
+     unf (0.2.0)
+     unicode-display_width (2.6.0)
+     word_wrap (1.0.0)
+-    xcodeproj (1.25.0)
++    xcodeproj (1.27.0)
+       CFPropertyList (>= 2.3.3, < 4.0)
+       atomos (~> 0.1.3)
+       claide (>= 1.0.2, < 2.0)
+       colored2 (~> 3.1)
+-      nanaimo (~> 0.3.0)
+-      rexml (>= 3.3.2, < 4.0)
++      nanaimo (~> 0.4.0)
++      rexml (>= 3.3.6, < 4.0)
+     xcpretty (0.3.0)
+       rouge (~> 2.0.7)
+     xcpretty-travis-formatter (1.0.1)
+Submodule Loop 20c313c..0dfbc32:
+diff --git a/Loop/Loop/View Controllers/StatusTableViewController.swift b/Loop/Loop/View Controllers/StatusTableViewController.swift
+index 6a4aadfc..0e14f216 100644
+--- a/Loop/Loop/View Controllers/StatusTableViewController.swift	
++++ b/Loop/Loop/View Controllers/StatusTableViewController.swift	
+@@ -240,10 +240,16 @@ final class StatusTableViewController: LoopChartsTableViewController {
+         didSet {
+             if oldValue != bolusState {
+                 switch bolusState {
+-                case .inProgress(_):
++                case .inProgress(let dose):
+                     guard case .inProgress = oldValue else {
+                         // Bolus starting
+                         bolusProgressReporter = deviceManager.pumpManager?.createBolusProgressReporter(reportingOn: DispatchQueue.main)
++                        // If there is an existing bolus progressCell, update its dose values now in case the app is currently in the
++                        // background as otherwise these values won't get initialized and can contain stale data from some earlier bolus.
++                        if let progressCell = tableView.cellForRow(at: IndexPath(row: StatusRow.status.rawValue, section: Section.status.rawValue)) as? BolusProgressTableViewCell {
++                            progressCell.totalUnits = dose.programmedUnits
++                            progressCell.deliveredUnits = 0
++                        }
+                         break
+                     }
+                 default:
+Submodule OmniBLE 4ad8117..fee22b3:
+diff --git a/OmniBLE/OmniBLE/OmnipodCommon/MessageBlocks/PodInfo.swift b/OmniBLE/OmniBLE/OmnipodCommon/MessageBlocks/PodInfo.swift
+index dfbfe181..a922ec23 100644
+--- a/OmniBLE/OmniBLE/OmnipodCommon/MessageBlocks/PodInfo.swift
++++ b/OmniBLE/OmniBLE/OmnipodCommon/MessageBlocks/PodInfo.swift
+@@ -22,13 +22,13 @@ public enum PodInfoResponseSubType: UInt8, Equatable {
+     case detailedStatus              = 0x02 // Returns detailed pod status, returned for most calls after a pod fault
+     case pulseLogPlus                = 0x03 // Returns up to the last 60 pulse log entries plus additional info
+     case activationTime              = 0x05 // Returns pod activation time and possible fault code & fault time
+-    case noSeqStatusResponse         = 0x07 // DASH only, returns the normal status response w/o incrementing msg seq #
++    case noSeqStatus                 = 0x07 // DASH only, returns the normal status response w/o incrementing msg seq #
+     case pulseLogRecent              = 0x50 // Returns the last 50 pulse log entries
+     case pulseLogPrevious            = 0x51 // Like 0x50, but returns up to the previous 50 entries before the last 50
+     
+     public var podInfoType: PodInfo.Type {
+         switch self {
+-        case .normal:
++        case .normal, .noSeqStatus:         // noSeqStatus won't increment the message seq # from the last response
+             return StatusResponse.self as! PodInfo.Type
+         case .triggeredAlerts:
+             return PodInfoTriggeredAlerts.self
+@@ -38,8 +38,6 @@ public enum PodInfoResponseSubType: UInt8, Equatable {
+             return PodInfoPulseLogPlus.self
+         case .activationTime:
+             return PodInfoActivationTime.self
+-        case .noSeqStatusResponse:
+-            return StatusResponse.self as! PodInfo.Type
+         case .pulseLogRecent:
+             return PodInfoPulseLogRecent.self
+         case .pulseLogPrevious:
+diff --git a/OmniBLE/OmniBLE/OmnipodCommon/Pod.swift b/OmniBLE/OmniBLE/OmnipodCommon/Pod.swift
+index d0daef2e..75db1abc 100644
+--- a/OmniBLE/OmniBLE/OmnipodCommon/Pod.swift
++++ b/OmniBLE/OmniBLE/OmnipodCommon/Pod.swift
+@@ -54,12 +54,15 @@ public struct Pod {
+     public static let reservoirCapacity: Double = 200
+ 
+     // Supported basal rates
+-    // Eros minimum scheduled basal rate is 0.05 U/H while for Dash supports 0 U/H.
+-    // Would need to have this value based on productID to be able to share this file with Eros.
++    // Eros minimum scheduled basal rate is 0.05 U/hr while Dash supports 0 U/hr.
+     public static let supportedBasalRates: [Double] = (0...600).map { Double($0) / Double(pulsesPerUnit) }
+ 
+-    // The internal basal rate used for non-Eros pods
+-    // Would need to have this value based on productID to be able to share this file with Eros.
++    // Supported temp basal rates
++    // Both Eros and Dash support a minimum temp basal rate of 0 U/hr.
++    public static let supportedTempBasalRates: [Double] = (0...600).map { Double($0) / Double(pulsesPerUnit) }
++
++    // The internal basal rate used for zero basal rates
++    // Eros uses 0.0 while Dash uses a near zero rate
+     public static let zeroBasalRate: Double = nearZeroBasalRate
+ 
+     // Maximum number of basal schedule entries supported
+@@ -85,13 +88,13 @@ public struct Pod {
+     public static let defaultExpirationReminderOffset = TimeInterval(hours: 2)
+     public static let expirationReminderAlertMinHoursBeforeExpiration = 1
+     public static let expirationReminderAlertMaxHoursBeforeExpiration = 24
+-    
++
+     // Threshold used to display pod end of life warnings
+     public static let timeRemainingWarningThreshold = TimeInterval(days: 1)
+-    
++
+     // Default low reservoir alert limit in Units
+     public static let defaultLowReservoirReminder: Double = 10
+-    
++
+     // Allowed Low Reservoir reminder values
+     public static let allowedLowReservoirReminderValues = Array(stride(from: 1, through: 50, by: 1))
+ }
+@@ -111,19 +114,46 @@ public enum DeliveryStatus: UInt8, CustomStringConvertible {
+     case extendedBolusAndTempBasal = 10
+ 
+     public var suspended: Bool {
+-        return self == .suspended || self == .priming || self == .extendedBolusWhileSuspended
++        // returns true if both the tempBasal and basal bits are clear
++        let suspendedStates: Set<DeliveryStatus> = [
++            .suspended,
++            .priming,
++            .extendedBolusWhileSuspended,
++        ]
++        return suspendedStates.contains(self)
+     }
+ 
+     public var bolusing: Bool {
+-        return self == .bolusInProgress || self == .bolusAndTempBasal || self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .priming || self == .extendedBolusWhileSuspended
++        // returns true if either the immediateBolus or extendedBolus bits are set
++        let bolusingStates: Set<DeliveryStatus> = [
++            .priming,
++            .bolusInProgress,
++            .bolusAndTempBasal,
++            .extendedBolusWhileSuspended,
++            .extendedBolusRunning,
++            .extendedBolusAndTempBasal,
++        ]
++        return bolusingStates.contains(self)
+     }
+ 
+     public var tempBasalRunning: Bool {
+-        return self == .tempBasalRunning || self == .bolusAndTempBasal || self == .extendedBolusAndTempBasal
++        // returns true if the tempBasal bit is set
++        let tempBasalRunningStates: Set<DeliveryStatus> = [
++            .tempBasalRunning,
++            .bolusAndTempBasal,
++            .extendedBolusAndTempBasal,
++        ]
++        return tempBasalRunningStates.contains(self)
+     }
+ 
+     public var extendedBolusRunning: Bool {
+-        return self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .extendedBolusWhileSuspended
++        // returns true if the extendedBolus bit is set
++        let extendedBolusRunningStates: Set<DeliveryStatus> = [
++            .extendedBolusWhileSuspended,
++            .extendedBolusRunning,
++            .extendedBolusAndTempBasal,
++        ]
++        return extendedBolusRunningStates.contains(self)
+     }
+ 
+     public var description: String {
+diff --git a/OmniBLE/OmniBLE/PumpManager/MessageTransport.swift b/OmniBLE/OmniBLE/PumpManager/MessageTransport.swift
+index 571e5907..9c357617 100644
+--- a/OmniBLE/OmniBLE/PumpManager/MessageTransport.swift
++++ b/OmniBLE/OmniBLE/PumpManager/MessageTransport.swift
+@@ -259,7 +259,7 @@ class PodMessageTransport: MessageTransport {
+         return try enDecrypt.encrypt(msg, nonceSeq)
+     }
+     
+-    func readAndAckResponse() throws -> Message {
++    private func readAndAckResponse() throws -> Message {
+         guard let enDecrypt = self.enDecrypt else { throw PodCommsError.podNotConnected }
+ 
+         let readResponse = try manager.readMessagePacket()
+@@ -276,22 +276,37 @@ class PodMessageTransport: MessageTransport {
+         incrementNonceSeq()
+         let ack = try getAck(response: decrypted)
+         let ackResult = manager.sendMessagePacket(ack)
+-        guard case .sentWithAcknowledgment = ackResult else {
+-            throw PodProtocolError.messageIOException("Could not write $msgType: \(ackResult)")
+-        }
+ 
+         // verify that the Omnipod message # matches the expected value
+         guard response.sequenceNum == messageNumber else {
+             throw MessageError.invalidSequence
+         }
+ 
++        switch ackResult {
++        case .sentWithAcknowledgment:
++            break
++        case .sentWithError, .unsentWithError:
++            // We had a communications error trying to send the response ack to the pod.
++            let ackErrStr = String(format: "Send of ack failed: %@", String(describing: ackResult))
++
++            // The original behavior here was to throw for this error which will throw out the verified response
++            // for a received pod command which forces the unacknowledged response code to try to resolve any insulin
++            // delivery related commands while treating other commands types as failures even though they were received.
++            // throw PodProtocolError.messageIOException(ackErrStr)
++
++            // Since we already have a fully verified response, simply log the ack comms error and return
++            // the received response since the pod has already accepted the command and provided its response.
++            // This results in less bogus failures on successfully received and handled pod commands and
++            // could result in a failure trying to send the next pod command but with less ill side effects.
++            log.error("%@, but still using validated response %@", ackErrStr, String(describing: response))
++        }
++
+         return response
+     }
+     
+     private func parseResponse(decrypted: MessagePacket) throws -> Message {
+ 
+         let data = try StringLengthPrefixEncoding.parseKeys([RESPONSE_PREFIX], decrypted.payload)[0]
+-        log.debug("Received decrypted response: %{public}@ in packet: %{public}@", data.hexadecimalString, decrypted.payload.hexadecimalString)
+ 
+         // Dash pods generates a CRC16 for Omnipod Messages, but the actual algorithm is not understood and doesn't match the CRC16
+         // that the pod enforces for incoming Omnipod command message. The Dash PDM explicitly ignores the CRC16 for incoming messages,
+diff --git a/OmniBLE/OmniBLE/PumpManager/OmniBLEPumpManager.swift b/OmniBLE/OmniBLE/PumpManager/OmniBLEPumpManager.swift
+index afea8dc1..72c87051 100644
+--- a/OmniBLE/OmniBLE/PumpManager/OmniBLEPumpManager.swift
++++ b/OmniBLE/OmniBLE/PumpManager/OmniBLEPumpManager.swift
+@@ -1038,7 +1038,7 @@ extension OmniBLEPumpManager {
+         podComms.runSession(withName: "Resuming pod setup") { (result) in
+             switch result {
+             case .success(let session):
+-                let status = try? session.getStatus()
++                let status = try? session.getStatus(noSeqGetStatus: true)
+                 if status == nil {
+                     self.log.debug("### Pod setup resume getStatus failed, sleeping %d seconds", sleepTime)
+                     sleep(sleepTime)
+@@ -1062,7 +1062,7 @@ extension OmniBLEPumpManager {
+             do {
+                 switch result {
+                 case .success(let session):
+-                    let status = try session.getStatus()
++                    let status = try session.getStatus(noSeqGetStatus: true)
+                     session.dosesForStorage({ (doses) -> Bool in
+                         self.store(doses: doses, in: session)
+                     })
+@@ -1849,7 +1849,7 @@ extension OmniBLEPumpManager: PumpManager {
+             })
+ 
+             if let podState = self.state.podState, podState.isSuspended || podState.lastDeliveryStatusReceived?.suspended == true {
+-                self.log.error("Not enacting bolus because podState or last status received indicates pod is suspended")
++                self.log.info("Not enacting bolus because podState or last status received indicates pod is suspended")
+                 completion(.deviceState(PodCommsError.podSuspended))
+                 return
+             }
+@@ -2033,7 +2033,7 @@ extension OmniBLEPumpManager: PumpManager {
+                     return
+                 }
+ 
+-                guard status.deliveryStatus != .suspended else {
++                guard !status.deliveryStatus.suspended else {
+                     self.log.info("Canceling temp basal because status return indicates pod is suspended!")
+                     completion(.communication(PodCommsError.podSuspended))
+                     return
+@@ -2422,12 +2422,10 @@ extension OmniBLEPumpManager: PumpManager {
+ 
+ extension OmniBLEPumpManager: MessageLogger {
+     func didSend(_ message: Data) {
+-        log.default("didSend: %{public}@", message.hexadecimalString)
+         self.logDeviceCommunication(message.hexadecimalString, type: .send)
+     }
+ 
+     func didReceive(_ message: Data) {
+-        log.default("didReceive: %{public}@", message.hexadecimalString)
+         self.logDeviceCommunication(message.hexadecimalString, type: .receive)
+     }
+ 
+@@ -2443,7 +2441,7 @@ extension OmniBLEPumpManager: PodCommsDelegate {
+         podComms.runSession(withName: "Post-connect status fetch") { result in
+             switch result {
+             case .success(let session):
+-                let _ = try? session.getStatus()
++                let _ = try? session.getStatus(noSeqGetStatus: true)
+                 self.silenceAcknowledgedAlerts()
+                 session.dosesForStorage() { (doses) -> Bool in
+                     return self.store(doses: doses, in: session)
+diff --git a/OmniBLE/OmniBLE/PumpManager/PodCommsSession.swift b/OmniBLE/OmniBLE/PumpManager/PodCommsSession.swift
+index e23b178a..67ca93d1 100644
+--- a/OmniBLE/OmniBLE/PumpManager/PodCommsSession.swift
++++ b/OmniBLE/OmniBLE/PumpManager/PodCommsSession.swift
+@@ -275,26 +275,40 @@ public class PodCommsSession {
+     ///     - PodCommsError.unexpectedResponse
+     ///     - PodCommsError.rejectedMessage
+     ///     - PodCommsError.nonceResyncFailed
++    ///     - PodCommsError.unacknowledgedMessage
+     ///     - PodCommsError.commsError.MessageError
+     ///     - PodCommsError.commsError.PeripheralManagerError
+     ///     - PodCommsError.commsError.PodProtocolError
++    ///     - MessageError
+     func send<T: MessageBlock>(_ messageBlocks: [MessageBlock], beepBlock: MessageBlock? = nil, expectFollowOnMessage: Bool = false) throws -> T {
+         
+         var triesRemaining = 2  // Retries only happen for nonce resync
+         var blocksToSend = messageBlocks
+-        
+-        // If a beep block was specified & pod isn't faulted, append the beep block to emit the confirmation beep
+-        if let beepBlock = beepBlock, podState.isFaulted == false {
++
++        // If a beep block was specified & the pod isn't faulted AND there isn't an unacknowledged
++        // command for a getStatus command, append the beep block to emit the confirmation beep.
++        // Since a beep command changes lastProgrammingMessageSeqNum, we need skip appending a beep
++        // block while still trying to resolve an unacknowldged delivery command with getStatus calls.
++        if let beepBlock = beepBlock, podState.isFaulted == false &&
++            !(podState.unacknowledgedCommand != nil && blocksToSend[0].blockType == .getStatus)
++        {
+             blocksToSend += [beepBlock]
+         }
+ 
+ //        if blocksToSend.contains(where: { $0 as? NonceResyncableMessageBlock != nil }) {
+ //            podState.advanceToNextNonce()
+ //        }
+-        
+-        let messageNumber = transport.messageNumber
+ 
+         var sentNonce: UInt32?
++        var messageNumber = transport.messageNumber
++        if let getStatusCommand = messageBlocks[0] as? GetStatusCommand,
++            getStatusCommand.podInfoType == .noSeqStatus
++        {
++            // For the special type 7 DASH noSeqStatus getStatus command,
++            // back up the Omnipod msg # here to its previous value so that
++            // this message will have same msg # the last received response.
++            messageNumber = messageNumber == 0 ? 0b1111 : messageNumber - 1
++        }
+ 
+         while (triesRemaining > 0) {
+             triesRemaining -= 1
+@@ -421,6 +435,12 @@ public class PodCommsSession {
+     // specified to first acknowledge and clear all possible pending pod alerts and pod alert configurations.
+     @discardableResult
+     func configureAlerts(_ alerts: [PodAlert], acknowledgeAll: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
++
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail configure alerts with unacknowledged command and incomplete pod setup")
++            throw PodCommsError.unacknowledgedCommandPending
++        }
++
+         let configurations = alerts.map { $0.configuration }
+         let configureAlerts = ConfigureAlertsCommand(nonce: podState.currentNonce, configurations: configurations)
+         let blocksToSend: [MessageBlock]
+@@ -445,7 +465,12 @@ public class PodCommsSession {
+             log.info("Skip beep config with faulted pod")
+             return .failure(PodCommsError.podFault(fault: fault))
+         }
+-        
++
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail beep config with unacknowledged command and incomplete pod setup")
++            return .failure(PodCommsError.unacknowledgedCommandPending)
++        }
++
+         let beepConfigCommand = BeepConfigCommand(beepType: beepType, tempBasalCompletionBeep: tempBasalCompletionBeep, bolusCompletionBeep: bolusCompletionBeep)
+         do {
+             let statusResponse: StatusResponse = try send([beepConfigCommand])
+@@ -724,7 +749,6 @@ public class PodCommsSession {
+     }
+ 
+     // Cancels any suspend related alerts, called when setting a basal schedule with active suspend alerts
+-    @discardableResult
+     private func cancelSuspendAlerts() throws -> StatusResponse {
+ 
+         do {
+@@ -846,7 +870,6 @@ public class PodCommsSession {
+     
+     // use cancelDelivery with .none to get status as well as to validate & advance the nonce
+     // Throws PodCommsError
+-    @discardableResult
+     public func cancelNone(beepBlock: MessageBlock? = nil) throws -> StatusResponse {
+         var statusResponse: StatusResponse
+ 
+@@ -864,9 +887,10 @@ public class PodCommsSession {
+     }
+ 
+     // Throws PodCommsError
+-    @discardableResult
+-    public func getStatus(beepBlock: MessageBlock? = nil) throws -> StatusResponse {
+-        let statusResponse: StatusResponse = try send([GetStatusCommand()], beepBlock: beepBlock)
++    public func getStatus(noSeqGetStatus: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
++        // For noSeqSetStatus, use an alternative DASH noSeqStatus (type 7) request instead of a normal (type 0) request
++        let statusType: PodInfoResponseSubType = noSeqGetStatus ? .noSeqStatus : .normal
++        let statusResponse: StatusResponse = try send([GetStatusCommand(podInfoType: statusType)], beepBlock: beepBlock)
+ 
+         if podState.unacknowledgedCommand != nil {
+             recoverUnacknowledgedCommand(using: statusResponse)
+@@ -874,8 +898,7 @@ public class PodCommsSession {
+         podState.updateFromStatusResponse(statusResponse, at: currentDate)
+         return statusResponse
+     }
+-    
+-    @discardableResult
++
+     public func getDetailedStatus(beepBlock: MessageBlock? = nil) throws -> DetailedStatus {
+         let infoResponse: PodInfoResponse = try send([GetStatusCommand(podInfoType: .detailedStatus)], beepBlock: beepBlock)
+         
+@@ -895,14 +918,13 @@ public class PodCommsSession {
+         return detailedStatus
+     }
+ 
+-    @discardableResult
+     public func readPodInfo(podInfoResponseSubType: PodInfoResponseSubType, beepBlock: MessageBlock? = nil) throws -> PodInfoResponse {
+         let podInfoCommand = GetStatusCommand(podInfoType: podInfoResponseSubType)
+         let podInfoResponse: PodInfoResponse = try send([podInfoCommand], beepBlock: beepBlock)
+         return podInfoResponse
+     }
+ 
+-    // Reconnected to the pod, and we know program was successful
++    // Reconnected to the pod, and we know program was successful based on lastProgrammingMessageSeqNum
+     private func unacknowledgedCommandWasReceived(pendingCommand: PendingCommand, podStatus: StatusResponse) {
+         switch pendingCommand {
+         case .program(let program, _, let commandDate, _):
+@@ -919,7 +941,6 @@ public class PodCommsSession {
+                 }
+             }
+         case .stopProgram(let stopProgram, _, let commandDate, _):
+-
+             if stopProgram.contains(.bolus), let bolus = podState.unfinalizedBolus, !bolus.isFinished(at: commandDate) {
+                 podState.unfinalizedBolus?.cancel(at: commandDate, withRemaining: podStatus.bolusNotDelivered)
+             }
+@@ -933,6 +954,60 @@ public class PodCommsSession {
+         }
+     }
+ 
++    // Reconnected to the pod and we didn't match lastProgrammingMessageSeqNum which indicates
++    // that the command was not received. Now verify the pendingCommand against the current pod
++    // delivery status to decide whether the delivery related command might have been received or not.
++    // Returns true if the command was received based on the pod delivery status and podState was updated.
++    private func checkCommandAgainstStatus(pendingCommand: PendingCommand, podStatus: StatusResponse) -> Bool {
++        let deliveryStatus = podStatus.deliveryStatus
++        var podStatusMatched = false
++        switch pendingCommand {
++        case .program(let program, _, let commandDate, _):
++            if let dose = program.unfinalizedDose(at: commandDate, withCertainty: .certain, insulinType: podState.insulinType) {
++                switch dose.doseType {
++                case .bolus:
++                    if deliveryStatus.bolusing {
++                        podState.unfinalizedBolus = dose
++                        podStatusMatched = true
++                    }
++                case .tempBasal:
++                    if deliveryStatus.tempBasalRunning {
++                        podState.unfinalizedTempBasal = dose
++                        podStatusMatched = true
++                    }
++                case .resume:
++                    if !deliveryStatus.suspended {
++                        podState.suspendState = .resumed(commandDate)
++                        podStatusMatched = true
++                    }
++                default:
++                    break
++                }
++            }
++        case .stopProgram(let stopProgram, _, let commandDate, _):
++            if stopProgram.contains(.bolus), let bolus = podState.unfinalizedBolus, !bolus.isFinished(at: commandDate) {
++                if !deliveryStatus.bolusing {
++                    podState.unfinalizedBolus?.cancel(at: commandDate, withRemaining: podStatus.bolusNotDelivered)
++                    podStatusMatched = true
++                }
++            }
++            if stopProgram.contains(.tempBasal), let tempBasal = podState.unfinalizedTempBasal, !tempBasal.isFinished(at: commandDate) {
++                if !deliveryStatus.tempBasalRunning {
++                    podState.unfinalizedTempBasal?.cancel(at: commandDate)
++                    podStatusMatched = true
++                }
++            }
++            if stopProgram.contains(.basal) {
++                if !deliveryStatus.suspended {
++                    podState.finalizedDoses.append(UnfinalizedDose(suspendStartTime: commandDate, scheduledCertainty: .certain))
++                    podState.suspendState = .suspended(commandDate)
++                    podStatusMatched = true
++                }
++            }
++        }
++        return podStatusMatched
++    }
++
+     public func recoverUnacknowledgedCommand(using status: StatusResponse) {
+         if let pendingCommand = podState.unacknowledgedCommand {
+             self.log.default("Recovering from unacknowledged command %{public}@, status = %{public}@", String(describing: pendingCommand), String(describing: status))
+@@ -940,6 +1015,8 @@ public class PodCommsSession {
+             if status.lastProgrammingMessageSeqNum == pendingCommand.sequence {
+                 self.log.default("Unacknowledged command was received by pump")
+                 unacknowledgedCommandWasReceived(pendingCommand: pendingCommand, podStatus: status)
++            } else if checkCommandAgainstStatus(pendingCommand: pendingCommand, podStatus: status) {
++                self.log.default("Accepted unacknowledged command was received based on pod delivery status of ${public}@", String(describing: status.deliveryStatus))
+             } else {
+                 self.log.default("Unacknowledged command was not received by pump")
+             }
+@@ -994,6 +1071,12 @@ public class PodCommsSession {
+     }
+     
+     public func acknowledgeAlerts(alerts: AlertSet, beepBlock: MessageBlock? = nil) throws -> AlertSet {
++
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail acknowledge alerts with unacknowledged command and pod setup complete")
++            throw PodCommsError.unacknowledgedCommandPending
++        }
++
+         let cmd = AcknowledgeAlertCommand(nonce: podState.currentNonce, alerts: alerts)
+         let status: StatusResponse = try send([cmd], beepBlock: beepBlock)
+         podState.updateFromStatusResponse(status, at: currentDate)
+diff --git a/OmniBLE/OmniBLE/PumpManager/PodState.swift b/OmniBLE/OmniBLE/PumpManager/PodState.swift
+index dc71bde0..2c38b2db 100644
+--- a/OmniBLE/OmniBLE/PumpManager/PodState.swift
++++ b/OmniBLE/OmniBLE/PumpManager/PodState.swift
+@@ -312,7 +312,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+         if deliveryStatus.tempBasalRunning && unfinalizedTempBasal == nil { // active temp basal that we aren't tracking
+             // unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: 0, startTime: Date(), duration: .minutes(30), isHighTemp: false, scheduledCertainty: .certain, insulinType: insulinType)
+         }
+-        if deliveryStatus != .suspended && isSuspended { // active basal that we aren't tracking
++        if !deliveryStatus.suspended && isSuspended { // active basal that we aren't tracking
+             let resumeStartTime = Date()
+             suspendState = .resumed(resumeStartTime)
+             unfinalizedResume = UnfinalizedDose(resumeStartTime: resumeStartTime, scheduledCertainty: .certain, insulinType: insulinType)
+@@ -570,7 +570,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+             "* expiresAt: \(String(reflecting: expiresAt))",
+             "* podTime: \(podTime.timeIntervalStr)",
+             "* podTimeUpdated: \(String(reflecting: podTimeUpdated))",
+-            "* setupUnitsDelivered: \(String(reflecting: setupUnitsDelivered))",
++            "* setupUnitsDelivered: \(setupUnitsDelivered == nil ? "?" : setupUnitsDelivered!.twoDecimals) U",
+             "* firmwareVersion: \(firmwareVersion)",
+             "* bleFirmwareVersion: \(bleFirmwareVersion)",
+             "* lotNo: \(lotNo)",
+@@ -583,6 +583,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+             "* unfinalizedResume: \(String(describing: unfinalizedResume))",
+             "* finalizedDoses: \(String(describing: finalizedDoses))",
+             "* activeAlertsSlots: \(alertSetString(alertSet: activeAlertSlots))",
++            "* delivered: \(lastInsulinMeasurements == nil ? "?" : lastInsulinMeasurements!.delivered.twoDecimals) U",
++            "* reservoirLevel: \(lastInsulinMeasurements == nil || lastInsulinMeasurements!.reservoirLevel == nil || lastInsulinMeasurements!.reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : lastInsulinMeasurements!.reservoirLevel!.twoDecimals) U",
+             "* messageTransportState: \(String(describing: messageTransportState))",
+             "* setupProgress: \(setupProgress)",
+             "* primeFinishTime: \(String(describing: primeFinishTime))",
+diff --git a/OmniBLE/OmniBLE/PumpManagerUI/ViewModels/OmniBLESettingsViewModel.swift b/OmniBLE/OmniBLE/PumpManagerUI/ViewModels/OmniBLESettingsViewModel.swift
+index 8aca8d42..014f85c4 100644
+--- a/OmniBLE/OmniBLE/PumpManagerUI/ViewModels/OmniBLESettingsViewModel.swift
++++ b/OmniBLE/OmniBLE/PumpManagerUI/ViewModels/OmniBLESettingsViewModel.swift
+@@ -476,7 +476,7 @@ class OmniBLESettingsViewModel: ObservableObject {
+     }
+ 
+     public var allowedTempBasalRates: [Double] {
+-        return Pod.supportedBasalRates.filter { $0 <= pumpManager.state.maximumTempBasalRate }
++        return Pod.supportedTempBasalRates.filter { $0 <= pumpManager.state.maximumTempBasalRate }
+     }
+ }
+ 
+diff --git a/OmniBLE/OmniBLEParser/main.swift b/OmniBLE/OmniBLEParser/main.swift
+index b883e888..95df8cbb 100644
+--- a/OmniBLE/OmniBLEParser/main.swift
++++ b/OmniBLE/OmniBLEParser/main.swift
+@@ -9,9 +9,12 @@
+ 
+ import Foundation
+ 
+-// These options can be forced off by using the -q option argument
++// The following default values can all be forced to false or to true using the -q and -v command line options respectively
+ fileprivate var printDate: Bool = true // whether to print the date (when available) along with the time (when available)
+-fileprivate var printFullMessage: Bool = true // whether to print full message decode including the address and seq
++fileprivate var printUnacknowledgedMessageLines: Bool = true // whether to print "Unacknowledged message" lines
++fileprivate var printAddressAndSeq: Bool = false // whether to print full message decode including the pod address and seq #
++fileprivate var printPodConnectionLines: Bool = false // whether to print "connection Pod" lines
++
+ 
+ //from NSHipster - http://nshipster.com/swift-literal-convertible/
+ struct Regex {
+@@ -46,10 +49,20 @@ func ~=<T: RegularExpressionMatchable>(pattern: Regex, matchable: T) -> Bool {
+     return matchable.match(regex: pattern)
+ }
+ 
+-func printDecoded(timeStr: String, hexString: String)
++extension String {
++    func subString(location: Int, length: Int? = nil) -> String {
++      let start = min(max(0, location), self.count)
++      let limitedLength = min(self.count - start, length ?? Int.max)
++      let from = index(startIndex, offsetBy: start)
++      let to = index(startIndex, offsetBy: start + limitedLength)
++      return String(self[from..<to])
++    }
++}
++
++func printDecoded(dateStr: String, timeStr: String, hexStr: String)
+ {
+-    guard let data = Data(hexadecimalString: hexString), data.count >= 10 else {
+-        print("Bad hex string: \(hexString)")
++    guard let data = Data(hexadecimalString: hexStr), data.count >= 10 else {
++        print("Bad hex string: \(hexStr)")
+         return
+     }
+     do {
+@@ -69,42 +82,71 @@ func printDecoded(timeStr: String, hexString: String)
+             checkCRC = true
+         }
+         let message = try Message(encodedData: data, checkCRC: checkCRC)
+-        if printFullMessage {
++        var dateTimeStr: String
++        if printDate && !dateStr.isEmpty {
++            dateTimeStr = dateStr + " " + timeStr + " "
++        } else if !timeStr.isEmpty {
++            dateTimeStr = timeStr + " "
++        } else {
++            dateTimeStr = ""
++        }
++        if printAddressAndSeq {
+             // print the complete message with the address and seq
+-            print("\(type)\(timeStr) \(message)")
++            print("\(type)\(dateTimeStr)\(message)")
+         } else {
+             // skip printing the address and seq for each message
+-            print("\(type)\(timeStr) \(message.messageBlocks)")
++            print("\(type)\(dateTimeStr)\(message.messageBlocks)")
+         }
+     } catch let error {
+-        print("Could not parse \(hexString): \(error)")
++        print("Could not parse \(hexStr): \(error)")
+     }
+ }
+ 
+ // * 2022-04-05 06:56:14 +0000 Omnipod-Dash 17CAE1DD send 17cae1dd00030e010003b1
+ // * 2022-04-05 06:56:14 +0000 Omnipod-Dash 17CAE1DD receive 17cae1dd040a1d18002ab00000019fff0198
+-func parseLoopReportLine(_ line: String) {
++func parseLoopReportLine(line: String) {
+     let components = line.components(separatedBy: .whitespaces)
+     let hexString = components[components.count - 1]
+ 
+-    let date = components[1]
+-    let time = components[2]
+-    let timeStr = printDate ? date + " " + time : time
+-
+-    printDecoded(timeStr: timeStr, hexString: hexString)
++    printDecoded(dateStr: components[1], timeStr: components[2], hexStr: hexString)
+ }
+ 
++// Older Xcode log file with inline metadata
+ // 2023-02-02 15:23:13.094289-0800 Loop[60606:22880823] [PodMessageTransport] Send(Hex): 1776c2c63c030e010000a0
+ // 2023-02-02 15:23:13.497849-0800 Loop[60606:22880823] [PodMessageTransport] Recv(Hex): 1776c2c6000a1d180064d800000443ff0000
+-func parseLoopXcodeLine(_ line: String) {
++func parseLoopXcodeInlineMetadataLine(line: String) {
+     let components = line.components(separatedBy: .whitespaces)
+     let hexString = components[components.count - 1]
+ 
+-    let date = components[0]
+-    let time = components[1].padding(toLength: 15, withPad: " ", startingAt: 0)  // skip the -0800 portion
+-    let timeStr = printDate ? date + " " + time : time
++    let time = components[1].subString(location: 0, length: 15) // use the 15 detailed time chars w/o TZ (e.g., "15:23:13.497849")
+ 
+-    printDecoded(timeStr: timeStr, hexString: hexString)
++    printDecoded(dateStr: components[0], timeStr: time, hexStr: hexString)
++}
++
++// Newer Xcode log file using separate metadata lines (app independent)
++// Send(Hex): 1f074dca1c201a0ea814ef4e01007901384000000000160e000000006b49d20000006b49d200013a
++// Timestamp: 2024-01-14 12:02:27.095438-08:00 | Library: OmniKit | Category: PodMessageTransport
++// Recv(Hex): 1f074dca200a1d280059b800001aa7ff01c0
++// Timestamp: 2024-01-14 12:02:30.391271-08:00 | Library: OmniKit | Category: PodMessageTransport
++func parseXcodeLine(line: String, timestampLine: String) {
++    var date = ""
++    var time = ""
++
++    let timeStampLineComponents = timestampLine.components(separatedBy: .whitespaces)
++    if timeStampLineComponents.count >= 3 {
++        for i in 0...timeStampLineComponents.count - 2 {
++            if timeStampLineComponents[i] == "Timestamp:" {
++                date = timeStampLineComponents[i + 1]
++                time = timeStampLineComponents[i + 2].subString(location: 0, length: 15) // use the 15 detailed time chars w/o TZ
++                break
++            }
++        }
++    }
++
++    let components = line.components(separatedBy: .whitespaces)
++    let hexString = components[components.count - 1]
++
++    printDecoded(dateStr: date, timeStr: time, hexStr: hexString)
+ }
+ 
+ // N.B. Simulator output typically has a space after the hex string!
+@@ -112,7 +154,7 @@ func parseLoopXcodeLine(_ line: String) {
+ // INFO[7699] pkg response 0x1d; HEX, 1776c2c6000a1d280064e80000057bff0000
+ // INFO[2023-09-04T18:17:06-07:00] pkg command; 0x07; GET_VERSION; HEX, ffffffff00060704ffffffff82b2
+ // INFO[2023-09-04T18:17:06-07:00] pkg response 0x1; HEX, ffffffff04170115040a00010300040208146db10006e45100ffffffff0000
+-func parseSimulatorLogLine(_ line: String) {
++func parseSimulatorLogLine(line: String) {
+     let components = line.components(separatedBy: .whitespaces)
+     var hexStringIndex = components.count - 1
+     let hexString: String
+@@ -122,61 +164,144 @@ func parseSimulatorLogLine(_ line: String) {
+     hexString = components[hexStringIndex]
+ 
+     let c0 = components[0]
+-    // start at 5 for printDate or shorter "INFO[7699]" format
+-    let offset = printDate || c0.count <= 16 ? 5 : 16
+-    let startIndex = c0.index(c0.startIndex, offsetBy: offset)
+-    let endIndex = c0.index(c0.startIndex, offsetBy: c0.count - 2)
+-    let timeStr = String(c0[startIndex...endIndex])
++    let date: String
++    let time: String
++
++    if c0.count <= 16 {
++        // seconds only format, e.g., "INFO[7699]"
++        date = ""
++        time = c0.subString(location: 5, length: c0.count - 6) // six less for the "INFO[]" chars
++    } else {
++        // full time format, e.g., "INFO[2023-09-04T18:17:06-07:00]"
++        date = c0.subString(location: 5, length: 10)
++        time = c0.subString(location: 16, length: 8) // the time w/o TZ (e.g., "18:17:06")
++    }
+ 
+-    printDecoded(timeStr: timeStr, hexString: hexString)
++    printDecoded(dateStr: date, timeStr: time, hexStr: hexString)
+ }
+ 
+ 
+-// iAPS or Trio log file
+-// iAPS_log 2024-05-08T00:03:57-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: 17ab48aa20071f05494e532e0201d5
+-// iAPS or Trio Xcode log with timestamp
+-// 2024-05-25 14:16:54.933281-0700 FreeAPS[2973:2299225] [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 566 DEV: Device message: 170f1e3710080806494e532e000081ab
+-// iAPS or Trio Xcode log with no timestamp
+-// DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 566 DEV: Device message: 170f1e3710080806494e532e000081ab
+-func parseFreeAPSLogOrXcodeLine(_ line: String) {
++// FreeAPS style log file or Xcode log file with inline metadata
++// 2024-05-08T00:03:57-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: 17ab48aa20071f05494e532e0201d5
++func parseFreeAPSLogOrXcodeInlineMetadataLine(line: String) {
+     let components = line.components(separatedBy: .whitespaces)
+     let hexString = components[components.count - 1]
++    let date, time: String
+ 
+     if components.count > 9 {
+-        // have a timestamp
+-        let date = components[0].prefix(10)
+-        let time: String
+-        if components.count == 12 {
+-            // iAPS or Trio log file with date and time joined with a "T", e.g., 2024-05-25T00:26:05-0700
+-            let dateAndTimeComponents = components[0].components(separatedBy: "T")
+-            time = dateAndTimeComponents[1].padding(toLength: 8, withPad: " ", startingAt: 0) // skip the -0700 portion
++        // have a timestamp like "2024-05-08T00:03:57-0700" or "2024-05-25" "14:16:54.933281-0700"
++        date = components[0].subString(location: 0, length: 10) // the first 10 chars are the date (e.g,. "2024-05-25")
++        if components[0].contains("T") {
++            // iAPS or Trio log file with date and time joined with a "T", e.g., "2024-05-25T00:26:05-0700"
++            time = components[0].subString(location: 11, length: 8) // the 8 time chars w/o TZ (e.g., "00:26:05")
+         } else {
+-            // Xcode log file with separate date and time, e.g., 2024-05-25 14:16:53.571361-0700
+-            time = components[1].padding(toLength: 15, withPad: " ", startingAt: 11) // skip the -0700 portion
++            // Xcode log file with separate date and time, e.g., "2024-05-25" "14:16:53.571361-0700"
++            time = components[1].subString(location: 0, length: 15)  // the 15 detailed time chars w/o TZ (e.g., "14:16:53.571361")
+         }
+-        let timeStr = printDate ? date + " " + time : time
+-        printDecoded(timeStr: timeStr, hexString: hexString)
+     } else {
+         // no timestamp
+-        printDecoded(timeStr: "", hexString: hexString)
++        date = ""
++        time = ""
+     }
++    printDecoded(dateStr: date, timeStr: time, hexStr: hexString)
+ }
+ 
+ // 2020-11-04 13:38:34.256  1336  6945 I PodComm pod command: 08202EAB08030E01070319
+ // 2020-11-04 13:38:34.979  1336  1378 V PodComm response (hex) 08202EAB0C0A1D9800EB80A400042FFF8320
+-func parseDashPDMLogLine(_ line: String) {
++func parseDashPDMLogLine(line: String) {
+     let components = line.components(separatedBy: .whitespaces)
+     let hexString = components[components.count - 1]
+ 
+-    let date = components[0]
+-    let time = components[1]
+-    let timeStr = printDate ? date + " " + time : time
++    printDecoded(dateStr: components[0], timeStr: components[1], hexStr: hexString)
++}
++
++// Disconnect and connect messages
++//
++// Loop Report
++// * 2024-07-09 23:10:17 +0000 Omnipod-Dash 170C4026 connection Pod disconnected 80635530-69E1-E701-9C57-190CC608CE6F Optional(Error Domain=CBErrorDomain Code=7 "The specified device has disconnected from us." UserInfo={NSLocalizedDescription=The specified device has disconnected from us.})
++// iAPS or Trio log file
++// 2024-05-25T00:05:22-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: Pod connected C8AA0FAE-7BF3-D682-38D7-DD7314F0F128
++//
++// Loop xcode log
++// 2024-05-25 14:04:19.799014-0700 Loop[2042:132457] [PersistentDeviceLog] connection (17FC3D73) Pod disconnected 86779FC4-EB9B-6ED6-6A38-C345BE12FDB6 nil
++// iAPS or Trio xcode log
++// 2024-05-25 14:22:47.988314-0700 FreeAPS[2973:2299227] [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 566 DEV: Device message: Pod connected F74B4012-5849-3E00-792E-66726A675CED
++//
++// With newer Xcode logging, metadata could be on a separate line (app independent)
++//
++// Unacknowledged messages
++// Old style
++// * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message. seq:10, error = ...
++// Newer styles
++// * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message sending command seq:11, error = ...
++// * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message reading response for sent command seq:12, error = ...
++func printPodInfoLine(line: String, timestampLine: String) {
++    let components = line.components(separatedBy: .whitespaces)
++    var endIndex = components.endIndex - 1
++    var startIndex = components[0] == "*" ? 1 : 0   // skip any leading "*"
++
++    var date = ""
++    var time = ""
++    let timeStampLineComponents = timestampLine.components(separatedBy: .whitespaces)
++    if timeStampLineComponents.count >= 3 {
++        // newer Xcode logging with a separate line for metadata
++        for i in 0...timeStampLineComponents.count - 2 {
++            if timeStampLineComponents[i] == "Timestamp:" {
++                date = timeStampLineComponents[i + 1]
++                time = timeStampLineComponents[i + 2].subString(location: 0, length: 15) // use the 15 detailed time chars w/o TZ
++                break
++            }
++        }
++    } else if components[startIndex].contains("T") {
++        // iAPS or Trio log file with date and time with TZ joined with a 'T', e.g., "2024-05-25T00:26:05-0700"
++        date = components[startIndex].subString(location: 0, length: 10) // the first 10 chars are date (e.g., "2024-05-25")
++        time = components[startIndex].subString(location: 11, length: 8) // the 8 time chars w/o TZ (e.g., "00:26:05)
++        startIndex += 1
++    } else if components[startIndex + 1].contains(".") {
++        // Xcode log file with separate date and precise time with TZ, e.g., "2024-05-25" "14:16:53.571361-0700"
++        date = components[startIndex]
++        time = components[1].subString(location: 0, length: 15)  // the 15 detailed time chars w/o TZ (e.g., "14:16:53.571361")
++        startIndex += 2
++    } else if components[startIndex + 2].hasPrefix("+") {
++        // Loop log file with separate date, time & timezone, e.g., "2023-04-05" "06:07:08" "+0000"
++        date = components[startIndex]
++        time = components[startIndex + 1]
++        startIndex += 3
++    }
++
++    // Trim the fat to simplify the output depending on whether it's a connection or unacknowledged message
++    for i in startIndex...endIndex {
++        // For disconnected & connected messages, only keep 2 words
++        if components[i].contains("disconnected") || components[i].contains("connected") && i > 1 {
++            startIndex = i - 1 // "Pod"
++            endIndex = i // "disconnected" or "connected"
++            break
++        }
++        if components[i].contains("Unacknowledged") {
++            startIndex = i // strip earlier cruft
++            break
++        }
++    }
+ 
+-    printDecoded(timeStr: timeStr, hexString: hexString)
++    var podInfoLine = "          " // aligns with "RESPONSE: " or "COMMAND:  " prefixes
++    if printDate && !date.isEmpty {
++        podInfoLine += date + " "
++    }
++    if !time.isEmpty {
++        podInfoLine += time + " "
++    }
++
++    for i in startIndex...endIndex {
++        podInfoLine += components[i]
++        if i < endIndex {
++            podInfoLine += " "
++        }
++    }
++    print(podInfoLine)
+ }
+ 
+ func usage() {
+-    print("Usage: [-q] file...")
++    print("Usage: [-qv] file...")
+     print("Set the Xcode Arguments Passed on Launch using Product->Scheme->Edit Scheme...")
+     print("to specify the full path to Loop Report, Xcode log, pod simulator log, iAPS log, Trio log or DASH PDM log file(s) to parse.\n")
+     exit(1)
+@@ -189,52 +314,101 @@ if CommandLine.argc <= 1 {
+ for arg in CommandLine.arguments[1...] {
+     if arg == "-q" {
+         printDate = false
+-        printFullMessage = false
++        printUnacknowledgedMessageLines = false
++        printAddressAndSeq = false
++        printPodConnectionLines = false
++        continue
++    } else if arg == "-v" {
++        printDate = true
++        printUnacknowledgedMessageLines = true
++        printAddressAndSeq = true
++        printPodConnectionLines = true
++        continue
++    } else if arg == "" || arg == "--" {
+         continue
+     } else if arg.starts(with: "-") {
+         // no other arguments curently supported
+         usage()
+     }
+ 
++    var timestampLine: String
+     print("\nParsing \(arg)")
+     do {
+         let data = try String(contentsOfFile: arg, encoding: .utf8)
+         let lines = data.components(separatedBy: .newlines)
+ 
+-        for line in lines {
++        for i in 0..<lines.count {
++            let line = lines[i]
++
++            // New style Xcode metadata logging can have optional timestamp info on a separate line
++            // Send(Hex): 1f074dca1c201a0ea814ef4e01007901384000000000160e000000006b49d20000006b49d200013a
++            // Timestamp: 2024-01-14 12:02:27.095438-08:00 | Library: OmniKit | Category: PodMessageTransport
++            // Recv(Hex): 1f074dca200a1d280059b800001aa7ff01c0
++            // Timestamp: 2024-01-14 12:02:30.391271-08:00 | Library: OmniKit | Category: PodMessageTransport
++            if i < lines.count - 1 && lines[i + 1].contains("Timestamp:") {
++                timestampLine = lines[i + 1]
++            } else {
++                timestampLine = ""
++            }
++
+             switch line {
+             // Loop Report file
+             // * 2022-04-05 06:56:14 +0000 Omnipod-Dash 17CAE1DD send 17cae1dd00030e010003b1
+             // * 2022-04-05 06:56:14 +0000 Omnipod-Dash 17CAE1DD receive 17cae1dd040a1d18002ab00000019fff0198
+             case Regex("(send|receive) [0-9a-fA-F]+$"):
+-                parseLoopReportLine(line)
++                parseLoopReportLine(line: line)
+ 
+-            // Loop Xcode log
++            // Older Xcode log file with inline metadata
+             // 2023-02-02 15:23:13.094289-0800 Loop[60606:22880823] [PodMessageTransport] Send(Hex): 1776c2c63c030e010000a0
+             // 2023-02-02 15:23:13.497849-0800 Loop[60606:22880823] [PodMessageTransport] Recv(Hex): 1776c2c6000a1d180064d800000443ff0000
+             case Regex(" Loop\\[.*\\] \\[PodMessageTransport\\] (Send|Recv)\\(Hex\\): [0-9a-fA-F]+$"):
+-                parseLoopXcodeLine(line)
++                parseLoopXcodeInlineMetadataLine(line: line)
++
++            // Newer Xcode log file using separate metadata lines (app independent)
++            // Send(Hex): 1f074dca1c201a0ea814ef4e01007901384000000000160e000000006b49d20000006b49d200013a
++            // Recv(Hex): 1f074dca200a1d280059b800001aa7ff01c0
++            case Regex("(Send|Recv)\\(Hex\\): [0-9a-fA-F]+$"):
++                parseXcodeLine(line: line, timestampLine: timestampLine)
++
++            // FreeAPS style log file or Xcode log file with inline metadata
++            // 2024-05-08T00:03:57-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: 17ab48aa20071f05494e532e0201d5
++            case Regex("Device message: [0-9a-fA-F]+$"):
++                parseFreeAPSLogOrXcodeInlineMetadataLine(line: line)
+ 
+             // Simulator log file (N.B. typically has a trailing space!)
+             // INFO[7699] pkg command; 0x0e; GET_STATUS; HEX, 1776c2c63c030e010000a0
+             // INFO[7699] pkg response 0x1d; HEX, 1776c2c6000a1d280064e80000057bff0000
+             case Regex("; HEX, [0-9a-fA-F]+ $"), Regex("; HEX, [0-9a-fA-F]+$"):
+-                parseSimulatorLogLine(line)
+-
+-            // iAPS or Trio log file
+-            // iAPS_log 2024-05-08T00:03:57-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: 17ab48aa20071f05494e532e0201d5
+-            // iAPS or Trio Xcode log with timestamp
+-            // 2024-05-25 14:16:54.933281-0700 FreeAPS[2973:2299225] [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 566 DEV: Device message: 170f1e3710080806494e532e000081ab
+-            // iAPS or Trio Xcode log with no timestamp
+-            // DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 566 DEV: Device message: 170f1e3710080806494e532e000081ab
+-            case Regex("Device message: [0-9a-fA-F]+$"):
+-                parseFreeAPSLogOrXcodeLine(line)
++                parseSimulatorLogLine(line: line)
+ 
+             // DASH PDM log file
+             // 2020-11-04 21:35:52.218  1336  1378 I PodComm pod command: 08202EAB30030E010000BC
+             // 2020-11-04 21:35:52.575  1336  6945 V PodComm response (hex) 08202EAB340A1D18018D2000000BA3FF81D9
+             case Regex("I PodComm pod command: "), Regex("V PodComm response \\(hex\\) "):
+-                parseDashPDMLogLine(line)
++                parseDashPDMLogLine(line: line)
++
++            // Pod disconnected/Pod connected messages from either log or xcode log file
++            // Loop
++            // * 2024-07-09 23:10:17 +0000 Omnipod-Dash 170C4026 connection Pod disconnected 80635530-69E1-E701-9C57-190CC608CE6F Optional(Error Domain=CBErrorDomain Code=7 "The specified device has disconnected from us." UserInfo={NSLocalizedDescription=The specified device has disconnected from us.})
++            // * 2024-07-09 23:10:21 +0000 Omnipod-Dash 170C4026 connection Pod connected 80635530-69E1-E701-9C57-190CC608CE6F
++            // iAPS or Trio
++            // 2024-05-25T00:05:21-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: Pod disconnected C8AA0FAE-7BF3-D682-38D7-DD7314F0F128 Optional(Error Domain=CBErrorDomain Code=7 "The specified device has disconnected from us." UserInfo={NSLocalizedDescription=The specified device has disconnected from us.})
++            // 2024-05-25T00:05:22-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 576 - DEV: Device message: Pod connected C8AA0FAE-7BF3-D682-38D7-DD7314F0F128
++            case Regex(" Pod disconnected "), Regex(" Pod connected "):
++                if printPodConnectionLines {
++                    printPodInfoLine(line: line, timestampLine: timestampLine)
++                }
++
++            // Unacknowledged messages lines from either a log or xcode log file
++            // Older style unacknowledged message error
++            // * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message. seq:10, error = ...
++            // Newer style unacknowledged message errors
++            // * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message sending command seq:11, error = ...
++            // * 2024-07-09 23:25:25 +0000 Omnipod-Dash 170C4026 error Unacknowledged message reading response for sent command seq:12, error = ...
++            case Regex(" Unacknowledged message"):
++                if printUnacknowledgedMessageLines {
++                    printPodInfoLine(line: line, timestampLine: timestampLine)
++                }
+ 
+             default:
+                 break
+Submodule OmniKit 01bc598..0857ad8:
+diff --git a/OmniKit/OmniKit/OmnipodCommon/Pod.swift b/OmniKit/OmniKit/OmnipodCommon/Pod.swift
+index 2acaf2c..c5b32e7 100644
+--- a/OmniKit/OmniKit/OmnipodCommon/Pod.swift
++++ b/OmniKit/OmniKit/OmnipodCommon/Pod.swift
+@@ -53,15 +53,15 @@ public struct Pod {
+     public static let reservoirCapacity: Double = 200
+ 
+     // Supported basal rates
+-    // Eros minimum scheduled basal rate is 0.05 U/H while for Dash supports 0 U/H.
+-    // Would need to have this value based on productID to be able to share this with Eros.
++    // Eros minimum scheduled basal rate is 0.05 U/hr while Dash supports 0 U/hr.
+     public static let supportedBasalRates: [Double] = (1...600).map { Double($0) / Double(pulsesPerUnit) }
+ 
+     // Supported temp basal rates
++    // Both Eros and Dash support a minimum temp basal rate of 0 U/hr.
+     public static let supportedTempBasalRates: [Double] = (0...600).map { Double($0) / Double(pulsesPerUnit) }
+ 
+-    // The internal basal rate used for non-Eros pods
+-    // Would need to have this value based on productID to be able to share this file with Eros.
++    // The internal basal rate used for zero basal rates
++    // Eros uses 0.0 while Dash uses a near zero rate
+     public static let zeroBasalRate: Double = 0.0
+ 
+     // Maximum number of basal schedule entries supported
+@@ -113,19 +113,46 @@ public enum DeliveryStatus: UInt8, CustomStringConvertible {
+     case extendedBolusAndTempBasal = 10
+ 
+     public var suspended: Bool {
+-        return self == .suspended || self == .priming || self == .extendedBolusWhileSuspended
++        // returns true if both the tempBasal and basal bits are clear
++        let suspendedStates: Set<DeliveryStatus> = [
++            .suspended,
++            .priming,
++            .extendedBolusWhileSuspended,
++        ]
++        return suspendedStates.contains(self)
+     }
+ 
+     public var bolusing: Bool {
+-        return self == .bolusInProgress || self == .bolusAndTempBasal || self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .priming || self == .extendedBolusWhileSuspended
++        // returns true if either the immediateBolus or extendedBolus bits are set
++        let bolusingStates: Set<DeliveryStatus> = [
++            .priming,
++            .bolusInProgress,
++            .bolusAndTempBasal,
++            .extendedBolusWhileSuspended,
++            .extendedBolusRunning,
++            .extendedBolusAndTempBasal,
++        ]
++        return bolusingStates.contains(self)
+     }
+ 
+     public var tempBasalRunning: Bool {
+-        return self == .tempBasalRunning || self == .bolusAndTempBasal || self == .extendedBolusAndTempBasal
++        // returns true if the tempBasal bit is set
++        let tempBasalRunningStates: Set<DeliveryStatus> = [
++            .tempBasalRunning,
++            .bolusAndTempBasal,
++            .extendedBolusAndTempBasal,
++        ]
++        return tempBasalRunningStates.contains(self)
+     }
+ 
+     public var extendedBolusRunning: Bool {
+-        return self == .extendedBolusRunning || self == .extendedBolusAndTempBasal || self == .extendedBolusWhileSuspended
++        // returns true if the extendedBolus bit is set
++        let extendedBolusRunningStates: Set<DeliveryStatus> = [
++            .extendedBolusWhileSuspended,
++            .extendedBolusRunning,
++            .extendedBolusAndTempBasal,
++        ]
++        return extendedBolusRunningStates.contains(self)
+     }
+ 
+     public var description: String {
+diff --git a/OmniKit/OmniKit/PumpManager/OmnipodPumpManager.swift b/OmniKit/OmniKit/PumpManager/OmnipodPumpManager.swift
+index 630074c..734bc52 100644
+--- a/OmniKit/OmniKit/PumpManager/OmnipodPumpManager.swift
++++ b/OmniKit/OmniKit/PumpManager/OmnipodPumpManager.swift
+@@ -1871,7 +1871,7 @@ extension OmnipodPumpManager: PumpManager {
+             })
+ 
+             if let podState = self.state.podState, podState.isSuspended || podState.lastDeliveryStatusReceived?.suspended == true {
+-                self.log.error("Not enacting bolus because podState or last status received indicates pod is suspended")
++                self.log.info("Not enacting bolus because podState or last status received indicates pod is suspended")
+                 completion(.deviceState(PodCommsError.podSuspended))
+                 return
+             }
+@@ -2053,7 +2053,7 @@ extension OmnipodPumpManager: PumpManager {
+                     return
+                 }
+ 
+-                guard status.deliveryStatus != .suspended else {
++                guard !status.deliveryStatus.suspended else {
+                     self.log.info("Canceling temp basal because status return indicates pod is suspended!")
+                     completion(.communication(PodCommsError.podSuspended))
+                     return
+@@ -2448,12 +2448,10 @@ extension OmnipodPumpManager: PumpManager {
+ 
+ extension OmnipodPumpManager: MessageLogger {
+     func didSend(_ message: Data) {
+-        log.default("didSend: %{public}@", message.hexadecimalString)
+         self.logDeviceCommunication(message.hexadecimalString, type: .send)
+     }
+     
+     func didReceive(_ message: Data) {
+-        log.default("didReceive: %{public}@", message.hexadecimalString)
+         self.logDeviceCommunication(message.hexadecimalString, type: .receive)
+     }
+ 
+diff --git a/OmniKit/OmniKit/PumpManager/PodCommsSession.swift b/OmniKit/OmniKit/PumpManager/PodCommsSession.swift
+index bbb74f7..cfe5b31 100644
+--- a/OmniKit/OmniKit/PumpManager/PodCommsSession.swift
++++ b/OmniKit/OmniKit/PumpManager/PodCommsSession.swift
+@@ -251,6 +251,9 @@ public class PodCommsSession {
+     ///     - PodCommsError.unexpectedResponse
+     ///     - PodCommsError.rejectedMessage
+     ///     - PodCommsError.nonceResyncFailed
++    ///     - PodCommsError.unexpectedPacketType
++    ///     - PodCommsError.emptyResponse
++    ///     - PodCommsError.unacknowledgedMessage
+     ///     - MessageError
+     ///     - RileyLinkDeviceError
+     func send<T: MessageBlock>(_ messageBlocks: [MessageBlock], beepBlock: MessageBlock? = nil, expectFollowOnMessage: Bool = false) throws -> T {
+@@ -258,8 +261,13 @@ public class PodCommsSession {
+         var triesRemaining = 2  // Retries only happen for nonce resync
+         var blocksToSend = messageBlocks
+ 
+-        // If a beep block was specified & pod isn't faulted, append the beep block to emit the confirmation beep
+-        if let beepBlock = beepBlock, podState.isFaulted == false {
++        // If a beep block was specified & the pod isn't faulted AND there isn't an unacknowledged
++        // command for a getStatus command, append the beep block to emit the confirmation beep.
++        // Since a beep command changes lastProgrammingMessageSeqNum, we need skip appending a beep
++        // block while still trying to resolve an unacknowldged delivery command with getStatus calls.
++        if let beepBlock = beepBlock, podState.isFaulted == false &&
++            !(podState.unacknowledgedCommand != nil && blocksToSend[0].blockType == .getStatus)
++        {
+             blocksToSend += [beepBlock]
+         }
+ 
+@@ -396,6 +404,12 @@ public class PodCommsSession {
+     // specified to first acknowledge and clear all possible pending pod alerts and pod alert configurations.
+     @discardableResult
+     func configureAlerts(_ alerts: [PodAlert], acknowledgeAll: Bool = false, beepBlock: MessageBlock? = nil) throws -> StatusResponse {
++
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail configure alerts with unacknowledged command and incomplete pod setup")
++            throw PodCommsError.unacknowledgedCommandPending
++        }
++
+         let configurations = alerts.map { $0.configuration }
+         let configureAlerts = ConfigureAlertsCommand(nonce: podState.currentNonce, configurations: configurations)
+         let blocksToSend: [MessageBlock]
+@@ -421,6 +435,11 @@ public class PodCommsSession {
+             return .failure(PodCommsError.podFault(fault: fault))
+         }
+ 
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail beep config with unacknowledged command and incomplete pod setup")
++            return .failure(PodCommsError.unacknowledgedCommandPending)
++        }
++
+         let beepConfigCommand = BeepConfigCommand(beepType: beepType, tempBasalCompletionBeep: tempBasalCompletionBeep, bolusCompletionBeep: bolusCompletionBeep)
+         do {
+             let statusResponse: StatusResponse = try send([beepConfigCommand])
+@@ -699,7 +718,6 @@ public class PodCommsSession {
+     }
+ 
+     // Cancels any suspend related alerts, called when setting a basal schedule with active suspend alerts
+-    @discardableResult
+     private func cancelSuspendAlerts() throws -> StatusResponse {
+ 
+         do {
+@@ -821,7 +839,6 @@ public class PodCommsSession {
+ 
+     // use cancelDelivery with .none to get status as well as to validate & advance the nonce
+     // Throws PodCommsError
+-    @discardableResult
+     public func cancelNone(beepBlock: MessageBlock? = nil) throws -> StatusResponse {
+         var statusResponse: StatusResponse
+ 
+@@ -839,7 +856,6 @@ public class PodCommsSession {
+     }
+ 
+     // Throws PodCommsError
+-    @discardableResult
+     public func getStatus(beepBlock: MessageBlock? = nil) throws -> StatusResponse {
+         let statusResponse: StatusResponse = try send([GetStatusCommand()], beepBlock: beepBlock)
+ 
+@@ -850,7 +866,6 @@ public class PodCommsSession {
+         return statusResponse
+     }
+ 
+-    @discardableResult
+     public func getDetailedStatus(beepBlock: MessageBlock? = nil) throws -> DetailedStatus {
+         let infoResponse: PodInfoResponse = try send([GetStatusCommand(podInfoType: .detailedStatus)], beepBlock: beepBlock)
+ 
+@@ -870,14 +885,13 @@ public class PodCommsSession {
+         return detailedStatus
+     }
+ 
+-    @discardableResult
+     public func readPodInfo(podInfoResponseSubType: PodInfoResponseSubType, beepBlock: MessageBlock? = nil) throws -> PodInfoResponse {
+         let podInfoCommand = GetStatusCommand(podInfoType: podInfoResponseSubType)
+         let podInfoResponse: PodInfoResponse = try send([podInfoCommand], beepBlock: beepBlock)
+         return podInfoResponse
+     }
+ 
+-    // Reconnected to the pod, and we know program was successful
++    // Reconnected to the pod, and we know program was successful based on lastProgrammingMessageSeqNum
+     private func unacknowledgedCommandWasReceived(pendingCommand: PendingCommand, podStatus: StatusResponse) {
+         switch pendingCommand {
+         case .program(let program, _, let commandDate, _):
+@@ -908,6 +922,60 @@ public class PodCommsSession {
+         }
+     }
+ 
++    // Reconnected to the pod and we didn't match lastProgrammingMessageSeqNum which indicates
++    // that the command was not received. Now verify the pendingCommand against the current pod
++    // delivery status to decide whether the delivery related command might have been received or not.
++    // Returns true if the command was received based on the pod delivery status and podState was updated.
++    private func checkCommandAgainstStatus(pendingCommand: PendingCommand, podStatus: StatusResponse) -> Bool {
++        let deliveryStatus = podStatus.deliveryStatus
++        var podStatusMatched = false
++        switch pendingCommand {
++        case .program(let program, _, let commandDate, _):
++            if let dose = program.unfinalizedDose(at: commandDate, withCertainty: .certain, insulinType: podState.insulinType) {
++                switch dose.doseType {
++                case .bolus:
++                    if deliveryStatus.bolusing {
++                        podState.unfinalizedBolus = dose
++                        podStatusMatched = true
++                    }
++                case .tempBasal:
++                    if deliveryStatus.tempBasalRunning {
++                        podState.unfinalizedTempBasal = dose
++                        podStatusMatched = true
++                    }
++                case .resume:
++                    if !deliveryStatus.suspended {
++                        podState.suspendState = .resumed(commandDate)
++                        podStatusMatched = true
++                    }
++                default:
++                    break
++                }
++            }
++        case .stopProgram(let stopProgram, _, let commandDate, _):
++            if stopProgram.contains(.bolus), let bolus = podState.unfinalizedBolus, !bolus.isFinished(at: commandDate) {
++                if !deliveryStatus.bolusing {
++                    podState.unfinalizedBolus?.cancel(at: commandDate, withRemaining: podStatus.bolusNotDelivered)
++                    podStatusMatched = true
++                }
++            }
++            if stopProgram.contains(.tempBasal), let tempBasal = podState.unfinalizedTempBasal, !tempBasal.isFinished(at: commandDate) {
++                if !deliveryStatus.tempBasalRunning {
++                    podState.unfinalizedTempBasal?.cancel(at: commandDate)
++                    podStatusMatched = true
++                }
++            }
++            if stopProgram.contains(.basal) {
++                if !deliveryStatus.suspended {
++                    podState.finalizedDoses.append(UnfinalizedDose(suspendStartTime: commandDate, scheduledCertainty: .certain))
++                    podState.suspendState = .suspended(commandDate)
++                    podStatusMatched = true
++                }
++            }
++        }
++        return podStatusMatched
++    }
++
+     public func recoverUnacknowledgedCommand(using status: StatusResponse) {
+         if let pendingCommand = podState.unacknowledgedCommand {
+             self.log.default("Recovering from unacknowledged command %{public}@, status = %{public}@", String(describing: pendingCommand), String(describing: status))
+@@ -915,6 +983,8 @@ public class PodCommsSession {
+             if status.lastProgrammingMessageSeqNum == pendingCommand.sequence {
+                 self.log.default("Unacknowledged command was received by pump")
+                 unacknowledgedCommandWasReceived(pendingCommand: pendingCommand, podStatus: status)
++            } else if checkCommandAgainstStatus(pendingCommand: pendingCommand, podStatus: status) {
++                self.log.default("Accepted unacknowledged command was received based on pod delivery status of ${public}@", String(describing: status.deliveryStatus))
+             } else {
+                 self.log.default("Unacknowledged command was not received by pump")
+             }
+@@ -970,6 +1040,12 @@ public class PodCommsSession {
+     }
+ 
+     public func acknowledgeAlerts(alerts: AlertSet, beepBlock: MessageBlock? = nil) throws -> AlertSet {
++
++        guard podState.unacknowledgedCommand == nil || podState.setupProgress != .completed else {
++            log.info("Fail acknowledge alerts with unacknowledged command and pod setup complete")
++            throw PodCommsError.unacknowledgedCommandPending
++        }
++
+         let cmd = AcknowledgeAlertCommand(nonce: podState.currentNonce, alerts: alerts)
+         let status: StatusResponse = try send([cmd], beepBlock: beepBlock)
+         podState.updateFromStatusResponse(status, at: currentDate)
+diff --git a/OmniKit/OmniKit/PumpManager/PodState.swift b/OmniKit/OmniKit/PumpManager/PodState.swift
+index b330fe1..ad396fe 100644
+--- a/OmniKit/OmniKit/PumpManager/PodState.swift
++++ b/OmniKit/OmniKit/PumpManager/PodState.swift
+@@ -300,7 +300,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+         if deliveryStatus.tempBasalRunning && unfinalizedTempBasal == nil { // active temp basal that we aren't tracking
+             // unfinalizedTempBasal = UnfinalizedDose(tempBasalRate: 0, startTime: Date(), duration: .minutes(30), isHighTemp: false, scheduledCertainty: .certain, insulinType: insulinType)
+         }
+-        if deliveryStatus != .suspended && isSuspended { // active basal that we aren't tracking
++        if !deliveryStatus.suspended && isSuspended { // active basal that we aren't tracking
+             let resumeStartTime = Date()
+             suspendState = .resumed(resumeStartTime)
+             unfinalizedResume = UnfinalizedDose(resumeStartTime: resumeStartTime, scheduledCertainty: .certain, insulinType: insulinType)
+@@ -555,7 +555,7 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+             "* expiresAt: \(String(reflecting: expiresAt))",
+             "* podTime: \(podTime.timeIntervalStr)",
+             "* podTimeUpdated: \(String(reflecting: podTimeUpdated))",
+-            "* setupUnitsDelivered: \(String(reflecting: setupUnitsDelivered))",
++            "* setupUnitsDelivered: \(setupUnitsDelivered == nil ? "?" : setupUnitsDelivered!.twoDecimals) U",
+             "* piVersion: \(piVersion)",
+             "* pmVersion: \(pmVersion)",
+             "* lot: \(lot)",
+@@ -568,6 +568,8 @@ public struct PodState: RawRepresentable, Equatable, CustomDebugStringConvertibl
+             "* unfinalizedResume: \(String(describing: unfinalizedResume))",
+             "* finalizedDoses: \(String(describing: finalizedDoses))",
+             "* activeAlertsSlots: \(alertSetString(alertSet: activeAlertSlots))",
++            "* delivered: \(lastInsulinMeasurements == nil ? "?" : lastInsulinMeasurements!.delivered.twoDecimals) U",
++            "* reservoirLevel: \(lastInsulinMeasurements == nil || lastInsulinMeasurements!.reservoirLevel == nil || lastInsulinMeasurements!.reservoirLevel == Pod.reservoirLevelAboveThresholdMagicNumber ? "50+" : lastInsulinMeasurements!.reservoirLevel!.twoDecimals) U",
+             "* messageTransportState: \(String(describing: messageTransportState))",
+             "* setupProgress: \(setupProgress)",
+             "* primeFinishTime: \(String(describing: primeFinishTime))",
+diff --git a/OmniKit/OmniKitUI/PumpManager/OmniPodPumpManager+UI.swift b/OmniKit/OmniKitUI/PumpManager/OmniPodPumpManager+UI.swift
+index 69fdebe..681e5a0 100644
+--- a/OmniKit/OmniKitUI/PumpManager/OmniPodPumpManager+UI.swift
++++ b/OmniKit/OmniKitUI/PumpManager/OmniPodPumpManager+UI.swift
+@@ -47,6 +47,24 @@ extension OmnipodPumpManager: PumpManagerUI {
+ 
+ }
+ 
++public enum OmniKitStatusBadge: DeviceStatusBadge {
++    case timeSyncNeeded
++
++    public var image: UIImage? {
++        switch self {
++        case .timeSyncNeeded:
++            return UIImage(systemName: "clock.fill")
++        }
++    }
++
++    public var state: DeviceStatusBadgeState {
++        switch self {
++        case .timeSyncNeeded:
++            return .warning
++        }
++    }
++}
++
+ // MARK: - PumpStatusIndicator
+ extension OmnipodPumpManager {
+     public var pumpStatusHighlight: DeviceStatusHighlight? {
+@@ -58,7 +76,10 @@ extension OmnipodPumpManager {
+     }
+     
+     public var pumpStatusBadge: DeviceStatusBadge? {
+-        return nil
++        if isClockOffset {
++            return OmniKitStatusBadge.timeSyncNeeded
++        } else {
++            return nil
++        }
+     }
+-
+ }
