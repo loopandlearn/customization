@@ -1,4 +1,4 @@
-Submodule Loop contains modified content
+Submodule Loop 1aaee2d..03d5489:
 diff --git a/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift b/Loop/Loop Widget Extension/Bootstrap/Bootstrap.swift
 new file mode 100644
 index 00000000..00823471
@@ -576,15 +576,13 @@ index 26f92edb..684bf073 100644
      }
  }
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index 11819516..15966e4b 100644
+index 11819516..133e3dca 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -401,6 +401,23 @@
+@@ -401,6 +401,21 @@
  		B4E96D5D248A82A2002DABAD /* StatusBarHUDView.xib in Resources */ = {isa = PBXBuildFile; fileRef = B4E96D5C248A82A2002DABAD /* StatusBarHUDView.xib */; };
  		B4F3D25124AF890C0095CE44 /* BluetoothStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F3D25024AF890C0095CE44 /* BluetoothStateManager.swift */; };
  		B4FEEF7D24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FEEF7C24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift */; };
-+		B813C5682C9C30B400306DAF /* QuickStatsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B813C5672C9C30B400306DAF /* QuickStatsViewModel.swift */; };
-+		B813C56C2C9C30DC00306DAF /* QuickStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B813C56B2C9C30DC00306DAF /* QuickStatsView.swift */; };
 +		B82181F62C93628300478A91 /* LiveActivityManagementViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82181F52C93628300478A91 /* LiveActivityManagementViewModel.swift */; };
 +		B82182002C93716A00478A91 /* ChartAxisGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82181F92C936AD600478A91 /* ChartAxisGenerator.swift */; };
 +		B851FFC52C37221800D738C1 /* LiveActivityManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B851FFC42C37221800D738C1 /* LiveActivityManagementView.swift */; };
@@ -596,14 +594,14 @@ index 11819516..15966e4b 100644
 +		B87539CF2C2DCB770085A975 /* BasalViewActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87539CE2C2DCB770085A975 /* BasalViewActivity.swift */; };
 +		B87D411D2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87D411C2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift */; };
 +		B87D411F2C28A85F00120877 /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B87D411E2C28A85F00120877 /* ActivityKit.framework */; };
-+		B8A937B82C29BA5900E38645 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937B72C29BA5900E38645 /* LiveActivityManager.swift */; };
++		B8A937B82C29BA5900E38645 /* GlucoseActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */; };
 +		B8A937C32C29C3B400E38645 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */; };
 +		B8A937C42C29C43B00E38645 /* GlucoseActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */; };
 +		B8FD0B522C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8FD0B512C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift */; };
  		C1004DF22981F5B700B8CF94 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF02981F5B700B8CF94 /* InfoPlist.strings */; };
  		C1004DF52981F5B700B8CF94 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF32981F5B700B8CF94 /* Localizable.strings */; };
  		C1004DF82981F5B700B8CF94 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1004DF62981F5B700B8CF94 /* InfoPlist.strings */; };
-@@ -729,6 +746,16 @@
+@@ -729,6 +744,16 @@
  			name = "Embed App Extensions";
  			runOnlyForDeploymentPostprocessing = 0;
  		};
@@ -620,12 +618,10 @@ index 11819516..15966e4b 100644
  		C1E3DC4828595FAA00CA19FF /* Embed Frameworks */ = {
  			isa = PBXCopyFilesBuildPhase;
  			buildActionMask = 2147483647;
-@@ -1325,6 +1352,21 @@
+@@ -1325,6 +1350,19 @@
  		B4E96D5C248A82A2002DABAD /* StatusBarHUDView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = StatusBarHUDView.xib; sourceTree = "<group>"; };
  		B4F3D25024AF890C0095CE44 /* BluetoothStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothStateManager.swift; sourceTree = "<group>"; };
  		B4FEEF7C24B8A71F00A8DF9B /* DeviceDataManager+DeviceStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeviceDataManager+DeviceStatus.swift"; sourceTree = "<group>"; };
-+		B813C5672C9C30B400306DAF /* QuickStatsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStatsViewModel.swift; sourceTree = "<group>"; };
-+		B813C56B2C9C30DC00306DAF /* QuickStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStatsView.swift; sourceTree = "<group>"; };
 +		B82181F52C93628300478A91 /* LiveActivityManagementViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManagementViewModel.swift; sourceTree = "<group>"; };
 +		B82181F92C936AD600478A91 /* ChartAxisGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartAxisGenerator.swift; sourceTree = "<group>"; };
 +		B851FFC42C37221800D738C1 /* LiveActivityManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManagementView.swift; sourceTree = "<group>"; };
@@ -636,13 +632,13 @@ index 11819516..15966e4b 100644
 +		B87539CE2C2DCB770085A975 /* BasalViewActivity.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasalViewActivity.swift; sourceTree = "<group>"; };
 +		B87D411C2C28A69600120877 /* GlucoseLiveActivityConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseLiveActivityConfiguration.swift; sourceTree = "<group>"; };
 +		B87D411E2C28A85F00120877 /* ActivityKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
-+		B8A937B72C29BA5900E38645 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
++		B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseActivityManager.swift; sourceTree = "<group>"; };
 +		B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseActivityAttributes.swift; sourceTree = "<group>"; };
 +		B8FD0B512C39CA3E003FB72B /* LiveActivityBottomRowManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityBottomRowManagerView.swift; sourceTree = "<group>"; };
  		C1004DEF2981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
  		C1004DF12981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
  		C1004DF42981F5B700B8CF94 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
-@@ -1727,6 +1769,7 @@
+@@ -1727,6 +1765,7 @@
  				1419606928D9554E00BA86E0 /* LoopKitUI.framework in Frameworks */,
  				1419606A28D955BC00BA86E0 /* MockKitUI.framework in Frameworks */,
  				1481F9BB28DA26F4004C5AEB /* LoopUI.framework in Frameworks */,
@@ -650,7 +646,7 @@ index 11819516..15966e4b 100644
  				1419606428D9550400BA86E0 /* LoopKitUI.framework in Frameworks */,
  			);
  			runOnlyForDeploymentPostprocessing = 0;
-@@ -1836,6 +1879,7 @@
+@@ -1836,6 +1875,7 @@
  				84AA81D12A4A2778000B658B /* Components */,
  				84AA81D92A4A2966000B658B /* Helpers */,
  				84AA81DE2A4A2B3D000B658B /* Timeline */,
@@ -658,7 +654,7 @@ index 11819516..15966e4b 100644
  				84AA81DF2A4A2B7A000B658B /* Widgets */,
  				84AA81D22A4A27A3000B658B /* LoopWidgets.swift */,
  			);
-@@ -2163,6 +2207,7 @@
+@@ -2163,6 +2203,7 @@
  				43DE92581C5479E4001FFDE1 /* PotentialCarbEntryUserInfo.swift */,
  				43C05CB721EBEA54006FB252 /* HKUnit.swift */,
  				434FF1E91CF26C29000DB779 /* IdentifiableClass.swift */,
@@ -666,7 +662,7 @@ index 11819516..15966e4b 100644
  				C19E96DD23D2733F003F79B0 /* LoopCompletionFreshness.swift */,
  				430B29892041F54A00BA9F93 /* NSUserDefaults.swift */,
  				431E73471FF95A900069B5F7 /* PersistenceController.swift */,
-@@ -2170,10 +2215,10 @@
+@@ -2170,10 +2211,10 @@
  				43D9FFD121EAE05D00AF44BF /* LoopCore.h */,
  				43D9FFD221EAE05D00AF44BF /* Info.plist */,
  				4B60626A287E286000BF8BBB /* Localizable.strings */,
@@ -678,7 +674,7 @@ index 11819516..15966e4b 100644
  			);
  			path = LoopCore;
  			sourceTree = "<group>";
-@@ -2276,6 +2321,8 @@
+@@ -2276,6 +2317,8 @@
  				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
  				DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */,
  				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
@@ -687,7 +683,7 @@ index 11819516..15966e4b 100644
  			);
  			path = Views;
  			sourceTree = "<group>";
-@@ -2315,6 +2362,7 @@
+@@ -2315,6 +2358,7 @@
  				1DA6499D2441266400F61E75 /* Alerts */,
  				E95D37FF24EADE68005E2F50 /* Store Protocols */,
  				E9B355232935906B0076AB04 /* Missed Meal Detection */,
@@ -695,7 +691,7 @@ index 11819516..15966e4b 100644
  				C1F2075B26D6F9B0007AB7EB /* AppExpirationAlerter.swift */,
  				A96DAC2B2838F31200D94E38 /* SharedLogging.swift */,
  				7E69CFFB2A16A77E00203CBD /* ResetLoopManager.swift */,
-@@ -2525,6 +2573,7 @@
+@@ -2525,6 +2569,7 @@
  				C11613472983096D00777E7C /* InfoPlist.strings */,
  				14B1736D28AEDA63006CCD7C /* LoopWidgetExtension.entitlements */,
  				14B1736628AED9EE006CCD7C /* Info.plist */,
@@ -703,7 +699,7 @@ index 11819516..15966e4b 100644
  			);
  			path = Bootstrap;
  			sourceTree = "<group>";
-@@ -2535,6 +2584,7 @@
+@@ -2535,6 +2580,7 @@
  				84AA81DA2A4A2973000B658B /* Date.swift */,
  				84AA81D52A4A28AF000B658B /* WidgetBackground.swift */,
  				84D2879E2AC756C8007ED283 /* ContentMargin.swift */,
@@ -711,7 +707,7 @@ index 11819516..15966e4b 100644
  			);
  			path = Helpers;
  			sourceTree = "<group>";
-@@ -2628,6 +2678,7 @@
+@@ -2628,6 +2674,7 @@
  				1D49795724E7289700948F05 /* ServicesViewModel.swift */,
  				C174233B259BEB0F00399C9D /* ManualEntryDoseViewModel.swift */,
  				1DB619AB270BAD3D006C9D07 /* VersionUpdateViewModel.swift */,
@@ -719,7 +715,7 @@ index 11819516..15966e4b 100644
  			);
  			path = "View Models";
  			sourceTree = "<group>";
-@@ -2663,6 +2714,7 @@
+@@ -2663,6 +2710,7 @@
  		968DCD53F724DE56FFE51920 /* Frameworks */ = {
  			isa = PBXGroup;
  			children = (
@@ -727,7 +723,7 @@ index 11819516..15966e4b 100644
  				C159C82E286787EF00A86EC0 /* LoopKit.framework */,
  				C159C8212867859800A86EC0 /* MockKitUI.framework */,
  				C159C8192867857000A86EC0 /* LoopKitUI.framework */,
-@@ -2760,6 +2812,26 @@
+@@ -2760,6 +2808,26 @@
  			path = LoopCore;
  			sourceTree = "<group>";
  		};
@@ -744,7 +740,7 @@ index 11819516..15966e4b 100644
 +		B8A937C52C29C44600E38645 /* Live Activity */ = {
 +			isa = PBXGroup;
 +			children = (
-+				B8A937B72C29BA5900E38645 /* LiveActivityManager.swift */,
++				B8A937B72C29BA5900E38645 /* GlucoseActivityManager.swift */,
 +				B8A937C02C29C29300E38645 /* GlucoseActivityAttributes.swift */,
 +				B82181F92C936AD600478A91 /* ChartAxisGenerator.swift */,
 +			);
@@ -754,7 +750,7 @@ index 11819516..15966e4b 100644
  		C13072B82A76AF0A009A7C58 /* live_capture */ = {
  			isa = PBXGroup;
  			children = (
-@@ -2982,6 +3054,7 @@
+@@ -2982,6 +3050,7 @@
  				14B1735828AED9EC006CCD7C /* Sources */,
  				14B1735928AED9EC006CCD7C /* Frameworks */,
  				14B1735A28AED9EC006CCD7C /* Resources */,
@@ -762,7 +758,7 @@ index 11819516..15966e4b 100644
  			);
  			buildRules = (
  			);
-@@ -2989,6 +3062,8 @@
+@@ -2989,6 +3058,8 @@
  				1481F9BE28DA26F4004C5AEB /* PBXTargetDependency */,
  			);
  			name = "Loop Widget Extension";
@@ -771,7 +767,7 @@ index 11819516..15966e4b 100644
  			productName = SmallStatusWidgetExtension;
  			productReference = 14B1735C28AED9EC006CCD7C /* Loop Widget Extension.appex */;
  			productType = "com.apple.product-type.app-extension";
-@@ -3623,12 +3698,15 @@
+@@ -3623,12 +3694,15 @@
  			isa = PBXSourcesBuildPhase;
  			buildActionMask = 2147483647;
  			files = (
@@ -787,7 +783,7 @@ index 11819516..15966e4b 100644
  				84AA81E32A4A36FB000B658B /* SystemActionLink.swift in Sources */,
  				14B1737828AEDC6C006CCD7C /* NSTimeInterval.swift in Sources */,
  				14B1737928AEDC6C006CCD7C /* NSUserDefaults+StatusExtension.swift in Sources */,
-@@ -3639,7 +3717,10 @@
+@@ -3639,7 +3713,10 @@
  				14B1737E28AEDC6C006CCD7C /* FeatureFlags.swift in Sources */,
  				84AA81E72A4A4DEF000B658B /* PumpView.swift in Sources */,
  				14B1737F28AEDC6C006CCD7C /* PluginManager.swift in Sources */,
@@ -798,7 +794,7 @@ index 11819516..15966e4b 100644
  				84AA81DB2A4A2973000B658B /* Date.swift in Sources */,
  				14B1737228AEDBF6006CCD7C /* BasalView.swift in Sources */,
  				14B1737428AEDBF6006CCD7C /* GlucoseView.swift in Sources */,
-@@ -3725,6 +3806,7 @@
+@@ -3725,6 +3802,7 @@
  				B4E202302661063E009421B5 /* AutomaticDosingStatus.swift in Sources */,
  				C191D2A125B3ACAA00C26C0B /* DosingStrategySelectionView.swift in Sources */,
  				A977A2F424ACFECF0059C207 /* CriticalEventLogExportManager.swift in Sources */,
@@ -806,7 +802,7 @@ index 11819516..15966e4b 100644
  				89CA2B32226C18B8004D9350 /* TestingScenariosTableViewController.swift in Sources */,
  				43E93FB71E469A5100EAB8DB /* HKUnit.swift in Sources */,
  				43C05CAF21EB2C24006FB252 /* NSBundle.swift in Sources */,
-@@ -3732,6 +3814,7 @@
+@@ -3732,6 +3810,7 @@
  				A967D94C24F99B9300CDDF8A /* OutputStream.swift in Sources */,
  				1DB1065124467E18005542BD /* AlertManager.swift in Sources */,
  				1D9650C82523FBA100A1370B /* DeviceDataManager+BolusEntryViewModelDelegate.swift in Sources */,
@@ -814,7 +810,7 @@ index 11819516..15966e4b 100644
  				43C0944A1CACCC73001F6403 /* NotificationManager.swift in Sources */,
  				149A28E42A8A63A700052EDF /* FavoriteFoodDetailView.swift in Sources */,
  				1DDE274024AEA4F200796622 /* NotificationsCriticalAlertPermissionsView.swift in Sources */,
-@@ -3786,6 +3869,7 @@
+@@ -3786,6 +3865,7 @@
  				C1AF062329426300002C1B19 /* ManualGlucoseEntryRow.swift in Sources */,
  				C148CEE724FD91BD00711B3B /* DeliveryUncertaintyAlertManager.swift in Sources */,
  				DDC389FC2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift in Sources */,
@@ -822,11 +818,11 @@ index 11819516..15966e4b 100644
  				1D12D3B92548EFDD00B53E8B /* main.swift in Sources */,
  				435400341C9F878D00D5819C /* SetBolusUserInfo.swift in Sources */,
  				A9DCF32A25B0FABF00C89088 /* LoopUIColorPalette+Default.swift in Sources */,
-@@ -3818,11 +3902,13 @@
+@@ -3818,11 +3898,13 @@
  				A97F250825E056D500F0EE19 /* OnboardingManager.swift in Sources */,
  				438D42F91D7C88BC003244B0 /* PredictionInputEffect.swift in Sources */,
  				892A5D692230C41D008961AB /* RangeReplaceableCollection.swift in Sources */,
-+				B8A937B82C29BA5900E38645 /* LiveActivityManager.swift in Sources */,
++				B8A937B82C29BA5900E38645 /* GlucoseActivityManager.swift in Sources */,
  				DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */,
  				4F70C2101DE8FAC5006380B7 /* ExtensionDataManager.swift in Sources */,
  				43DFB62320D4CAE7008A7BAE /* PumpManager.swift in Sources */,
@@ -836,7 +832,7 @@ index 11819516..15966e4b 100644
  				431A8C401EC6E8AB00823B9C /* CircleMaskView.swift in Sources */,
  				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
  				439897371CD2F80600223065 /* AnalyticsServicesManager.swift in Sources */,
-@@ -3835,6 +3921,7 @@
+@@ -3835,6 +3917,7 @@
  				439706E622D2E84900C81566 /* PredictionSettingTableViewCell.swift in Sources */,
  				430D85891F44037000AF2D4F /* HUDViewTableViewCell.swift in Sources */,
  				43A51E211EB6DBDD000736CC /* LoopChartsTableViewController.swift in Sources */,
@@ -844,7 +840,7 @@ index 11819516..15966e4b 100644
  				8968B1122408B3520074BB48 /* UIFont.swift in Sources */,
  				1452F4A92A851C9400F8B9E4 /* AddEditFavoriteFoodViewModel.swift in Sources */,
  				438D42FB1D7D11A4003244B0 /* PredictionInputEffectTableViewCell.swift in Sources */,
-@@ -3956,6 +4043,7 @@
+@@ -3956,6 +4039,7 @@
  				C17DDC9D28AC33A1005FBF4C /* PersistedProperty.swift in Sources */,
  				43C05CA921EB2B26006FB252 /* PersistenceController.swift in Sources */,
  				A9CE912224CA032E00302A40 /* NSUserDefaults.swift in Sources */,
@@ -852,7 +848,7 @@ index 11819516..15966e4b 100644
  				43C05CAB21EB2B4A006FB252 /* NSBundle.swift in Sources */,
  				43C05CC721EC2ABC006FB252 /* IdentifiableClass.swift in Sources */,
  				E9B3552B293591E70076AB04 /* MissedMealNotification.swift in Sources */,
-@@ -3977,6 +4065,7 @@
+@@ -3977,6 +4061,7 @@
  				C17DDC9C28AC339E005FBF4C /* PersistedProperty.swift in Sources */,
  				43C05CA821EB2B26006FB252 /* PersistenceController.swift in Sources */,
  				43C05CAA21EB2B49006FB252 /* NSBundle.swift in Sources */,
@@ -860,7 +856,7 @@ index 11819516..15966e4b 100644
  				43C05CC821EC2ABC006FB252 /* IdentifiableClass.swift in Sources */,
  				43C05CAD21EB2BBF006FB252 /* NSUserDefaults.swift in Sources */,
  				E9B3552A293591E70076AB04 /* MissedMealNotification.swift in Sources */,
-@@ -4832,6 +4921,7 @@
+@@ -4832,6 +4917,7 @@
  				INFOPLIST_FILE = "Loop Widget Extension/Bootstrap/Info.plist";
  				INFOPLIST_KEY_CFBundleDisplayName = "Loop Widgets";
  				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 LoopKit Authors. All rights reserved.";
@@ -868,7 +864,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -4880,6 +4970,7 @@
+@@ -4880,6 +4966,7 @@
  				INFOPLIST_FILE = "Loop Widget Extension/Bootstrap/Info.plist";
  				INFOPLIST_KEY_CFBundleDisplayName = "Loop Widgets";
  				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 LoopKit Authors. All rights reserved.";
@@ -876,7 +872,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5138,6 +5229,7 @@
+@@ -5138,6 +5225,7 @@
  				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
  				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
  				INFOPLIST_FILE = Loop/Info.plist;
@@ -884,7 +880,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5167,6 +5259,7 @@
+@@ -5167,6 +5255,7 @@
  				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
  				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
  				INFOPLIST_FILE = Loop/Info.plist;
@@ -892,7 +888,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5423,6 +5516,7 @@
+@@ -5423,6 +5512,7 @@
  				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
  				ENABLE_BITCODE = NO;
  				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
@@ -900,7 +896,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5449,6 +5543,7 @@
+@@ -5449,6 +5539,7 @@
  				DEVELOPMENT_TEAM = "$(LOOP_DEVELOPMENT_TEAM)";
  				ENABLE_BITCODE = NO;
  				INFOPLIST_FILE = "Loop Status Extension/Info.plist";
@@ -908,7 +904,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5516,6 +5611,7 @@
+@@ -5516,6 +5607,7 @@
  				ENABLE_BITCODE = NO;
  				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
  				INFOPLIST_FILE = "Loop Intent Extension/Info.plist";
@@ -916,7 +912,7 @@ index 11819516..15966e4b 100644
  				LD_RUNPATH_SEARCH_PATHS = (
  					"$(inherited)",
  					"@executable_path/Frameworks",
-@@ -5543,6 +5639,7 @@
+@@ -5543,6 +5635,7 @@
  				ENABLE_BITCODE = NO;
  				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
  				INFOPLIST_FILE = "Loop Intent Extension/Info.plist";
@@ -1240,12 +1236,12 @@ index 00000000..936de751
 +    public let x: Date
 +    public let y: Double
 +}
-diff --git a/Loop/Loop/Managers/Live Activity/LiveActivityManager.swift b/Loop/Loop/Managers/Live Activity/LiveActivityManager.swift
+diff --git a/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift
 new file mode 100644
-index 00000000..30c6920f
+index 00000000..3903ee8b
 --- /dev/null
-+++ b/Loop/Loop/Managers/Live Activity/LiveActivityManager.swift	
-@@ -0,0 +1,516 @@
++++ b/Loop/Loop/Managers/Live Activity/GlucoseActivityManager.swift	
+@@ -0,0 +1,520 @@
 +//
 +//  LiveActivityManaer.swift
 +//  Loop
@@ -1266,7 +1262,7 @@ index 00000000..30c6920f
 +}
 +
 +@available(iOS 16.2, *)
-+class LiveActivityManager {
++class GlucoseActivityManager {
 +    private let activityInfo = ActivityAuthorizationInfo()
 +    private var activity: Activity<GlucoseActivityAttributes>?
 +    private let healthStore = HKHealthStore()
@@ -1337,7 +1333,10 @@ index 00000000..30c6920f
 +        Task {
 +            if self.needsRecreation(), await UIApplication.shared.applicationState == .active {
 +                // activity is no longer visible or old. End it and try to push the update again
++                print("INFO: Live Activities needs recreation")
 +                await endActivity()
++                update()
++                return
 +            }
 +            
 +            guard let unit = await self.healthStore.cachedPreferredUnits(for: .bloodGlucose) else {
@@ -1345,7 +1344,6 @@ index 00000000..30c6920f
 +                return
 +            }
 +            
-+            let isMmol = unit == HKUnit.millimolesPerLiter
 +            await self.endUnknownActivities()
 +
 +            let statusContext = UserDefaults.appGroup?.statusExtensionContext
@@ -1356,7 +1354,7 @@ index 00000000..30c6920f
 +                print("ERROR: No glucose sample found...")
 +                return
 +            }
-+
++            
 +            let current = currentGlucose.quantity.doubleValue(for: unit)
 +            
 +            var delta: String = "+\(glucoseFormatter.string(from: Double(0)) ?? "")"
@@ -1366,13 +1364,14 @@ index 00000000..30c6920f
 +                delta = "\(deltaValue < 0 ? "-" : "+")\(glucoseFormatter.string(from: abs(deltaValue)) ?? "??")"
 +            }
 +            
++            
 +            let bottomRow = self.getBottomRow(
 +                currentGlucose: current,
 +                delta: delta,
 +                statusContext: statusContext,
 +                glucoseFormatter: glucoseFormatter
 +            )
-+
++            
 +            var predicatedGlucose: [Double] = []
 +            if let samples = statusContext?.predictedGlucose?.values, settings.addPredictiveLine {
 +                predicatedGlucose = samples
@@ -1425,7 +1424,7 @@ index 00000000..30c6920f
 +                currentGlucose: current,
 +                trendType: statusContext?.glucoseDisplay?.trendType,
 +                delta: delta,
-+                isMmol: isMmol,
++                isMmol: unit == HKUnit.millimolesPerLiter,
 +                isCloseLoop: statusContext?.isClosedLoop ?? false,
 +                lastCompleted: statusContext?.lastLoopCompleted,
 +                bottomRow: bottomRow,
@@ -1503,6 +1502,7 @@ index 00000000..30c6920f
 +    
 +    private func endActivity() async {
 +        let dynamicState = self.activity?.content.state
++        
 +        await self.activity?.end(nil, dismissalPolicy: .immediate)
 +        for unknownActivity in Activity<GlucoseActivityAttributes>.activities {
 +            await unknownActivity.end(nil, dismissalPolicy: .immediate)
@@ -1763,7 +1763,7 @@ index 00000000..30c6920f
 +    }
 +}
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2319f4ec..36c228c7 100644
+index 2319f4ec..c5220cb0 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -68,6 +68,8 @@ final class LoopDataManager {
@@ -1771,7 +1771,7 @@ index 2319f4ec..36c228c7 100644
  
      private var insulinOnBoard: InsulinValue?
 +    
-+    private var liveActivityManager: LiveActivityManager?
++    private var liveActivityManager: GlucoseActivityManager?
  
      deinit {
          for observer in notificationObservers {
@@ -1780,7 +1780,7 @@ index 2319f4ec..36c228c7 100644
  
          self.trustedTimeOffset = trustedTimeOffset
 +        
-+        self.liveActivityManager = LiveActivityManager(
++        self.liveActivityManager = GlucoseActivityManager(
 +            glucoseStore: self.glucoseStore,
 +            doseStore: self.doseStore,
 +            loopSettings: self.settings
@@ -2047,10 +2047,10 @@ index 00000000..49e50caa
 +}
 diff --git a/Loop/Loop/Views/LiveActivityManagementView.swift b/Loop/Loop/Views/LiveActivityManagementView.swift
 new file mode 100644
-index 00000000..bdf87dc5
+index 00000000..f7f875ca
 --- /dev/null
 +++ b/Loop/Loop/Views/LiveActivityManagementView.swift
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,113 @@
 +//
 +//  LiveActivityManagementView.swift
 +//  Loop
@@ -2067,18 +2067,12 @@ index 00000000..bdf87dc5
 +struct LiveActivityManagementView: View {
 +    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
 +    @StateObject private var viewModel = LiveActivityManagementViewModel()
-+    @State private var previousViewModel = LiveActivityManagementViewModel()
-+    
-+    @State private var isDirty = false
 +   
 +    var body: some View {
 +        VStack {
 +            List {
 +                Section {
 +                    Toggle(NSLocalizedString("Enabled", comment: "Title for enable live activity toggle"), isOn: $viewModel.enabled)
-+                        .onChange(of: viewModel.enabled) { _ in
-+                            self.isDirty = previousViewModel.enabled != viewModel.enabled
-+                        }
 +                    
 +                    ExpandableSetting(
 +                        isEditing: $viewModel.isEditingMode,
@@ -2096,48 +2090,29 @@ index 00000000..bdf87dc5
 +                                             formatter: { $0.name() })
 +                        }
 +                    )
-+                    .onChange(of: viewModel.mode) { _ in
-+                        self.isDirty = previousViewModel.mode != viewModel.mode
-+                    }
 +                }
 +                
 +                Section {
 +                    if viewModel.mode == .large {
 +                        Toggle(NSLocalizedString("Add predictive line", comment: "Title for predictive line toggle"), isOn: $viewModel.addPredictiveLine)
 +                            .transition(.move(edge: viewModel.mode == .large ? .top : .bottom))
-+                            .onChange(of: viewModel.addPredictiveLine) { _ in
-+                                self.isDirty = previousViewModel.addPredictiveLine != viewModel.addPredictiveLine
-+                            }
 +                    }
 +                    
 +                    Toggle(NSLocalizedString("Use BG coloring", comment: "Title for BG coloring"), isOn: $viewModel.useLimits)
 +                        .transition(.move(edge: viewModel.mode == .large ? .top : .bottom))
-+                        .onChange(of: viewModel.useLimits) { _ in
-+                            self.isDirty = previousViewModel.useLimits != viewModel.useLimits
-+                        }
 +                    
-+                    if self.displayGlucosePreference.unit == .millimolesPerLiter {
-+                        TextInput(label: "Upper limit", value: $viewModel.upperLimitChartMmol)
-+                            .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
-+                            .onChange(of: viewModel.upperLimitChartMmol) { _ in
-+                                self.isDirty = previousViewModel.upperLimitChartMmol != viewModel.upperLimitChartMmol
-+                            }
-+                        TextInput(label: "Lower limit", value: $viewModel.lowerLimitChartMmol)
-+                            .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
-+                            .onChange(of: viewModel.lowerLimitChartMmol) { _ in
-+                                self.isDirty = previousViewModel.lowerLimitChartMmol != viewModel.lowerLimitChartMmol
-+                            }
-+                    } else {
-+                        TextInput(label: "Upper limit", value: $viewModel.upperLimitChartMg)
-+                            .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
-+                            .onChange(of: viewModel.upperLimitChartMg) { _ in
-+                                self.isDirty = previousViewModel.upperLimitChartMg != viewModel.upperLimitChartMg
-+                            }
-+                        TextInput(label: "Lower limit", value: $viewModel.lowerLimitChartMg)
-+                            .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
-+                            .onChange(of: viewModel.lowerLimitChartMg) { _ in
-+                                self.isDirty = previousViewModel.lowerLimitChartMg != viewModel.lowerLimitChartMg
-+                            }
++                    if viewModel.useLimits {
++                        if self.displayGlucosePreference.unit == .millimolesPerLiter {
++                            TextInput(label: "Upper limit", value: $viewModel.upperLimitChartMmol)
++                                .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
++                            TextInput(label: "Lower limit", value: $viewModel.lowerLimitChartMmol)
++                                .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
++                        } else {
++                            TextInput(label: "Upper limit", value: $viewModel.upperLimitChartMg)
++                                .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
++                            TextInput(label: "Lower limit", value: $viewModel.lowerLimitChartMg)
++                                .transition(.move(edge: viewModel.useLimits ? .top : .bottom))
++                        }
 +                    }
 +                }
 +                
@@ -2147,6 +2122,8 @@ index 00000000..bdf87dc5
 +                        label: { Text(NSLocalizedString("Bottom row configuration", comment: "Title for Bottom row configuration")) }
 +                    )
 +                }
++                
++                
 +            }
 +            .animation(.easeInOut, value: UUID())
 +            .insetGroupedListStyle()
@@ -2156,7 +2133,6 @@ index 00000000..bdf87dc5
 +                Text(NSLocalizedString("Save", comment: ""))
 +            }
 +            .buttonStyle(ActionButtonStyle())
-+            .disabled(!isDirty)
 +            .padding([.bottom, .horizontal])
 +        }
 +            .navigationBarTitle(Text(NSLocalizedString("Live activity", comment: "Live activity screen title")))
@@ -2186,14 +2162,11 @@ index 00000000..bdf87dc5
 +        
 +        UserDefaults.standard.liveActivity = settings
 +        NotificationCenter.default.post(name: .LiveActivitySettingsChanged, object: settings)
-+        
-+        self.isDirty = false
-+        previousViewModel = LiveActivityManagementViewModel()
 +    }
 +}
 diff --git a/Loop/LoopCore/LiveActivitySettings.swift b/Loop/LoopCore/LiveActivitySettings.swift
 new file mode 100644
-index 00000000..d0f892f7
+index 00000000..71807464
 --- /dev/null
 +++ b/Loop/LoopCore/LiveActivitySettings.swift
 @@ -0,0 +1,159 @@
@@ -2316,7 +2289,7 @@ index 00000000..d0f892f7
 +        self.enabled = try values.decode(Bool.self, forKey: .enabled)
 +        self.mode = try values.decodeIfPresent(LiveActivityMode.self, forKey: .mode) ?? .large
 +        self.addPredictiveLine = try values.decode(Bool.self, forKey: .addPredictiveLine)
-+        self.useLimits = try values.decode(Bool.self, forKey: .useLimits)
++        self.useLimits = try values.decodeIfPresent(Bool.self, forKey: .useLimits) ?? true
 +        self.upperLimitChartMmol = try values.decode(Double?.self, forKey: .upperLimitChartMmol) ?? LiveActivitySettings.defaultUpperLimitMmol
 +        self.lowerLimitChartMmol = try values.decode(Double?.self, forKey: .lowerLimitChartMmol) ?? LiveActivitySettings.defaultLowerLimitMmol
 +        self.upperLimitChartMg = try values.decode(Double?.self, forKey: .upperLimitChartMg) ?? LiveActivitySettings.defaultUpperLimitMg
@@ -2356,6 +2329,7 @@ index 00000000..d0f892f7
 +            lhs.upperLimitChartMg != rhs.upperLimitChartMg
 +    }
 +}
+\ No newline at end of file
 diff --git a/Loop/LoopCore/NSUserDefaults.swift b/Loop/LoopCore/NSUserDefaults.swift
 index 93fa7e17..dacf2ecd 100644
 --- a/Loop/LoopCore/NSUserDefaults.swift
