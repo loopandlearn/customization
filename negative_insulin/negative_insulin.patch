@@ -61,8 +61,7 @@ index 2319f4ec..5e47cbc3 100644
      }
  
      // MARK: - Background task management
-@@ -995,6 +1003,64 @@ extension LoopDataManager {
-         let earliestEffectDate = Date(timeInterval: .hours(-24), since: now())
+@@ -996,5 +1004,63 @@ extension LoopDataManager {
          let nextCounteractionEffectDate = insulinCounteractionEffects.last?.endDate ?? earliestEffectDate
          let insulinEffectStartDate = nextCounteractionEffectDate.addingTimeInterval(.minutes(-5))
 +        
