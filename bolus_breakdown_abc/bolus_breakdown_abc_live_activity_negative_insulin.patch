@@ -1,0 +1,3020 @@
+Submodule Loop 3645d8c...8f55d1b:
+diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
+index 7e00af68..2768771f 100644
+--- a/Loop/Loop.xcodeproj/project.pbxproj
++++ b/Loop/Loop.xcodeproj/project.pbxproj
+@@ -11,6 +11,9 @@
+ 		1419606428D9550400BA86E0 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 437AFEE6203688CF008C4892 /* LoopKitUI.framework */; };
+ 		1419606928D9554E00BA86E0 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 437AFEE6203688CF008C4892 /* LoopKitUI.framework */; };
+ 		1419606A28D955BC00BA86E0 /* MockKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C101947127DD473C004E7EB8 /* MockKitUI.framework */; };
++		12F04F012D19791B002B2121 /* AutoBolusCarbsSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F04F002D197907002B2121 /* AutoBolusCarbsSelectionView.swift */; };
++		12F4D9C82D4017D400FAEF5F /* SettingsView+underDevelopmentSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F4D9C72D4017D400FAEF5F /* SettingsView+underDevelopmentSection.swift */; };
++		12F4D9C92D4017D400FAEF5F /* CarbBolusSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F4D9C62D4017D400FAEF5F /* CarbBolusSelectionView.swift */; };
+ 		142CB7592A60BF2E0075748A /* EditMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142CB7582A60BF2E0075748A /* EditMode.swift */; };
+ 		142CB75B2A60BFC30075748A /* FavoriteFoodsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142CB75A2A60BFC30075748A /* FavoriteFoodsView.swift */; };
+ 		1452F4A92A851C9400F8B9E4 /* AddEditFavoriteFoodViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1452F4A82A851C9400F8B9E4 /* AddEditFavoriteFoodViewModel.swift */; };
+@@ -774,6 +777,9 @@
+ 		142CB75A2A60BFC30075748A /* FavoriteFoodsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FavoriteFoodsView.swift; sourceTree = "<group>"; };
+ 		1452F4A82A851C9400F8B9E4 /* AddEditFavoriteFoodViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditFavoriteFoodViewModel.swift; sourceTree = "<group>"; };
+ 		1452F4AA2A851EDF00F8B9E4 /* AddEditFavoriteFoodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEditFavoriteFoodView.swift; sourceTree = "<group>"; };
++		12F04F002D197907002B2121 /* AutoBolusCarbsSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoBolusCarbsSelectionView.swift; sourceTree = "<group>"; };
++		12F4D9C62D4017D400FAEF5F /* CarbBolusSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbBolusSelectionView.swift; sourceTree = "<group>"; };
++		12F4D9C72D4017D400FAEF5F /* SettingsView+underDevelopmentSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+underDevelopmentSection.swift"; sourceTree = "<group>"; };
+ 		1452F4AC2A851F8800F8B9E4 /* HowAbsorptionTimeWorksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowAbsorptionTimeWorksView.swift; sourceTree = "<group>"; };
+ 		147EFE8D2A8BCC5500272438 /* DefaultAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DefaultAssets.xcassets; sourceTree = "<group>"; };
+ 		147EFE8F2A8BCD8000272438 /* DerivedAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = DerivedAssets.xcassets; sourceTree = "<group>"; };
+@@ -2313,6 +2319,9 @@
+ 				439706E522D2E84900C81566 /* PredictionSettingTableViewCell.swift */,
+ 				1DE09BA824A3E23F009EE9F9 /* SettingsView.swift */,
+ 				DDC389FB2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift */,
++				12F4D9C72D4017D400FAEF5F /* SettingsView+underDevelopmentSection.swift */,
++				12F04F002D197907002B2121 /* AutoBolusCarbsSelectionView.swift */,
++				12F4D9C62D4017D400FAEF5F /* CarbBolusSelectionView.swift */,
+ 				C1DE5D22251BFC4D00439E49 /* SimpleBolusView.swift */,
+ 				43F64DD81D9C92C900D24DC6 /* TitleSubtitleTableViewCell.swift */,
+ 				4311FB9A1F37FE1B00D4C0A7 /* TitleSubtitleTextFieldTableViewCell.swift */,
+@@ -3818,6 +3827,7 @@
+ 				149A28E42A8A63A700052EDF /* FavoriteFoodDetailView.swift in Sources */,
+ 				1DDE274024AEA4F200796622 /* NotificationsCriticalAlertPermissionsView.swift in Sources */,
+ 				A9A056B524B94123007CF06D /* CriticalEventLogExportViewModel.swift in Sources */,
++				12F04F012D19791B002B2121 /* AutoBolusCarbsSelectionView.swift in Sources */,
+ 				434FF1EE1CF27EEF000DB779 /* UITableViewCell.swift in Sources */,
+ 				439BED2A1E76093C00B0AED5 /* CGMManager.swift in Sources */,
+ 				C16B983E26B4893300256B05 /* DoseEnactor.swift in Sources */,
+@@ -3912,6 +3922,8 @@
+ 				1D05219D2469F1F5000EBBDE /* AlertStore.swift in Sources */,
+ 				439897371CD2F80600223065 /* AnalyticsServicesManager.swift in Sources */,
+ 				14D906F42A846510006EB79A /* FavoriteFoodsViewModel.swift in Sources */,
++				12F4D9C82D4017D400FAEF5F /* SettingsView+underDevelopmentSection.swift in Sources */,
++				12F4D9C92D4017D400FAEF5F /* CarbBolusSelectionView.swift in Sources */,
+ 				DDC389FE2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift in Sources */,
+ 				A9C62D842331700E00535612 /* DiagnosticLog+Subsystem.swift in Sources */,
+ 				895FE0952201234000FCF18A /* OverrideSelectionViewController.swift in Sources */,
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 5aa9c4fd..1e03f196 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -444,6 +444,18 @@ final class LoopDataManager {
+         }
+     }
+     private let lockedLastLoopCompleted: Locked<Date?>
++    
++    var autoBolusCarbsEnabledAndActive: Bool {
++        guard UserDefaults.standard.autoBolusCarbsEnabled else {
++            return false
++        }
++        
++        guard let override = lockedSettings.value.scheduleOverride, override.isActive() else {
++            return UserDefaults.standard.autoBolusCarbsActiveByDefault
++        }
++
++        return override.settings.autoBolusCarbsActive ?? UserDefaults.standard.autoBolusCarbsActiveByDefault
++    }
+ 
+     fileprivate var lastLoopError: LoopError?
+ 
+@@ -1600,22 +1612,194 @@ extension LoopDataManager {
+         let prediction = try predictGlucoseFromManualGlucose(glucose, potentialBolus: nil, potentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, includingPendingInsulin: shouldIncludePendingInsulin, considerPositiveVelocityAndRC: considerPositiveVelocityAndRC)
+         return try recommendManualBolus(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry)
+     }
++    
++    
++    fileprivate func getTotalCobCorrectionAmount(consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry? = nil, replacingCarbEntry replacedCarbEntry: StoredCarbEntry? = nil, considerPositiveVelocityAndRC: Bool, pendingInsulin: Double) throws -> Double? {
++                
++        let shouldIncludePendingInsulin = pendingInsulin > 0
++        
++        let carbAndInsulinPrediction = try predictGlucose(using: [.carbs, .insulin], potentialBolus: nil, potentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, includingPendingInsulin: shouldIncludePendingInsulin, includingPositiveVelocityAndRC: false)
++        
++        guard !carbAndInsulinPrediction.isEmpty else {
++            return nil
++        }
++        
++        let carbOnlyPrediction = try predictGlucose(using: [.carbs], potentialBolus: nil, potentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, includingPendingInsulin: shouldIncludePendingInsulin, includingPositiveVelocityAndRC: false)
++        
++        guard !carbOnlyPrediction.isEmpty else {
++            return nil
++        }
++        
++        // cobCorrection includes insulin when its effects are to reduce BG, but doesn't include it if it raises it (e.g., negative IOB)
++        let cobPrediction = carbAndInsulinPrediction.last!.quantity < carbOnlyPrediction.last!.quantity ? carbAndInsulinPrediction : carbOnlyPrediction
++        
++        let flatCobPrediction = cobPrediction.map{PredictedGlucoseValue(startDate: $0.startDate, quantity: cobPrediction.last!.quantity)}
++        
++        return try recommendBolusValidatingDataRecency(forPrediction: flatCobPrediction, consideringPotentialCarbEntry: potentialCarbEntry, usage: .cobBreakdown)?.amount
++    }
+ 
++    
+     /// - Throws: LoopError.missingDataError
+-    fileprivate func recommendBolus(consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?, replacingCarbEntry replacedCarbEntry: StoredCarbEntry?, considerPositiveVelocityAndRC: Bool) throws -> ManualBolusRecommendation? {
++    fileprivate func recommendBolus(consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry? = nil, replacingCarbEntry replacedCarbEntry: StoredCarbEntry? = nil, considerPositiveVelocityAndRC: Bool, pendingInsulin: Double, provideBreakdown: Bool) throws -> ManualBolusRecommendation? {
+         guard lastRequestedBolus == nil else {
+             // Don't recommend changes if a bolus was just requested.
+             // Sending additional pump commands is not going to be
+             // successful in any case.
+             return nil
+         }
+-
+-        let pendingInsulin = try getPendingInsulin()
++        
+         let shouldIncludePendingInsulin = pendingInsulin > 0
+         let prediction = try predictGlucose(using: .all, potentialBolus: nil, potentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, includingPendingInsulin: shouldIncludePendingInsulin, includingPositiveVelocityAndRC: considerPositiveVelocityAndRC)
+-        return try recommendBolusValidatingDataRecency(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry)
++        let recommendation = try recommendBolusValidatingDataRecency(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry)
++        
++        guard recommendation != nil else {
++            return nil
++        }
++        
++        guard provideBreakdown else {
++            return recommendation
++        }
++
++        guard !prediction.isEmpty else {
++            return recommendation // unable to differentiate between correction amounts,
++        }
++        
++        guard let totalCobAmount = try getTotalCobCorrectionAmount(consideringPotentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, considerPositiveVelocityAndRC: considerPositiveVelocityAndRC, pendingInsulin: pendingInsulin) else {
++            
++            return recommendation // unable to differentiate between correction amounts
++        }
++        
++        var carbsAmount = 0.0
++        
++        if potentialCarbEntry != nil {
++            guard let carbBreakdownRecommendation = try recommendBolusValidatingDataRecency(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry, usage: .carbBreakdown) else {
++                
++                return recommendation // unable to differentiate between correction amounts
++            }
++            
++            // the insulin needed to cover the zeroCarbEntry will underflow to 0 once added/subtracted
++            let zeroCarbEntry = replacedCarbEntry == nil ? nil : NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 1E-50), startDate: potentialCarbEntry!.startDate, foodType: nil, absorptionTime: potentialCarbEntry!.absorptionTime)
++            
++            let predictionWithZeroCarbEntry = try predictGlucose(using: .all, potentialBolus: nil, potentialCarbEntry: zeroCarbEntry, replacingCarbEntry: replacedCarbEntry, includingPendingInsulin: shouldIncludePendingInsulin, includingPositiveVelocityAndRC: considerPositiveVelocityAndRC)
++            
++            guard let carbBreakdownRecommendationWithZeroCarbEntry = try recommendBolusValidatingDataRecency(forPrediction: predictionWithZeroCarbEntry, consideringPotentialCarbEntry: zeroCarbEntry, usage: .carbBreakdown) else {
++            
++                return recommendation // unable to directly calculate carbsAmount
++            }
++            
++            carbsAmount = carbBreakdownRecommendation.amount - carbBreakdownRecommendationWithZeroCarbEntry.amount
++        }
++        
++        var missingAmount = recommendation!.missingAmount
++        let extra = Swift.max(missingAmount ?? 0, 0)
++        var correctionAmount = recommendation!.amount + extra - carbsAmount
++        
++        if let calcAmount = try calcCorrectionAmount(carbsAmount: carbsAmount, prediction: prediction, potentialCarbEntry: potentialCarbEntry) {
++
++            if recommendation!.notice == .predictedGlucoseInRange {
++                correctionAmount = Swift.min(correctionAmount, calcAmount, 0) // ensure 0 if in range but above the mid-point
++                missingAmount = carbsAmount + correctionAmount - recommendation!.amount
++                if missingAmount! <= 0 || volumeRounder()(missingAmount!) == 0 {
++                    missingAmount = nil // this MUST be the case since extra should be 0, and missingAmount <= extra by construction
++                }
++            } else {
++                let totalMissingAmount = carbsAmount + calcAmount - recommendation!.amount
++                if totalMissingAmount > extra, volumeRounder()(totalMissingAmount - extra) > 0 {
++                    correctionAmount = calcAmount
++                    missingAmount = totalMissingAmount
++                } else if recommendation!.amount == 0 && calcAmount < 0 {
++                    correctionAmount = calcAmount
++                    missingAmount = nil
++                }
++            }
++        }
++                
++        return ManualBolusRecommendation(amount: recommendation!.amount, pendingInsulin: recommendation!.pendingInsulin, notice: recommendation!.notice, missingAmount: missingAmount, bolusBreakdown: BolusBreakdown(fullCarbsAmount: carbsAmount, fullCobCorrectionAmount: totalCobAmount, fullCorrectionAmount: correctionAmount))        
+     }
++    
++    fileprivate func calcCorrectionAmount(carbsAmount: Double,
++                                          prediction: [PredictedGlucoseValue],
++                                          potentialCarbEntry: NewCarbEntry?) throws -> Double? {
++        
++        let recommendationAmountForCarbs = try recommendBolusValidatingDataRecency(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry, usage: .carbBreakdown)?.amount
++        
++        guard recommendationAmountForCarbs != nil else {
++            return nil
++        }
++        
++        let recommendationAmountForCorrection = try recommendBolusValidatingDataRecency(forPrediction: prediction, consideringPotentialCarbEntry: potentialCarbEntry, usage: .correctionBreakdown)?.amount
++        
++        guard recommendationAmountForCorrection != nil else {
++            return nil
++        }
+ 
++        // carbs + correction + y = a
++        // carbs + correction + ratio*y = b
++        // --> y = (b-a)/(ratio - 1)
++        // --> correction = a - y - carbs
++
++        let ratio = ManualBolusRecommendationUsage.correctionBreakdown.targetsAdjustment / ManualBolusRecommendationUsage.carbBreakdown.targetsAdjustment
++        let y = (recommendationAmountForCorrection! - recommendationAmountForCarbs!) / (ratio - 1)
++        
++        return recommendationAmountForCarbs! - y - carbsAmount
++    }
++
++    fileprivate enum ManualBolusRecommendationUsage {
++        case standard, cobBreakdown, carbBreakdown, correctionBreakdown
++        
++        func suspendThresholdOverride(_ suspendThreshold: HKQuantity?) -> HKQuantity? {
++            switch self {
++            case .standard: return suspendThreshold
++            default: return nil
++            }
++        }
++        
++        func maxBolusOverride(_ maxBolus: Double) -> Double {
++            switch self {
++            case .standard: return maxBolus
++            default: return 1E15
++            }
++        }
++        
++        func volumeRounderOverride(_ volumeRounder: @escaping (Double) -> Double) -> ((Double) -> Double)? {
++            switch self {
++            case .standard: return volumeRounder
++            default: return nil
++            }
++        }
++        
++        var targetsAdjustment : Double {
++            switch self {
++            case .standard: return 0.0
++            case .cobBreakdown: return 0.0
++            case .carbBreakdown: return -1E5
++            case .correctionBreakdown: return -2E5
++            }
++        }
++       
++        func glucoseTargetsOverride(_ schedule: GlucoseRangeSchedule, _ startingGlucose: HKQuantity) -> GlucoseRangeSchedule{
++            switch self {
++            case .standard: return schedule
++            case .cobBreakdown:
++                let target = startingGlucose.doubleValue(for: .milligramsPerDeciliter)
++                return GlucoseRangeSchedule(unit: .milligramsPerDeciliter,
++                                           dailyItems: [RepeatingScheduleValue(startTime: TimeInterval(0), value: DoubleRange(minValue: target, maxValue: target))])!
++            default: return adjustSchedule(schedule, amount: self.targetsAdjustment)
++            }
++        }
++        
++        private func adjustSchedule(_ schedule: GlucoseRangeSchedule, amount: Double) -> GlucoseRangeSchedule {
++            return GlucoseRangeSchedule(unit: schedule.unit,
++                                        dailyItems: schedule.items.map{scheduleValue in
++                                                scheduleValue.map{range in
++                                                    DoubleRange(minValue: range.minValue + amount, maxValue: range.maxValue + amount)}},
++                                        timeZone: schedule.timeZone)!
++        }
++        
++        
++    }
++    
++    
+     /// - Throws:
+     ///     - LoopError.missingDataError
+     ///     - LoopError.glucoseTooOld
+@@ -1623,7 +1807,8 @@ extension LoopDataManager {
+     ///     - LoopError.pumpDataTooOld
+     ///     - LoopError.configurationError
+     fileprivate func recommendBolusValidatingDataRecency<Sample: GlucoseValue>(forPrediction predictedGlucose: [Sample],
+-                                                                               consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?) throws -> ManualBolusRecommendation? {
++                                                                               consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?,
++                                                                               usage: ManualBolusRecommendationUsage = .standard) throws -> ManualBolusRecommendation? {
+         guard let glucose = glucoseStore.latestGlucose else {
+             throw LoopError.missingDataError(.glucose)
+         }
+@@ -1655,21 +1840,34 @@ extension LoopDataManager {
+             throw LoopError.missingDataError(.insulinEffect)
+         }
+ 
+-        return try recommendManualBolus(forPrediction: predictedGlucose, consideringPotentialCarbEntry: potentialCarbEntry)
++        return try recommendManualBolus(forPrediction: predictedGlucose, consideringPotentialCarbEntry: potentialCarbEntry, usage: usage)
++    }
++    
++    private func volumeRounder() -> ((Double) -> Double) {
++        let result = { (_ units: Double) in
++            return self.delegate?.roundBolusVolume(units: units) ?? units
++        }
++        return result
+     }
+     
+     /// - Throws: LoopError.configurationError
+     private func recommendManualBolus<Sample: GlucoseValue>(forPrediction predictedGlucose: [Sample],
+-                                                      consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?) throws -> ManualBolusRecommendation? {
+-        guard let glucoseTargetRange = settings.effectiveGlucoseTargetRangeSchedule(presumingMealEntry: potentialCarbEntry != nil) else {
+-            throw LoopError.configurationError(.glucoseTargetRangeSchedule)
+-        }
++                                                            consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?,
++                                                            usage: ManualBolusRecommendationUsage = .standard) throws -> ManualBolusRecommendation? {
+         guard let insulinSensitivity = insulinSensitivityScheduleApplyingOverrideHistory else {
+             throw LoopError.configurationError(.insulinSensitivitySchedule)
+         }
++        
++        guard let glucoseTargetRange = settings.effectiveGlucoseTargetRangeSchedule(presumingMealEntry: potentialCarbEntry != nil)  else {
++            throw LoopError.configurationError(.glucoseTargetRangeSchedule)
++        }
+         guard let maxBolus = settings.maximumBolus else {
+             throw LoopError.configurationError(.maximumBolus)
+         }
++        
++        guard let startingGlucose = self.glucoseStore.latestGlucose?.quantity else {
++            throw LoopError.missingDataError(.glucose)
++        }
+ 
+         guard lastRequestedBolus == nil
+         else {
+@@ -1678,22 +1876,18 @@ extension LoopDataManager {
+             // successful in any case.
+             return nil
+         }
+-
+-        let volumeRounder = { (_ units: Double) in
+-            return self.delegate?.roundBolusVolume(units: units) ?? units
+-        }
+         
+         let model = doseStore.insulinModelProvider.model(for: pumpInsulinType)
+-
++                
+         return predictedGlucose.recommendedManualBolus(
+-            to: glucoseTargetRange,
++            to: usage.glucoseTargetsOverride(glucoseTargetRange, startingGlucose),
+             at: now(),
+-            suspendThreshold: settings.suspendThreshold?.quantity,
++            suspendThreshold: usage.suspendThresholdOverride(settings.suspendThreshold?.quantity),
+             sensitivity: insulinSensitivity,
+             model: model,
+             pendingInsulin: 0, // Pending insulin is already reflected in the prediction
+-            maxBolus: maxBolus,
+-            volumeRounder: volumeRounder
++            maxBolus: usage.maxBolusOverride(maxBolus),
++            volumeRounder: usage.volumeRounderOverride(volumeRounder())
+         )
+     }
+ 
+@@ -1809,6 +2003,82 @@ extension LoopDataManager {
+         suspendInsulinDeliveryEffect = suspendDoses.glucoseEffects(insulinModelProvider: doseStore.insulinModelProvider, longestEffectDuration: doseStore.longestEffectDuration, insulinSensitivity: insulinSensitivity).filterDateRange(startSuspend, endSuspend)
+     }
+ 
++    fileprivate func getDosingRecommendation(dosingStrategy: AutomaticDosingStrategy, glucose: any GlucoseSampleValue, predictedGlucose: [PredictedGlucoseValue], iobHeadroom: Double, glucoseTargetRange: GlucoseRangeSchedule?, insulinSensitivity: InsulinSensitivitySchedule?, basalRateSchedule: BasalRateSchedule?, startDate: Date, bolusApplicationFactor: Double? = nil, volumeRounder: ((Double) -> Double)? = nil) -> AutomaticDoseRecommendation? {
++        
++        let rateRounder = { (_ rate: Double) in
++            return self.delegate?.roundBasalRate(unitsPerHour: rate) ?? rate
++        }
++
++        let lastTempBasal: DoseEntry?
++
++        if case .some(.tempBasal(let dose)) = basalDeliveryState {
++            lastTempBasal = dose
++        } else {
++            lastTempBasal = nil
++        }
++        
++        let maxBolus = settings.maximumBolus!
++        let maxBasal = settings.maximumBasalRatePerHour!
++        
++        switch dosingStrategy {
++        case .automaticBolus:
++            let correctionRangeSchedule = settings.effectiveGlucoseTargetRangeSchedule()
++            
++            let effectiveBolusApplicationFactor: Double
++            
++            if bolusApplicationFactor != nil {
++                effectiveBolusApplicationFactor = bolusApplicationFactor!
++            } else {
++                // Create dosing strategy based on user setting
++                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.glucoseBasedApplicationFactorEnabled
++                ? GlucoseBasedApplicationFactorStrategy()
++                : ConstantApplicationFactorStrategy()
++                
++                effectiveBolusApplicationFactor = applicationFactorStrategy.calculateDosingFactor(
++                    for: glucose.quantity,
++                    correctionRangeSchedule: correctionRangeSchedule!,
++                    settings: settings
++                )
++            }
++            
++            self.logger.debug(" *** Glucose: %{public}@, effectiveBolusApplicationFactor: %.2f", glucose.quantity.description, effectiveBolusApplicationFactor)
++            
++            // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
++            let maxAutomaticBolus = min(iobHeadroom, maxBolus * min(effectiveBolusApplicationFactor, 1.0))
++            
++            return predictedGlucose.recommendedAutomaticDose(
++                to: glucoseTargetRange!,
++                at: predictedGlucose[0].startDate,
++                suspendThreshold: settings.suspendThreshold?.quantity,
++                sensitivity: insulinSensitivity!,
++                model: doseStore.insulinModelProvider.model(for: pumpInsulinType),
++                basalRates: basalRateSchedule!,
++                maxAutomaticBolus: maxAutomaticBolus,
++                partialApplicationFactor: effectiveBolusApplicationFactor * self.timeBasedDoseApplicationFactor,
++                lastTempBasal: lastTempBasal,
++                volumeRounder: volumeRounder ?? self.volumeRounder(),
++                rateRounder: rateRounder,
++                isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
++            )
++        case .tempBasalOnly:
++            
++            let temp = predictedGlucose.recommendedTempBasal(
++                to: glucoseTargetRange!,
++                at: predictedGlucose[0].startDate,
++                suspendThreshold: settings.suspendThreshold?.quantity,
++                sensitivity: insulinSensitivity!,
++                model: doseStore.insulinModelProvider.model(for: pumpInsulinType),
++                basalRates: basalRateSchedule!,
++                maxBasalRate: maxBasal,
++                additionalActiveInsulinClamp: iobHeadroom,
++                lastTempBasal: lastTempBasal,
++                rateRounder: rateRounder,
++                isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
++            )
++            return AutomaticDoseRecommendation(basalAdjustment: temp)
++        }
++    }
++    
+     /// Runs the glucose prediction on the latest effect data.
+     ///
+     /// - Throws:
+@@ -1921,81 +2191,71 @@ extension LoopDataManager {
+                 dosingDecision.appendWarning(.bolusInProgress)
+                 return (dosingDecision, nil)
+             }
++            
++            var dosingRecommendation: AutomaticDoseRecommendation?
+ 
+-            let rateRounder = { (_ rate: Double) in
+-                return self.delegate?.roundBasalRate(unitsPerHour: rate) ?? rate
+-            }
+-
+-            let lastTempBasal: DoseEntry?
+-
+-            if case .some(.tempBasal(let dose)) = basalDeliveryState {
+-                lastTempBasal = dose
+-            } else {
+-                lastTempBasal = nil
+-            }
+-
+-            let dosingRecommendation: AutomaticDoseRecommendation?
+-
++            var autoBolusCarbsAmount = -Double.infinity
++            
+             // automaticDosingIOBLimit calculated from the user entered maxBolus
+             let automaticDosingIOBLimit = maxBolus! * 2.0
+             let iobHeadroom = automaticDosingIOBLimit - self.insulinOnBoard!.value
+-
+-            switch settings.automaticDosingStrategy {
+-            case .automaticBolus:
+-                let volumeRounder = { (_ units: Double) in
+-                    return self.delegate?.roundBolusVolume(units: units) ?? units
++            
++            if autoBolusCarbsEnabledAndActive {
++                do {
++                    let posVelocityAndRC = FeatureFlags.usePositiveMomentumAndRCForManualBoluses
++                    let pendingInsulin = try getPendingInsulin()
++                    if let recommendation = try recommendBolus(considerPositiveVelocityAndRC: posVelocityAndRC, pendingInsulin: pendingInsulin, provideBreakdown: false), let totalCobAmount = try getTotalCobCorrectionAmount(considerPositiveVelocityAndRC: posVelocityAndRC, pendingInsulin: pendingInsulin) {
++                        
++                        let amount = min(recommendation.amount, volumeRounder()(min(iobHeadroom, totalCobAmount)))
++                        
++                        if amount > 0 {
++                            autoBolusCarbsAmount = amount
++                        }
++                    }
++                } catch {
++                    logger.error("Unexpected error, won't auto-bolus carbs: %{public}@", String(describing: error))
+                 }
+-
+-                // Create dosing strategy based on user setting
+-                let applicationFactorStrategy: ApplicationFactorStrategy = UserDefaults.standard.glucoseBasedApplicationFactorEnabled
+-                    ? GlucoseBasedApplicationFactorStrategy()
+-                    : ConstantApplicationFactorStrategy()
+-
+-                let correctionRangeSchedule = settings.effectiveGlucoseTargetRangeSchedule()
+-
+-                let effectiveBolusApplicationFactor = applicationFactorStrategy.calculateDosingFactor(
+-                    for: glucose.quantity,
+-                    correctionRangeSchedule: correctionRangeSchedule!,
+-                    settings: settings
+-                )
+-
+-                self.logger.debug(" *** Glucose: %{public}@, effectiveBolusApplicationFactor: %.2f", glucose.quantity.description, effectiveBolusApplicationFactor)
++            }
++            
++            let bolusApplicationFactor: Double?
++            let volumeRounder: ((Double) -> Double)?
++
++            if autoBolusCarbsAmount > 0 {
++                switch settings.automaticDosingStrategy {
++                case .automaticBolus:
++                    bolusApplicationFactor = nil
++                    volumeRounder = nil
++                case .tempBasalOnly:
++                    // instead of temp basal, compare with automaticBolus with an adjusted bolusApplicationFactor reflecting 5 minutes of temp basal
++                    // we avoid rounding this value so we can accurately know whether the temp basal would give more or less insulin over 5 minutes
++                    bolusApplicationFactor = 5.0/30.0
++                    volumeRounder = {$0}
++                }
++            } else {
++                bolusApplicationFactor = nil
++                volumeRounder = nil
++            }
+                 
+-                // If a user customizes maxPartialApplicationFactor > 1; this respects maxBolus
+-                let maxAutomaticBolus = min(iobHeadroom, maxBolus! * min(effectiveBolusApplicationFactor, 1.0))
+-
+-                dosingRecommendation = predictedGlucose.recommendedAutomaticDose(
+-                    to: glucoseTargetRange!,
+-                    at: predictedGlucose[0].startDate,
+-                    suspendThreshold: settings.suspendThreshold?.quantity,
+-                    sensitivity: insulinSensitivity!,
+-                    model: doseStore.insulinModelProvider.model(for: pumpInsulinType),
+-                    basalRates: basalRateSchedule!,
+-                    maxAutomaticBolus: maxAutomaticBolus,
+-                    partialApplicationFactor: effectiveBolusApplicationFactor * self.timeBasedDoseApplicationFactor,
+-                    lastTempBasal: lastTempBasal,
+-                    volumeRounder: volumeRounder,
+-                    rateRounder: rateRounder,
+-                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
+-                )
+-            case .tempBasalOnly:
+-
+-                let temp = predictedGlucose.recommendedTempBasal(
+-                    to: glucoseTargetRange!,
+-                    at: predictedGlucose[0].startDate,
+-                    suspendThreshold: settings.suspendThreshold?.quantity,
+-                    sensitivity: insulinSensitivity!,
+-                    model: doseStore.insulinModelProvider.model(for: pumpInsulinType),
+-                    basalRates: basalRateSchedule!,
+-                    maxBasalRate: maxBasal!,
+-                    additionalActiveInsulinClamp: iobHeadroom,
+-                    lastTempBasal: lastTempBasal,
+-                    rateRounder: rateRounder,
+-                    isBasalRateScheduleOverrideActive: settings.scheduleOverride?.isBasalRateScheduleOverriden(at: startDate) == true
+-                )
+-                dosingRecommendation = AutomaticDoseRecommendation(basalAdjustment: temp)
++            let dosingStrategty = autoBolusCarbsAmount > 0 ? .automaticBolus : settings.automaticDosingStrategy
++                        
++            dosingRecommendation = getDosingRecommendation(dosingStrategy: dosingStrategty, glucose: glucose, predictedGlucose: predictedGlucose, iobHeadroom: iobHeadroom, glucoseTargetRange: glucoseTargetRange, insulinSensitivity: insulinSensitivity, basalRateSchedule: basalRateSchedule, startDate: startDate, bolusApplicationFactor: bolusApplicationFactor, volumeRounder: volumeRounder)
++            
++            if autoBolusCarbsAmount > dosingRecommendation?.bolusUnits ?? 0.0 {
++                logger.info("Recommendation is to auto-bolus carbs as it will give more insulin")
++                dosingRecommendation = AutomaticDoseRecommendation(basalAdjustment: dosingRecommendation?.basalAdjustment, bolusUnits: autoBolusCarbsAmount)
++            } else {
++                switch settings.automaticDosingStrategy {
++                case .tempBasalOnly:
++                    if autoBolusCarbsAmount > 0 {
++                        // we used automaticBolus before so now we need to switch over to the standard tempBasal recommendation
++                        dosingRecommendation = getDosingRecommendation(dosingStrategy: .tempBasalOnly, glucose: glucose, predictedGlucose: predictedGlucose, iobHeadroom: iobHeadroom, glucoseTargetRange: glucoseTargetRange, insulinSensitivity: insulinSensitivity, basalRateSchedule: basalRateSchedule, startDate: startDate)
++                    }
++                default:
++                    break
++                }
+             }
+-
++          
++            
+             if let dosingRecommendation = dosingRecommendation {
+                 self.logger.default("Recommending dose: %{public}@ at %{public}@", String(describing: dosingRecommendation), String(describing: startDate))
+                 recommendedAutomaticDose = (recommendation: dosingRecommendation, date: startDate)
+@@ -2138,7 +2398,7 @@ protocol LoopState {
+     /// Computes the recommended bolus for correcting a glucose prediction, optionally considering a potential carb entry.
+     /// - Parameter potentialCarbEntry: A carb entry under consideration for which to include effects in the prediction
+     /// - Parameter replacedCarbEntry: An existing carb entry replaced by `potentialCarbEntry`
+-    /// - Parameter considerPositiveVelocityAndRC: Positive velocity and positive retrospective correction will not be used if this is false.
++    /// - Parameter considerPositiveVelocityAndRC: Positive velocity and positive retrospective correction will not be used if this is false.    
+     /// - Returns: A bolus recommendation, or `nil` if not applicable
+     /// - Throws: LoopError.missingDataError if recommendation cannot be computed
+     func recommendBolus(consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?, replacingCarbEntry replacedCarbEntry: StoredCarbEntry?, considerPositiveVelocityAndRC: Bool) throws -> ManualBolusRecommendation?
+@@ -2251,7 +2511,7 @@ extension LoopDataManager {
+ 
+         func recommendBolus(consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?, replacingCarbEntry replacedCarbEntry: StoredCarbEntry?, considerPositiveVelocityAndRC: Bool) throws -> ManualBolusRecommendation? {
+             dispatchPrecondition(condition: .onQueue(loopDataManager.dataAccessQueue))
+-            return try loopDataManager.recommendBolus(consideringPotentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, considerPositiveVelocityAndRC: considerPositiveVelocityAndRC)
++            return try loopDataManager.recommendBolus(consideringPotentialCarbEntry: potentialCarbEntry, replacingCarbEntry: replacedCarbEntry, considerPositiveVelocityAndRC: considerPositiveVelocityAndRC, pendingInsulin: loopDataManager.getPendingInsulin(), provideBreakdown: true)
+         }
+ 
+         func recommendBolusForManualGlucose(_ glucose: NewGlucoseSample, consideringPotentialCarbEntry potentialCarbEntry: NewCarbEntry?, replacingCarbEntry replacedCarbEntry: StoredCarbEntry?, considerPositiveVelocityAndRC: Bool) throws -> ManualBolusRecommendation? {
+diff --git a/Loop/Loop/View Controllers/StatusTableViewController.swift b/Loop/Loop/View Controllers/StatusTableViewController.swift
+index 6a4aadfc..ecdbf65f 100644
+--- a/Loop/Loop/View Controllers/StatusTableViewController.swift	
++++ b/Loop/Loop/View Controllers/StatusTableViewController.swift	
+@@ -42,9 +42,9 @@ final class StatusTableViewController: LoopChartsTableViewController {
+     var alertMuter: AlertMuter!
+ 
+     var supportManager: SupportManager!
+-
++    
+     lazy private var cancellables = Set<AnyCancellable>()
+-
++    
+     override func viewDidLoad() {
+ 
+         super.viewDidLoad()
+@@ -116,6 +116,13 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                     self?.reloadData(animated: true)
+                 }
+             },
++            
++            notificationCenter.addObserver(forName: .AlgorithmExperimentsChanged, object: UserDefaults.standard, queue: nil) { [weak self] (notification: Notification) in
++                DispatchQueue.main.async {
++                    self?.refreshContext.update(with: .status)
++                    self?.reloadData()
++                }
++            },
+         ]
+ 
+         automaticDosingStatus.$automaticDosingEnabled
+@@ -601,6 +608,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
+             } else {
+                 self.currentCOBDescription = nil
+             }
++            
++            self.currentAutoBolusCarbsActive = self.deviceManager.loopManager.autoBolusCarbsEnabledAndActive
+ 
+             self.tableView.beginUpdates()
+             if let hudView = self.hudView {
+@@ -677,6 +686,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
+     // MARK: COB
+ 
+     private var currentCOBDescription: String?
++    
++    private var currentAutoBolusCarbsActive = false
+ 
+     // MARK: - Loop Status Section Data
+ 
+@@ -987,7 +998,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                 cell.setChartGenerator(generator: { [weak self] (frame) in
+                     return self?.statusCharts.glucoseChart(withFrame: frame)?.view
+                 })
+-                cell.setTitleLabelText(label: NSLocalizedString("Glucose", comment: "The title of the glucose and prediction graph"))
++                cell.setTitleLabelText(label:  NSLocalizedString("Glucose", comment: "The title of the glucose and prediction graph"))
++
+                 cell.doesNavigate = automaticDosingStatus.automaticDosingEnabled || !FeatureFlags.simpleBolusCalculatorEnabled
+             case .iob:
+                 cell.setChartGenerator(generator: { [weak self] (frame) in
+@@ -1003,7 +1015,14 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                 cell.setChartGenerator(generator: { [weak self] (frame) in
+                     return self?.statusCharts.cobChart(withFrame: frame)?.view
+                 })
+-                cell.setTitleLabelText(label: NSLocalizedString("Active Carbohydrates", comment: "The title of the Carbs On-Board graph"))
++                
++                let label = NSLocalizedString("Active Carbohydrates", comment: "The title of the Carbs On-Board graph")
++                                
++                if currentAutoBolusCarbsActive {
++                    cell.setTitleLabelText(label: String(format: "%@ %@", label, "🔸"))
++                } else {
++                    cell.setTitleLabelText(label: label)
++                }
+             }
+ 
+             self.tableView(tableView, updateSubtitleFor: cell, at: indexPath)
+@@ -1142,6 +1161,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                 } else {
+                     cell.setSubtitleLabel(label: nil)
+                 }
++                
+                 cell.doesNavigate = automaticDosingStatus.automaticDosingEnabled || !FeatureFlags.simpleBolusCalculatorEnabled
+             case .iob:
+                 if let currentIOB = currentIOBDescription {
+@@ -1165,6 +1185,14 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                 } else {
+                     cell.setSubtitleLabel(label: nil)
+                 }
++                
++                let label = NSLocalizedString("Active Carbohydrates", comment: "The title of the Carbs On-Board graph");
++                
++                if currentAutoBolusCarbsActive {
++                    cell.setTitleLabelText(label: String(format: "%@ %@", label, "🔸"))
++                } else {
++                    cell.setTitleLabelText(label: label)
++                }
+             }
+         case .hud, .status, .alertWarning:
+             break
+@@ -1233,7 +1261,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
+                     case .preMeal, .legacyWorkout:
+                         break
+                     default:
+-                        let vc = AddEditOverrideTableViewController(glucoseUnit: statusCharts.glucose.glucoseUnit)
++                        let vc = AddEditOverrideTableViewController(glucoseUnit: statusCharts.glucose.glucoseUnit, autoBolusCarbsEnabled: UserDefaults.standard.autoBolusCarbsEnabled)
+                         vc.inputMode = .editOverride(override)
+                         vc.delegate = self
+                         show(vc, sender: tableView.cellForRow(at: indexPath))
+@@ -1342,6 +1370,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
+             vc.glucoseUnit = statusCharts.glucose.glucoseUnit
+             vc.overrideHistory = deviceManager.loopManager.overrideHistory.getEvents()
+             vc.delegate = self
++            vc.autoBolusCarbsEnabled = UserDefaults.standard.autoBolusCarbsEnabled
+         case let vc as PredictionTableViewController:
+             vc.deviceManager = deviceManager
+         default:
+diff --git a/Loop/Loop/View Models/BolusEntryViewModel.swift b/Loop/Loop/View Models/BolusEntryViewModel.swift
+index a86f20e0..0a371ee7 100644
+--- a/Loop/Loop/View Models/BolusEntryViewModel.swift	
++++ b/Loop/Loop/View Models/BolusEntryViewModel.swift	
+@@ -92,6 +92,8 @@ final class BolusEntryViewModel: ObservableObject {
+             }
+         }
+     }
++    
++    final let MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY = 0.005
+ 
+     // MARK: - State
+ 
+@@ -113,6 +115,36 @@ final class BolusEntryViewModel: ObservableObject {
+     let potentialCarbEntry: NewCarbEntry?
+     let selectedCarbAbsorptionTimeEmoji: String?
+ 
++    @Published var carbBolus: HKQuantity?
++    @Published var carbBolusIncluded = true
++    var carbBolusAmount: Double? {
++        carbBolus?.doubleValue(for: .internationalUnit())
++    }
++    @Published var cobCorrectionBolus: HKQuantity?
++    @Published var cobCorrectionBolusIncluded = true
++    var cobCorrectionBolusAmount: Double? {
++        cobCorrectionBolus?.doubleValue(for: .internationalUnit())
++    }
++    @Published var bgCorrectionBolus: HKQuantity?
++    @Published var bgCorrectionBolusIncluded = true
++    var bgCorrectionBolusAmount: Double? {
++        bgCorrectionBolus?.doubleValue(for: .internationalUnit())
++    }
++    @Published var maxExcessBolus: HKQuantity?
++    @Published var maxExcessBolusIncluded = true
++    var maxExcessBolusAmount: Double? {
++        maxExcessBolus?.doubleValue(for: .internationalUnit())
++    }
++    @Published var safetyLimitBolus: HKQuantity?
++    @Published var safetyLimitBolusIncluded = true
++    var safetyLimitBolusAmount: Double? {
++        safetyLimitBolus?.doubleValue(for: .internationalUnit())
++    }
++    @Published var exclusionsBolus: HKQuantity?
++    @Published var exclusionsBolusIncluded = true
++    var exclusionsBolusAmount: Double? {
++        exclusionsBolus?.doubleValue(for: .internationalUnit())
++    }
+     @Published var recommendedBolus: HKQuantity?
+     var recommendedBolusAmount: Double? {
+         recommendedBolus?.doubleValue(for: .internationalUnit())
+@@ -206,7 +238,7 @@ final class BolusEntryViewModel: ObservableObject {
+         self.observeElapsedTime()
+         self.observeEnteredManualGlucoseChanges()
+         self.observeEnteredBolusChanges()
+-
++        self.observeBolusBreakdownChanges()
+     }
+ 
+     private func observeLoopUpdates() {
+@@ -239,6 +271,63 @@ final class BolusEntryViewModel: ObservableObject {
+             }
+             .store(in: &cancellables)
+     }
++    
++    private func observeBolusBreakdownChanges() {
++        $carbBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.carbBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++        $cobCorrectionBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.cobCorrectionBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++        $bgCorrectionBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.bgCorrectionBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++        $maxExcessBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.maxExcessBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++        $safetyLimitBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.safetyLimitBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++        $exclusionsBolusIncluded
++            .sink { [weak self] newValue in
++                if self?.exclusionsBolusIncluded != newValue {
++                    self?.delegate?.withLoopState { [weak self] _ in
++                        self?.updateRecommendedBolusAndNoticeForBolusBreakdownChange()
++                    }
++                }
++            }
++            .store(in: &cancellables)
++    }
+ 
+     private func observeEnteredManualGlucoseChanges() {
+         $manualGlucoseQuantity
+@@ -444,6 +533,13 @@ final class BolusEntryViewModel: ObservableObject {
+         formatter.numberFormatter.roundingMode = .down
+         return formatter.numberFormatter
+     }()
++    
++    private lazy var breakdownBolusAmountFormatter: NumberFormatter = {
++        let formatter = QuantityFormatter(for: .internationalUnit())
++        formatter.numberFormatter.roundingMode = .down // round towards 0
++        formatter.numberFormatter.maximumFractionDigits = 2
++        return formatter.numberFormatter
++    }()
+ 
+     private lazy var absorptionTimeFormatter: DateComponentsFormatter = {
+         let formatter = DateComponentsFormatter()
+@@ -645,8 +741,16 @@ final class BolusEntryViewModel: ObservableObject {
+             }
+         }
+     }
+-
++    
+     private func updateRecommendedBolusAndNotice(from state: LoopState, isUpdatingFromUserInput: Bool) {
++        updateRecommendedBolusAndNotice(recommendationSupplier: {try computeBolusRecommendation(from: state)}, isUpdatingFromUserInput: isUpdatingFromUserInput)
++    }
++    
++    private func updateRecommendedBolusAndNoticeForBolusBreakdownChange() {
++        updateRecommendedBolusAndNotice(recommendationSupplier: {self.dosingDecision.manualBolusRecommendation?.recommendation}, isUpdatingFromUserInput: true)
++    }
++        
++    private func updateRecommendedBolusAndNotice(recommendationSupplier: () throws -> ManualBolusRecommendation?, isUpdatingFromUserInput: Bool) {
+         dispatchPrecondition(condition: .notOnQueue(.main))
+ 
+         guard let delegate = delegate else {
+@@ -656,14 +760,98 @@ final class BolusEntryViewModel: ObservableObject {
+ 
+         let now = Date()
+         var recommendation: ManualBolusRecommendation?
++        let carbBolus: HKQuantity?
++        let cobCorrectionBolus: HKQuantity?
++        let bgCorrectionBolus: HKQuantity?
+         let recommendedBolus: HKQuantity?
++        var maxExcessBolus: HKQuantity? = nil
++        var safetyLimitBolus: HKQuantity? = nil
++        var exclusionsBolus: HKQuantity? = nil
+         let notice: Notice?
+         do {
+-            recommendation = try computeBolusRecommendation(from: state)
++            recommendation = try recommendationSupplier()
++            
++            bgCorrectionBolusIncluded = self.bgCorrectionBolusIncluded
++            cobCorrectionBolusIncluded = self.cobCorrectionBolusIncluded
+ 
+             if let recommendation = recommendation {
+-                recommendedBolus = HKQuantity(unit: .internationalUnit(), doubleValue: delegate.roundBolusVolume(units: recommendation.amount))
+-                //recommendedBolus = HKQuantity(unit: .internationalUnit(), doubleValue: recommendation.amount)
++                var totalRecommendation = 0.0
++                                
++                let breakdown = recommendation.bolusBreakdown
++                
++                if let carbsAmount = breakdown?.carbsAmount, abs(carbsAmount) >= MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY{
++                    carbBolus = HKQuantity(unit: .internationalUnit(), doubleValue: carbsAmount)
++                    totalRecommendation += carbBolusIncluded ?  carbsAmount : 0
++                } else {
++                    carbBolus = nil
++                }
++                
++                if potentialCarbEntry != nil, UserDefaults.standard.carbBolusCarbEntryExcluded || UserDefaults.standard.carbBolusCobCorrectionExcluded || UserDefaults.standard.carbBolusBgCorrectionExcluded {
++
++                    var exclusionsAmount = -(recommendation.missingAmount ?? 0.0)
++                    
++                    if UserDefaults.standard.carbBolusCarbEntryExcluded {
++                        exclusionsAmount += breakdown?.carbsAmount ?? 0.0
++                    }
++                    if UserDefaults.standard.carbBolusCobCorrectionExcluded {
++                        exclusionsAmount += breakdown?.cobCorrectionAmount ?? 0.0
++                    }
++                    if UserDefaults.standard.carbBolusBgCorrectionExcluded {
++                        exclusionsAmount += breakdown?.bgCorrectionAmount ?? 0.0
++                    }
++                    
++                    if exclusionsAmount >= MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY {
++                        exclusionsBolus = HKQuantity(unit: .internationalUnit(), doubleValue: exclusionsAmount)
++                        totalRecommendation -= exclusionsBolusIncluded ? exclusionsAmount : 0
++                    }
++                }
++                
++                if let cobCorrectionAmount = breakdown?.cobCorrectionAmount, abs(cobCorrectionAmount) >= MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY {
++                    cobCorrectionBolus = HKQuantity(unit: .internationalUnit(), doubleValue: cobCorrectionAmount)
++                    totalRecommendation += cobCorrectionBolusIncluded ?  cobCorrectionAmount : 0
++                } else {
++                    cobCorrectionBolus = nil
++                }
++                
++                if let bgCorrectionAmount = breakdown?.bgCorrectionAmount, abs(bgCorrectionAmount) >= MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY {
++                    bgCorrectionBolus = HKQuantity(unit: .internationalUnit(), doubleValue: bgCorrectionAmount)
++                    totalRecommendation += bgCorrectionBolusIncluded ?  bgCorrectionAmount : 0
++                } else {
++                    bgCorrectionBolus = nil
++                }
++                
++                if let missingAmount = recommendation.missingAmount, missingAmount >= MIN_ABS_BOLUS_AMOUNT_FOR_DISPLAY {
++                    if let maxBolus = maximumBolus?.doubleValue(for: .internationalUnit()) {
++                        if recommendation.amount >= maxBolus {
++                            // while it is technically possible for some safetyLimitBolus too, this isn't identifiable, nor parituclarly relevant
++                            maxExcessBolus = HKQuantity(unit: .internationalUnit(), doubleValue: missingAmount)
++                        } else if recommendation.amount + missingAmount > maxBolus {
++                            safetyLimitBolus = HKQuantity(unit: .internationalUnit(), doubleValue: maxBolus - recommendation.amount)
++                            maxExcessBolus = HKQuantity(unit: .internationalUnit(), doubleValue: recommendation.amount + missingAmount - maxBolus)
++                        } else {
++                            safetyLimitBolus = HKQuantity(unit: .internationalUnit(), doubleValue: missingAmount)
++                        }
++                    } else {
++                        // generally we shouldn't be here, but if we don't know maxBolus we have to treat it all as safety limit
++                        safetyLimitBolus = HKQuantity(unit: .internationalUnit(), doubleValue: missingAmount)
++                    }
++                    
++                    if let maxExcessAmount = maxExcessBolus?.doubleValue(for: .internationalUnit()) {
++                        totalRecommendation -= maxExcessBolusIncluded ? maxExcessAmount : 0
++                    }
++
++                    if let safetyLimitAmount = safetyLimitBolus?.doubleValue(for: .internationalUnit()) {
++                        totalRecommendation -= safetyLimitBolusIncluded ? safetyLimitAmount : 0
++                    }
++                }
++                
++                if carbBolusIncluded, cobCorrectionBolusIncluded, bgCorrectionBolusIncluded, maxExcessBolusIncluded, safetyLimitBolusIncluded, !exclusionsBolusIncluded || exclusionsBolus == nil {
++                    totalRecommendation = recommendation.amount // avoid possible rounding issues
++                } else {
++                    totalRecommendation = round(1000 * totalRecommendation) / 1000
++                }
++                
++                recommendedBolus = HKQuantity(unit: .internationalUnit(), doubleValue: delegate.roundBolusVolume(units: max(0, totalRecommendation)))
+                 
+                 switch recommendation.notice {
+                 case .glucoseBelowSuspendThreshold:
+@@ -680,10 +868,22 @@ final class BolusEntryViewModel: ObservableObject {
+                     notice = nil
+                 }
+             } else {
++                carbBolus = nil
++                cobCorrectionBolus = nil
++                bgCorrectionBolus = nil
++                maxExcessBolus = nil
++                safetyLimitBolus = nil
++                exclusionsBolus = nil
+                 recommendedBolus = HKQuantity(unit: .internationalUnit(), doubleValue: 0)
+                 notice = nil
+             }
+         } catch {
++            carbBolus = nil
++            cobCorrectionBolus = nil
++            bgCorrectionBolus = nil
++            maxExcessBolus = nil
++            safetyLimitBolus = nil
++            exclusionsBolus = nil
+             recommendedBolus = nil
+ 
+             switch error {
+@@ -700,10 +900,16 @@ final class BolusEntryViewModel: ObservableObject {
+ 
+         DispatchQueue.main.async {
+             let priorRecommendedBolus = self.recommendedBolus
++            self.carbBolus = carbBolus
++            self.cobCorrectionBolus = cobCorrectionBolus
++            self.bgCorrectionBolus = bgCorrectionBolus
++            self.maxExcessBolus = maxExcessBolus
++            self.safetyLimitBolus = safetyLimitBolus
++            self.exclusionsBolus = exclusionsBolus
+             self.recommendedBolus = recommendedBolus
+             self.dosingDecision.manualBolusRecommendation = recommendation.map { ManualBolusRecommendationWithDate(recommendation: $0, date: now) }
+             self.activeNotice = notice
+-
++            
+             if priorRecommendedBolus != nil,
+                priorRecommendedBolus != recommendedBolus,
+                !self.enacting,
+@@ -729,7 +935,7 @@ final class BolusEntryViewModel: ObservableObject {
+             return try state.recommendBolus(
+                 consideringPotentialCarbEntry: potentialCarbEntry,
+                 replacingCarbEntry: originalCarbEntry,
+-                considerPositiveVelocityAndRC: FeatureFlags.usePositiveMomentumAndRCForManualBoluses
++                considerPositiveVelocityAndRC: FeatureFlags.usePositiveMomentumAndRCForManualBoluses               
+             )
+         }
+     }
+@@ -789,15 +995,46 @@ final class BolusEntryViewModel: ObservableObject {
+         chartDateInterval = DateInterval(start: chartStartDate, duration: .hours(totalHours))
+     }
+ 
+-    func formatBolusAmount(_ bolusAmount: Double) -> String {
+-        bolusAmountFormatter.string(from: bolusAmount) ?? String(bolusAmount)
++    func formatBolusAmount(_ bolusAmount: Double, forBreakdown: Bool = false) -> String {
++        let formatter = forBreakdown ? breakdownBolusAmountFormatter : bolusAmountFormatter
++        return formatter.string(from: bolusAmount) ?? String(bolusAmount)
+     }
+ 
++    var carbBolusString: String {
++        return bolusString(carbBolusAmount, forBreakdown: true)
++    }
++    var cobCorrectionBolusString: String {
++        return bolusString(cobCorrectionBolusAmount, forBreakdown: true)
++    }
++    var bgCorrectionBolusString: String {
++        return bolusString(bgCorrectionBolusAmount, forBreakdown: true)
++    }
++    var negativeMaxExcessBolusString: String {
++        negativeBolusString(amount: maxExcessBolusAmount)
++    }
++    var negativeSafetyLimitString: String {
++        negativeBolusString(amount: safetyLimitBolusAmount)
++    }
++    var negativeCorrectLimitString: String {
++        negativeBolusString(amount: exclusionsBolusAmount)
++    }
++    
++    func negativeBolusString(amount: Double?) -> String {
++        guard amount != nil else {
++            return bolusString(nil, forBreakdown: true)
++        }
++        return bolusString(-amount!, forBreakdown: true)
++    }
++    
+     var recommendedBolusString: String {
+-        guard let amount = recommendedBolusAmount else {
++        return bolusString(recommendedBolusAmount, forBreakdown: false)
++    }
++    
++    func bolusString(_ bolusAmount: Double?, forBreakdown: Bool) -> String {
++        guard let amount = bolusAmount else {
+             return "–"
+         }
+-        return formatBolusAmount(amount)
++        return formatBolusAmount(amount, forBreakdown: forBreakdown)
+     }
+ 
+     func updateEnteredBolus(_ enteredBolusString: String) {
+diff --git a/Loop/Loop/Views/AutoBolusCarbsSelectionView.swift b/Loop/Loop/Views/AutoBolusCarbsSelectionView.swift
+new file mode 100644
+index 00000000..01c4a05f
+--- /dev/null
++++ b/Loop/Loop/Views/AutoBolusCarbsSelectionView.swift
+@@ -0,0 +1,50 @@
++//
++//  AutoBolusCarbsSelectionView.swift
++//  Loop
++//
++//  Created by Moti Nisenson-Ken on 23/12/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++public struct AutoBolusCarbsSelectionView: View {
++    @Binding var isAutoBolusCarbsEnabled: Bool
++    @Binding var autoBolusCarbsActiveByDefault: Bool
++    
++    public var body: some View {
++        
++        ScrollView {
++            VStack(spacing: 10) {
++                Text(NSLocalizedString("Auto-Bolus Carbs", comment: "Title for auto-bolus carbs experiment description"))
++                    .font(.headline)
++                    .padding(.bottom, 20)
++
++                Divider()
++
++                Text(String(format: NSLocalizedString("Auto-Bolus Carbs (ABC) is a modification of how Loop corrects each loop cycle. When enabled and active, Loop will check how much insulin is needed to cover COB (similar to doing a manual bolus but without correcting for BG). If this amount is greater than the usual correction, a bolus for that amount will be given. Overrides can also be used to activate or deactivate. When ABC is enabled and active a %@ will appear beside Active Carbohydrates on the status screen.", comment: "Description of Auto-Bolus Carbs toggles."), "🔸"))
++                    .foregroundColor(.secondary)
++                Divider()
++
++                Toggle(NSLocalizedString("Auto-Bolus Carbs Enabled", comment: "Title for Auto-Bolus Carbs Enabled toggle"), isOn: $isAutoBolusCarbsEnabled)
++                    .padding(.top, 20)
++                
++                Toggle(NSLocalizedString("Auto-Bolus Carbs Active by Default", comment: "Title for Auto-Bolus Carbs Active by Default toggle"), isOn: $autoBolusCarbsActiveByDefault)
++                    .padding(.top, 20)
++                    .disabled(!isAutoBolusCarbsEnabled)
++            }
++            .padding()
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++    
++}
++
++struct AutoBolusCarbsSelectionView_Previews: PreviewProvider {
++    static var previews: some View {
++        AutoBolusCarbsSelectionView(isAutoBolusCarbsEnabled: .constant(true), autoBolusCarbsActiveByDefault: .constant(false))
++    }
++}
+diff --git a/Loop/Loop/Views/BolusEntryView.swift b/Loop/Loop/Views/BolusEntryView.swift
+index 4dd0c11a..1f863bb4 100644
+--- a/Loop/Loop/Views/BolusEntryView.swift
++++ b/Loop/Loop/Views/BolusEntryView.swift
+@@ -191,7 +191,7 @@ struct BolusEntryView: View {
+             if viewModel.isManualGlucoseEntryEnabled && viewModel.potentialCarbEntry != nil {
+                 potentialCarbEntryRow
+             }
+-
++                        
+             if viewModel.isManualGlucoseEntryEnabled || viewModel.potentialCarbEntry != nil {
+                 recommendedBolusRow
+             }
+@@ -226,20 +226,202 @@ struct BolusEntryView: View {
+             }
+         }
+     }
+-
++    
++    private func displayRecommendationBreakdown() -> Bool {
++        if viewModel.potentialCarbEntry != nil {
++            return viewModel.bgCorrectionBolus != nil && (viewModel.carbBolus != nil || viewModel.cobCorrectionBolus != nil)
++        } else {
++            return viewModel.bgCorrectionBolus != nil
++        }
++    }
++    
++    @State
++    private var recommendationBreakdownExpanded = false
++        
++    @ViewBuilder
+     private var recommendedBolusRow: some View {
+-        HStack {
+-            Text("Recommended Bolus", comment: "Label for recommended bolus row on bolus screen")
+-            Spacer()
++        let exclusionsApply = viewModel.exclusionsBolus != nil && viewModel.exclusionsBolusIncluded
++        let breakdownFont = Font.subheadline
++        
++        Section {
+             HStack(alignment: .firstTextBaseline) {
+-                Text(viewModel.recommendedBolusString)
+-                    .font(.title)
+-                    .foregroundColor(Color(.label))
+-                bolusUnitsLabel
++                Text("Recommended Bolus", comment: "Label for recommended bolus row on bolus screen")
++                if displayRecommendationBreakdown() {
++                    Image(systemName: "chevron.forward.circle")
++                        .imageScale(.small)
++                        .foregroundColor(.accentColor)
++                        .rotationEffect(.degrees(recommendationBreakdownExpanded ? 90 : 0))
++                }
++                Spacer()
++                HStack(alignment: .firstTextBaseline) {
++                    Text(viewModel.recommendedBolusString)
++                        .font(.title)
++                        .foregroundColor(Color(.label))
++                    bolusUnitsLabel
++                }
++            }
++            .contentShape(Rectangle())
++            .accessibilityElement(children: .combine)
++            .onTapGesture {
++                if displayRecommendationBreakdown() {
++                    recommendationBreakdownExpanded.toggle()
++                }
++            }
++            if recommendationBreakdownExpanded {
++                VStack {
++                    if viewModel.potentialCarbEntry != nil, viewModel.carbBolus != nil {
++                        let excluded = exclusionsApply && UserDefaults.standard.carbBolusCarbEntryExcluded
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.carbBolusIncluded ? 1 : 0)
++                            Text("Carb Entry", comment: "Label for carb bolus row on bolus screen")
++                                .font(breakdownFont)
++                                .foregroundStyle(excluded ? .secondary : .primary)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.carbBolusString)
++                                    .font(.subheadline)
++                                    .foregroundColor(Color(excluded ? .secondaryLabel : .label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.carbBolusIncluded.toggle()
++                        }
++                    }
++                    if viewModel.cobCorrectionBolus != nil {
++                        let excluded = exclusionsApply && UserDefaults.standard.carbBolusCobCorrectionExcluded
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.cobCorrectionBolusIncluded ? 1 : 0)
++                            Text("COB Correction", comment: "Label for COB correction bolus row on bolus screen")
++                                .font(breakdownFont)
++                                .foregroundStyle(excluded ? .secondary : .primary)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.cobCorrectionBolusString)
++                                    .font(breakdownFont)
++                                    .foregroundColor(Color(excluded ? .secondaryLabel : .label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.cobCorrectionBolusIncluded.toggle()
++                        }
++                    }
++                    if viewModel.bgCorrectionBolus != nil {
++                        let excluded = exclusionsApply && UserDefaults.standard.carbBolusBgCorrectionExcluded
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.bgCorrectionBolusIncluded ? 1 : 0)
++                            Text("BG Correction", comment: "Label for BG correction bolus row on bolus screen")
++                                .font(breakdownFont)
++                                .foregroundStyle(excluded ? .secondary : .primary)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.bgCorrectionBolusString)
++                                    .font(breakdownFont)
++                                    .foregroundColor(Color(excluded ? .secondaryLabel : .label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.bgCorrectionBolusIncluded.toggle()
++                        }
++                    }
++                    if viewModel.maxExcessBolus != nil {
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.maxExcessBolusIncluded ? 1 : 0)
++                            Text("Max Bolus Limit", comment: "Label for max bolus row on bolus screen")
++                                .font(breakdownFont)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.negativeMaxExcessBolusString)
++                                    .font(breakdownFont)
++                                    .foregroundColor(Color(.label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.maxExcessBolusIncluded.toggle()
++                        }
++                    }
++                    if viewModel.safetyLimitBolus != nil {
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.safetyLimitBolusIncluded ? 1 : 0)
++                            Text("Glucose Safety Limit", comment: "Label for glucose safety limit row on bolus screen")
++                                .font(breakdownFont)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.negativeSafetyLimitString)
++                                    .font(breakdownFont)
++                                    .foregroundColor(Color(.label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.safetyLimitBolusIncluded.toggle()
++                        }
++                    }
++                    if viewModel.exclusionsBolus != nil {
++                        HStack {
++                            Text("  ")
++                            Image(systemName: "checkmark")
++                                .imageScale(.small)
++                                .foregroundColor(.accentColor)
++                                .opacity(viewModel.exclusionsBolusIncluded ? 1 : 0)
++                            Text("Exclusions", comment: "Label for exclusions row on bolus screen")
++                                .font(breakdownFont)
++                            Spacer()
++                            HStack(alignment: .firstTextBaseline) {
++                                Text(viewModel.negativeCorrectLimitString)
++                                    .font(breakdownFont)
++                                    .foregroundColor(Color(.label))
++                                breakdownBolusUnitsLabel
++                            }
++                        }
++                        .accessibilityElement(children: .combine)
++                        .contentShape(Rectangle())
++                        .onTapGesture {
++                            viewModel.exclusionsBolusIncluded.toggle()
++                        }
++                    }
++                }
++                .accessibilityElement(children: .combine)
++                .transition(.slide)
++                .animation(.smooth, value: recommendationBreakdownExpanded)
+             }
+         }
+-        .accessibilityElement(children: .combine)
++        
+     }
++    
+ 
+     private func didBeginEditing() {
+         if !editedBolusAmount {
+@@ -275,6 +457,12 @@ struct BolusEntryView: View {
+         Text(QuantityFormatter(for: .internationalUnit()).localizedUnitStringWithPlurality())
+             .foregroundColor(Color(.secondaryLabel))
+     }
++    
++    private var breakdownBolusUnitsLabel: some View {
++        Text(QuantityFormatter(for: .internationalUnit()).localizedUnitStringWithPlurality())
++            .font(.footnote)
++            .foregroundColor(Color(.secondaryLabel))
++    }
+ 
+     private var enteredBolusStringBinding: Binding<String> {
+         Binding(
+diff --git a/Loop/Loop/Views/CarbBolusSelectionView.swift b/Loop/Loop/Views/CarbBolusSelectionView.swift
+new file mode 100644
+index 00000000..fda501b2
+--- /dev/null
++++ b/Loop/Loop/Views/CarbBolusSelectionView.swift
+@@ -0,0 +1,90 @@
++//
++//  CarbBolusSelectionView.swift
++//  Loop
++//
++//  Created by Moti Nisenson-Ken on 14/01/2025.
++//  Copyright © 2025 LoopKit Authors. All rights reserved.
++//
++
++
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++public struct CarbBolusSelectionView: View {
++    @AppStorage(UserDefaults.Key.CarbEntryExcluded.rawValue) var isCarbEntryExcluded = false
++    @AppStorage(UserDefaults.Key.CobCorrectionExcluded.rawValue) var isCobCorrectionExcluded = false
++    @AppStorage(UserDefaults.Key.BgCorrectionExcluded.rawValue) var isBgCorrectionExcluded = false
++    
++    public var body: some View {
++        
++        ScrollView {
++            VStack(spacing: 10) {
++                Text(NSLocalizedString("Carb Bolus Recommendation", comment: "Title for carb bolus recommendation description"))
++                    .font(.headline)
++                    .padding(.bottom, 20)
++
++                Divider()
++
++                Text(NSLocalizedString("When bolusing for carbs one can decide which elements to exclude. The toggles below enable one to not bolus for the Carb Entry, or to not give COB or BG corrections. When these are relevant an extra Exclusions row will appear in the Recommendation Breakdown reducing the overall bolus. Rows included in the Exclusions calculated are grayed out. The excluded amount may be smaller than expected, as negative insulin from other rows can still apply.", comment: "carb bolus recommendation options description"))
++                    .foregroundColor(.secondary)
++                Divider()
++
++                Toggle(NSLocalizedString("Carb Entry Excluded", comment: "Title for Carb Entry Excluded toggle"), isOn: $isCarbEntryExcluded)
++                    .padding(.top, 20)
++
++                Toggle(NSLocalizedString("COB Correction Excluded", comment: "Title for COB Correction Excluded toggle"), isOn: $isCobCorrectionExcluded)
++                    .padding(.top, 20)
++                
++                Toggle(NSLocalizedString("BG Correction Excluded", comment: "Title for BG Correction Excluded toggle"), isOn: $isBgCorrectionExcluded)
++                    .padding(.top, 20)
++            }
++            .padding()
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++    
++}
++
++extension UserDefaults {
++    fileprivate enum Key: String {
++        case CarbEntryExcluded = "com.loopkit.underDevelopment.carbBolus.carbyEntryExcluded"
++        case CobCorrectionExcluded = "com.loopkit.underDevelopment.carbBolus.correctionExcluded"
++        case BgCorrectionExcluded = "com.loopkit.underDevelopment.carbBolus.bgCorrectionExcluded"
++    }
++    
++    var carbBolusCarbEntryExcluded : Bool {
++        get {
++            bool(forKey: Key.CarbEntryExcluded.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.CarbEntryExcluded.rawValue)
++        }
++    }
++    
++    var carbBolusCobCorrectionExcluded : Bool {
++        get {
++            bool(forKey: Key.CobCorrectionExcluded.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.CobCorrectionExcluded.rawValue)
++        }
++    }
++    
++    var carbBolusBgCorrectionExcluded: Bool {
++        get {
++            bool(forKey: Key.BgCorrectionExcluded.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.BgCorrectionExcluded.rawValue)
++        }
++    }
++}
++
++struct CarbBolusSelectionView_Previews: PreviewProvider {
++    static var previews: some View {
++        CarbBolusSelectionView()
++    }
++}
++
+diff --git a/Loop/Loop/Views/ManualEntryDoseView.swift b/Loop/Loop/Views/ManualEntryDoseView.swift
+index e81dccda..04b95a6c 100644
+--- a/Loop/Loop/Views/ManualEntryDoseView.swift
++++ b/Loop/Loop/Views/ManualEntryDoseView.swift
+@@ -164,7 +164,7 @@ struct ManualEntryDoseView: View {
+     private var insulinTypePicker: some View {
+         ExpandablePicker(
+             with: viewModel.insulinTypePickerOptions,
+-            selectedValue: $viewModel.selectedInsulinType,
++            selectedValue: $viewModel.selectedInsulinType,            
+             label: NSLocalizedString("Insulin Type", comment: "Insulin type label")
+         )
+     }
+diff --git a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+index 4ed38456..90a79ff3 100644
+--- a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
++++ b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+@@ -21,15 +21,17 @@ extension SettingsView {
+ 
+ public struct ExperimentRow: View {
+     var name: String
+-    var enabled: Bool
++    var enabled: Bool?
+ 
+     public var body: some View {
+         HStack {
+             Text(name)
+                 .foregroundColor(.primary)
+             Spacer()
+-            Text(enabled ? "On" : "Off")
+-                .foregroundColor(enabled ? .red : .secondary)
++            if let enabled = enabled {
++                Text(enabled ? "On" : "Off")
++                    .foregroundColor(enabled ? .red : .secondary)
++            }
+         }
+         .padding()
+         .background(Color(UIColor.secondarySystemBackground))
+@@ -42,6 +44,8 @@ public struct ExperimentsSettingsView: View {
+     @AppStorage(UserDefaults.Key.GlucoseBasedApplicationFactorEnabled.rawValue) private var isGlucoseBasedApplicationFactorEnabled = false
+     @AppStorage(UserDefaults.Key.IntegralRetrospectiveCorrectionEnabled.rawValue) private var isIntegralRetrospectiveCorrectionEnabled = false
+     @AppStorage(UserDefaults.Key.NegativeInsulinDamperEnabled.rawValue) private var isNegativeInsulinDamperEnabled = false
++    @AppStorage(UserDefaults.Key.AutoBolusCarbsEnabled.rawValue) private var isAutoBolusCarbsEnabled = false
++    @AppStorage(UserDefaults.Key.AutoBolusCarbsActiveByDefault.rawValue) private var autoBolusCarbsActiveByDefault = false
+ 
+     var automaticDosingStrategy: AutomaticDosingStrategy
+ 
+@@ -77,20 +81,45 @@ public struct ExperimentsSettingsView: View {
+                         name: NSLocalizedString("Negative Insulin Damper", comment: "Title of negative insulin damper experiment"),
+                         enabled: isNegativeInsulinDamperEnabled)
+                 }
++                NavigationLink(destination: AutoBolusCarbsSelectionView(isAutoBolusCarbsEnabled: $isAutoBolusCarbsEnabled, autoBolusCarbsActiveByDefault: $autoBolusCarbsActiveByDefault)) {
++                    ExperimentRow(
++                        name: NSLocalizedString("Auto-Bolus Carbs", comment: "Title of auto-bolus carbs experiment"),
++                        enabled: isAutoBolusCarbsEnabled)
++                }
+                 Spacer()
+             }
+             .padding()
+         }
+         .navigationBarTitleDisplayMode(.inline)
++        .onChange(of: isGlucoseBasedApplicationFactorEnabled) { _ in
++            NotificationCenter.default.post(name: .AlgorithmExperimentsChanged, object: UserDefaults.standard, userInfo: nil)
++        }
++        .onChange(of: isIntegralRetrospectiveCorrectionEnabled) { _ in
++            NotificationCenter.default.post(name: .AlgorithmExperimentsChanged, object: UserDefaults.standard, userInfo: nil)
++        }
++        .onChange(of: isNegativeInsulinDamperEnabled) { _ in
++            NotificationCenter.default.post(name: .AlgorithmExperimentsChanged, object: UserDefaults.standard, userInfo: nil)
++        }
++        .onChange(of: isAutoBolusCarbsEnabled) { _ in
++            NotificationCenter.default.post(name: .AlgorithmExperimentsChanged, object: UserDefaults.standard, userInfo: nil)
++        }
++        .onChange(of: autoBolusCarbsActiveByDefault) { _ in
++            NotificationCenter.default.post(name: .AlgorithmExperimentsChanged, object: UserDefaults.standard, userInfo: nil)
++        }
+     }
+ }
+ 
++extension Notification.Name {
++    static let AlgorithmExperimentsChanged = Notification.Name(rawValue:  "com.loopKit.notification.AlgorithmExperimentsChanged")
++}
+ 
+ extension UserDefaults {
+     fileprivate enum Key: String {
+         case GlucoseBasedApplicationFactorEnabled = "com.loopkit.algorithmExperiments.glucoseBasedApplicationFactorEnabled"
+         case IntegralRetrospectiveCorrectionEnabled = "com.loopkit.algorithmExperiments.integralRetrospectiveCorrectionEnabled"
+         case NegativeInsulinDamperEnabled = "com.loopkit.algorithmExperiments.negativeInsulinDamperEnabled"
++        case AutoBolusCarbsEnabled = "com.loopkit.algorithmExperiments.autoBolusCarbsEnabled"
++        case AutoBolusCarbsActiveByDefault = "com.loopkit.algorithmExperiments.autoBolusCarbsActiveByDefault"
+     }
+ 
+     var glucoseBasedApplicationFactorEnabled: Bool {
+@@ -119,4 +148,22 @@ extension UserDefaults {
+             set(newValue, forKey: Key.NegativeInsulinDamperEnabled.rawValue)
+         }
+     }
++
++    var autoBolusCarbsEnabled: Bool {
++        get {
++            bool(forKey: Key.AutoBolusCarbsEnabled.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.AutoBolusCarbsEnabled.rawValue)
++        }
++    }
++
++    var autoBolusCarbsActiveByDefault: Bool {
++        get {
++            bool(forKey: Key.AutoBolusCarbsActiveByDefault.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.AutoBolusCarbsActiveByDefault.rawValue)
++        }
++    }
+ }
+diff --git a/Loop/Loop/Views/SettingsView+underDevelopmentSection.swift b/Loop/Loop/Views/SettingsView+underDevelopmentSection.swift
+new file mode 100644
+index 00000000..c4ae6334
+--- /dev/null
++++ b/Loop/Loop/Views/SettingsView+underDevelopmentSection.swift
+@@ -0,0 +1,50 @@
++//
++//  SettingsView+underDevelopmentSection.swift
++//  Loop
++//
++//  Created by Moti Nisenson-Ken on 14/01/2025.
++//  Copyright © 2025 LoopKit Authors. All rights reserved.
++//
++
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++extension SettingsView {
++    internal var underDevelopmentSection: some View {
++        NavigationLink(NSLocalizedString("🚧 Under Development 🚧", comment: "The title of the Under Development section in settings")) {
++            UnderDevelopmentSettingsView()
++        }
++    }
++}
++
++public struct UnderDevelopmentSettingsView: View {
++    
++    public var body: some View {
++        ScrollView {
++            VStack(alignment: .center, spacing: 12) {
++                Text(NSLocalizedString("🚧 Under Development 🚧", comment: "Navigation title for under development screen"))
++                    .font(.headline)
++                VStack {
++                    Text("⚠️").font(.largeTitle)
++                    Text("Caution")
++                }
++                Divider()
++                VStack(alignment: .leading, spacing: 12) {
++                    Text(NSLocalizedString("These features are under development. They may not have been tested thorougly.", comment: "Under Development description."))
++                    Text(NSLocalizedString("In future versions of Loop these features may change, end up as standard parts of Loop, or be removed from Loop entirely. Please follow along in the Loop Zulip chat to stay informed of possible changes to these features.", comment: "Under development description second paragraph."))
++                }
++                .foregroundColor(.secondary)
++
++                Divider()
++                NavigationLink(destination: CarbBolusSelectionView()) {
++                    ExperimentRow(name: NSLocalizedString("Carb Bolus Recommendation", comment: "Title of carb bolus recommendation feature"), enabled: nil)
++                }
++                Spacer()
++            }
++            .padding()
++        }
++        .navigationBarTitleDisplayMode(.inline)
++    }
++}
+diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
+index c3ec98b8..edcc5680 100644
+--- a/Loop/Loop/Views/SettingsView.swift
++++ b/Loop/Loop/Views/SettingsView.swift
+@@ -302,6 +302,9 @@ extension SettingsView {
+             if FeatureFlags.allowAlgorithmExperiments {
+                 algorithmExperimentsSection
+             }
++            if FeatureFlags.allowExperimentalFeatures {
++                underDevelopmentSection
++            }
+         }
+     }
+ 
+diff --git a/Loop/LoopTests/Managers/LoopDataManagerDosingTests.swift b/Loop/LoopTests/Managers/LoopDataManagerDosingTests.swift
+index 000d2e7e..01adc904 100644
+--- a/Loop/LoopTests/Managers/LoopDataManagerDosingTests.swift
++++ b/Loop/LoopTests/Managers/LoopDataManagerDosingTests.swift
+@@ -245,6 +245,171 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
+         XCTAssertEqual(4.63, recommendedBasal!.unitsPerHour, accuracy: defaultAccuracy)
+     }
+     
++    func testBeneathRangeForAutoBolusCarbs() {
++        // this scenario starts beneath the correction range
++        setUp(for: .highAndRisingWithCOB, correctionRanges: correctionRange(150.0), autoBolusCarbs: true)
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBolus: Double?
++        var manualBolusRecommendation: ManualBolusRecommendation?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBolus = state.recommendedAutomaticDose?.recommendation.bolusUnits
++            manualBolusRecommendation = try? state.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: FeatureFlags.usePositiveMomentumAndRCForManualBoluses)
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++        
++        XCTAssertNotNil(recommendedBolus)
++        XCTAssertEqual(min(manualBolusRecommendation!.amount, manualBolusRecommendation!.bolusBreakdown!.cobCorrectionAmount), recommendedBolus!, accuracy: defaultAccuracy)
++    }
++    
++    func testBeneathRangeForAutoBolusCarbsAutoIobMax() {
++        // this scenario starts beneath the correction range
++        // autoIobMax = 2*maxBolus and mockDoseStore has IOB of 9.5 - so headroom is 0.1
++        setUp(for: .highAndRisingWithCOB, maxBolus: 4.8, correctionRanges: correctionRange(150.0), autoBolusCarbs: true)
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBolus: Double?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBolus = state.recommendedAutomaticDose?.recommendation.bolusUnits
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++        
++        XCTAssertNotNil(recommendedBolus)
++        XCTAssertEqual(0.1, recommendedBolus!, accuracy: defaultAccuracy)
++    }
++    
++    func testHighAndStableWithAutoBolusCarbsForAutoBolusResult() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++        
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        
++        // 0.4*(cobCorrection + bgCorrection) will be the dosage compared against
++        // for this test we want cobCorrection < 0.4*(cobCorrection + bgCorrection)
++        // in other words we need cobCorrection < 2/3 * bgCorrection
++        let expectedCobCorrectionAmount = 0.6 * expectedBgCorrectionAmount
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, dosingStrategy: .automaticBolus, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))]}, autoBolusCarbs: true)
++        
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBolus: Double?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBolus = state.recommendedAutomaticDose?.recommendation.bolusUnits
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++
++        XCTAssertNotNil(recommendedBolus)
++        XCTAssertEqual(0.4 * (expectedCobCorrectionAmount + expectedBgCorrectionAmount), recommendedBolus!, accuracy: defaultAccuracy)
++    }
++    
++    func testHighAndStableWithAutoBolusCarbsForABCResultVsAutoBolus() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++        
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        
++        // 0.4*(cobCorrection + bgCorrection) will be the dosage compared against
++        // for this test we want cobCorrection < 0.4*(cobCorrection + bgCorrection)
++        // in other words we need cobCorrection < 2/3 * bgCorrection
++        let expectedCobCorrectionAmount = 0.7 * expectedBgCorrectionAmount
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, dosingStrategy: .automaticBolus, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))]}, autoBolusCarbs: true)
++        
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBolus: Double?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBolus = state.recommendedAutomaticDose?.recommendation.bolusUnits
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++
++        XCTAssertNotNil(recommendedBolus)
++        XCTAssertEqual(expectedCobCorrectionAmount, recommendedBolus!, accuracy: defaultAccuracy)
++    }
++    
++    func testHighAndStableWithAutoBolusCarbsForTempBasalResult() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++        
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        
++        // (cobCorrection + bgCorrection)/6 will be the dosage compared against
++        // for this test we want cobCorrection < (cobCorrection + bgCorrection)/6
++        // in other words we need cobCorrection < bgCorrection / 5
++        let expectedCobCorrectionAmount = expectedBgCorrectionAmount / 6
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, maxBasalRate: 7.0, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))]}, autoBolusCarbs: true)
++        
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBasal: TempBasalRecommendation?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBasal = state.recommendedAutomaticDose?.recommendation.basalAdjustment
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++
++        // unadjusted basal rate is 1.0
++        XCTAssertEqual(1.0 + 2*(expectedBgCorrectionAmount + expectedCobCorrectionAmount), recommendedBasal!.unitsPerHour, accuracy: defaultAccuracy)
++    }
++    
++    func testHighAndStableWithAutoBolusCarbsForABCResultvsTempBasal() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++        
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        
++        // (cobCorrection + bgCorrection)/6 will be the dosage compared against
++        // for this test we want cobCorrection > (cobCorrection + bgCorrection)/6
++        // in other words we need cobCorrection > bgCorrection / 5
++        let expectedCobCorrectionAmount = expectedBgCorrectionAmount / 4
++
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))]}, autoBolusCarbs: true)
++        
++        let updateGroup = DispatchGroup()
++        updateGroup.enter()
++        var recommendedBolus: Double?
++        self.loopDataManager.getLoopState { _, state in
++            recommendedBolus = state.recommendedAutomaticDose?.recommendation.bolusUnits
++            updateGroup.leave()
++        }
++        // We need to wait until the task completes to get outputs
++        updateGroup.wait()
++
++        XCTAssertNotNil(recommendedBolus)
++        XCTAssertEqual(expectedCobCorrectionAmount, recommendedBolus!, accuracy: defaultAccuracy)
++    }
++    
+     func testHighAndFalling() {
+         setUp(for: .highAndFalling)
+         let predictedGlucoseOutput = loadLocalDateGlucoseEffect("high_and_falling_predicted_glucose")
+@@ -507,9 +672,26 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
+         XCTAssertNil(dosingDecisionStore.dosingDecisions[0].manualBolusRequested)
+         NotificationCenter.default.removeObserver(observer)
+     }
++    
++    func dummyReplacementEntry() -> StoredCarbEntry{
++        StoredCarbEntry(startDate: now, quantity: HKQuantity(unit: .gram(), doubleValue: -1))
++    }
++    
++    func dummyCarbEntry() -> NewCarbEntry {
++        NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 1E-50), startDate: now.addingTimeInterval(TimeInterval(days: -2)),
++                     foodType: nil, absorptionTime: TimeInterval(hours: 3))
++    }
++    
++    func correctionRange(_ value: Double) -> GlucoseRangeSchedule {
++        correctionRange(value, value)
++    }
++
++    func correctionRange(_ minValue: Double, _ maxValue: Double) -> GlucoseRangeSchedule {
++        GlucoseRangeSchedule(unit: HKUnit.milligramsPerDeciliter, dailyItems: [RepeatingScheduleValue(startTime: TimeInterval(0), value: DoubleRange(minValue: minValue, maxValue: maxValue))])!
++    }
+ 
+     func testLoopGetStateRecommendsManualBolus() {
+-        setUp(for: .highAndStable)
++        setUp(for: .flatAndStable, correctionRanges: correctionRange(106.26136802382213 - 1.82 * 55), suspendThresholdValue: 0.0)
+         let exp = expectation(description: #function)
+         var recommendedBolus: ManualBolusRecommendation?
+         loopDataManager.getLoopState { (_, loopState) in
+@@ -518,6 +700,322 @@ class LoopDataManagerDosingTests: LoopDataManagerTests {
+         }
+         wait(for: [exp], timeout: 100000.0)
+         XCTAssertEqual(recommendedBolus!.amount, 1.82, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 1.82, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusMaxBolusClamping() {
++        setUp(for: .flatAndStable, maxBolus: 1, correctionRanges: correctionRange(106.26136802382213 - 1.82 * 55), suspendThresholdValue: 0.0)
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: true)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 1, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 1.82, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.missingAmount!, 0.82, accuracy: 0.01)
++    }
++        
++    func testLoopGetStateRecommendsManualBolusForCob() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++
++        let expectedCobCorrectionAmount = 0.5
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))]})
++                
++        let exp = expectation(description: #function)
++        
++        var recommendedBolus: ManualBolusRecommendation?
++
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: self.dummyCarbEntry(), replacingCarbEntry: self.dummyReplacementEntry(), considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, expectedBgCorrectionAmount + expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, expectedBgCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForCobAndReducingCarbEntry() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++
++        let expectedCobCorrectionAmount = 0.6
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf // COB correction is to 200. BG correction is the rest
++        let expectedCarbsAmount = 0.5
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedCobCorrectionAmount)
++        
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[
++                StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue)),
++                StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: 10))
++              ]})
++                
++        let exp = expectation(description: #function)
++        
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: expectedCarbsAmount * cir), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1))
++        
++        var recommendedBolus: ManualBolusRecommendation?
++
++        loopDataManager.getLoopState { (_, loopState) in
++            
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: StoredCarbEntry(startDate: self.now, quantity: HKQuantity(unit: .gram(), doubleValue: 10)), considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, expectedCarbsAmount + expectedBgCorrectionAmount + expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, expectedBgCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, expectedCarbsAmount, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForZeroCorrectionCobAndCarbEntry() {
++        // note that the default setup for .highAndStable has a _carb_effect file reflecting a 5g carb effect (with 45 ISF)
++        // predicted glucose starts from 200 and goes down to 176.21882841682697 (taking into account _insulin_effect)
++        let isf = 45.0
++        let cir = 10.0
++
++        let expectedCobCorrectionAmount = 0.0
++        let expectedCarbsAmount = 0.5
++        let expectedBgOffset = -0.2
++        let expectedBgCorrectionAmount = 1.82 + (200 - 176.21882841682697) / isf + expectedBgOffset
++        
++        
++        let carbValue = 5.0 + cir * ((200 - 176.21882841682697) / isf + expectedBgOffset)
++        
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true,
++              carbHistorySupplier: {[
++                StoredCarbEntry(startDate: $0, quantity: HKQuantity(unit: .gram(), doubleValue: carbValue))
++              ]})
++                
++        let exp = expectation(description: #function)
++        
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: expectedCarbsAmount * cir), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1))
++        
++        var recommendedBolus: ManualBolusRecommendation?
++
++        loopDataManager.getLoopState { (_, loopState) in
++            
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: self.dummyReplacementEntry(), considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, expectedCarbsAmount + expectedBgCorrectionAmount + expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, expectedBgCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, expectedCobCorrectionAmount, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, expectedCarbsAmount, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true)
++        let exp = expectation(description: #function)
++        
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 5.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 2.32, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 1.82, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0.5, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForCarbEntryMaxBolusClamping() {
++        setUp(for: .highAndStable, maxBolus: 1, predictCarbGlucoseEffects: true)
++        let exp = expectation(description: #function)
++        
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 5.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 1, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 1.82, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0.5, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.missingAmount!, 1.32, accuracy: 0.01)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForBeneathRange() {
++        setUp(for: .flatAndStable, correctionRanges: correctionRange(160))
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: true)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, (106.21882841682697 - 160) / 55, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForInRangeAboveMidPoint() {
++        setUp(for: .flatAndStable, correctionRanges: correctionRange(80, 110))
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: true)
++            exp.fulfill()
++        }
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForSuspendForCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true, correctionRanges: correctionRange(230), suspendThresholdValue: 220)
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 15.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, (176.21882841682697 - 230) / 45, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 1.5, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.missingAmount!, 1.5 + (176.21882841682697 - 230) / 45, accuracy: 0.01)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForBigAndSlowCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true, correctionRanges: correctionRange(176.2188), suspendThresholdValue: 176.218)
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 100.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 4.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 7.27, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 9.99, accuracy: 0.01) // 9.99 and not 10 since there is 10 minute delay, leaving 0.01 remaining
++        XCTAssertEqual(recommendedBolus!.missingAmount!, 9.99 - 7.27, accuracy: 0.01)
++    }
++
++    
++    func testLoopGetStateRecommendsManualBolusNoMissingForSuspendForCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true, correctionRanges: correctionRange(230), suspendThresholdValue: 220)
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 5.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, (176.21882841682697 - 230) / 45, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0.5, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount) // carbsAmount + bgCorrectionAmount < 0, so nothing is missing
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForSuspendNoCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true, correctionRanges: correctionRange(230), suspendThresholdValue: 180)
++        
++        let exp = expectation(description: #function)
++        var recommendedBolus: ManualBolusRecommendation?
++
++        let carbEntry = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 5.0), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus = try? loopState.recommendBolus(consideringPotentialCarbEntry: nil, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp.fulfill()
++        }
++
++        wait(for: [exp], timeout: 100000.0)
++        XCTAssertEqual(recommendedBolus!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.bgCorrectionAmount, (176.21882841682697 - 230) / 45, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus!.bolusBreakdown!.carbsAmount!, 0.0, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus!.missingAmount)
++    }
++    
++    func testLoopGetStateRecommendsManualBolusForInRangeCarbEntry() {
++        setUp(for: .highAndStable, predictCarbGlucoseEffects: true, correctionRanges: correctionRange(170, 210))
++                        
++        let exp1 = expectation(description: #function)
++        var recommendedBolus1: ManualBolusRecommendation?
++        
++        let exp2 = expectation(description: #function)
++        var recommendedBolus2: ManualBolusRecommendation?
++
++        // note that 176.218 + 5/10*45 < 210
++        let carbEntry1 = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 5), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus1 = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry1, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp1.fulfill()
++        }
++        wait(for: [exp1], timeout: 100000.0)
++
++        let carbEntry2 = NewCarbEntry(quantity: HKQuantity(unit: .gram(), doubleValue: 4.8), startDate: now, foodType: nil, absorptionTime: TimeInterval(hours: 1.0))
++        loopDataManager.getLoopState { (_, loopState) in
++            recommendedBolus2 = try? loopState.recommendBolus(consideringPotentialCarbEntry: carbEntry2, replacingCarbEntry: nil, considerPositiveVelocityAndRC: false)
++            exp2.fulfill()
++        }
++        wait(for: [exp2], timeout: 100000.0)
++
++                
++        XCTAssertEqual(recommendedBolus1!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus1!.bolusBreakdown!.bgCorrectionAmount, -0.5, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus1!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus1!.bolusBreakdown!.carbsAmount!, 0.5, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus1!.missingAmount)
++        
++        XCTAssertEqual(recommendedBolus2!.amount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus2!.bolusBreakdown!.bgCorrectionAmount, -0.48, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus2!.bolusBreakdown!.cobCorrectionAmount, 0, accuracy: 0.01)
++        XCTAssertEqual(recommendedBolus2!.bolusBreakdown!.carbsAmount!, 0.48, accuracy: 0.01)
++        XCTAssertNil(recommendedBolus2!.missingAmount)
+     }
+ 
+     func testLoopGetStateRecommendsManualBolusWithMomentum() {
+diff --git a/Loop/LoopTests/Managers/LoopDataManagerTests.swift b/Loop/LoopTests/Managers/LoopDataManagerTests.swift
+index 32c7d66f..fcaa1d50 100644
+--- a/Loop/LoopTests/Managers/LoopDataManagerTests.swift
++++ b/Loop/LoopTests/Managers/LoopDataManagerTests.swift
+@@ -116,7 +116,7 @@ class LoopDataManagerTests: XCTestCase {
+             RepeatingScheduleValue(startTime: TimeInterval(75600), value: DoubleRange(minValue: 100, maxValue: 110))
+         ], timeZone: .utcTimeZone)!
+     }
+-    
++        
+     // MARK: Mock stores
+     var now: Date!
+     var dosingDecisionStore: MockDosingDecisionStore!
+@@ -127,7 +127,15 @@ class LoopDataManagerTests: XCTestCase {
+                basalDeliveryState: PumpManagerStatus.BasalDeliveryState? = nil,
+                maxBolus: Double = 10,
+                maxBasalRate: Double = 5.0,
+-               dosingStrategy: AutomaticDosingStrategy = .tempBasalOnly)
++               dosingStrategy: AutomaticDosingStrategy = .tempBasalOnly,
++               predictCarbGlucoseEffects: Bool = false,
++               correctionRanges: GlucoseRangeSchedule? = nil,
++               suspendThresholdValue: Double? = nil,
++               // note that carbHistory is independent from carb effects;
++               // one can use dummy replacement carb entry to force recalculation when getting a manual bolus recommendation
++               carbHistorySupplier: ((Date) -> [StoredCarbEntry]?)? = nil,
++               autoBolusCarbs: Bool = false
++    )
+     {
+         let basalRateSchedule = loadBasalRateScheduleFixture("basal_profile")
+         let insulinSensitivitySchedule = InsulinSensitivitySchedule(
+@@ -145,10 +153,13 @@ class LoopDataManagerTests: XCTestCase {
+             ],
+             timeZone: .utcTimeZone
+         )!
++        let glucoseTargets = correctionRanges ?? glucoseTargetRangeSchedule
++        
++        let suspendThreshold = suspendThresholdValue == nil ? suspendThreshold : GlucoseThreshold(unit: .milligramsPerDeciliter, value: suspendThresholdValue!)
+ 
+         let settings = LoopSettings(
+             dosingEnabled: false,
+-            glucoseTargetRangeSchedule: glucoseTargetRangeSchedule,
++            glucoseTargetRangeSchedule: glucoseTargets,
+             insulinSensitivitySchedule: insulinSensitivitySchedule,
+             basalRateSchedule: basalRateSchedule,
+             carbRatioSchedule: carbRatioSchedule,
+@@ -163,13 +174,15 @@ class LoopDataManagerTests: XCTestCase {
+         doseStore.basalProfileApplyingOverrideHistory = doseStore.basalProfile
+         doseStore.sensitivitySchedule = insulinSensitivitySchedule
+         let glucoseStore = MockGlucoseStore(for: test)
+-        let carbStore = MockCarbStore(for: test)
+-        carbStore.insulinSensitivityScheduleApplyingOverrideHistory = insulinSensitivitySchedule
+-        carbStore.carbRatioSchedule = carbRatioSchedule
+         
+         let currentDate = glucoseStore.latestGlucose!.startDate
+         now = currentDate
+         
++        let carbStore = MockCarbStore(for: test, predictGlucose: predictCarbGlucoseEffects, carbHistory: carbHistorySupplier?(now))
++        carbStore.insulinSensitivityScheduleApplyingOverrideHistory = insulinSensitivitySchedule
++        carbStore.carbRatioSchedule = carbRatioSchedule
++
++        
+         dosingDecisionStore = MockDosingDecisionStore()
+         automaticDosingStatus = AutomaticDosingStatus(automaticDosingEnabled: true, isAutomaticDosingAllowed: true)
+         loopDataManager = LoopDataManager(
+@@ -189,10 +202,17 @@ class LoopDataManagerTests: XCTestCase {
+             automaticDosingStatus: automaticDosingStatus,
+             trustedTimeOffset: { 0 }
+         )
++        
++        if autoBolusCarbs {
++            UserDefaults.standard.autoBolusCarbsEnabled = true
++            UserDefaults.standard.autoBolusCarbsActiveByDefault = true
++        }
+     }
+     
+     override func tearDownWithError() throws {
+         loopDataManager = nil
++        UserDefaults.standard.autoBolusCarbsEnabled = false
++        UserDefaults.standard.autoBolusCarbsActiveByDefault = false
+     }
+ }
+ 
+diff --git a/Loop/LoopTests/Mock Stores/MockCarbStore.swift b/Loop/LoopTests/Mock Stores/MockCarbStore.swift
+index 4a5c016e..15d27b4d 100644
+--- a/Loop/LoopTests/Mock Stores/MockCarbStore.swift	
++++ b/Loop/LoopTests/Mock Stores/MockCarbStore.swift	
+@@ -11,11 +11,13 @@ import LoopKit
+ @testable import Loop
+ 
+ class MockCarbStore: CarbStoreProtocol {
++    var predictGlucose: Bool
+     var carbHistory: [StoredCarbEntry]?
+ 
+-    init(for scenario: DosingTestScenario = .flatAndStable) {
++    init(for scenario: DosingTestScenario = .flatAndStable, predictGlucose: Bool = false, carbHistory: [StoredCarbEntry]? = nil) {
+         self.scenario = scenario // The store returns different effect values based on the scenario
+-        self.carbHistory = loadHistoricCarbEntries(scenario: scenario)
++        self.predictGlucose = predictGlucose
++        self.carbHistory = carbHistory ?? loadHistoricCarbEntries(scenario: scenario)
+     }
+     
+     var scenario: DosingTestScenario
+@@ -52,14 +54,23 @@ class MockCarbStore: CarbStoreProtocol {
+         return defaultAbsorptionTimes.slow * 2
+     }
+     
++    var delay: TimeInterval = .minutes(10)
+     var delta: TimeInterval = .minutes(5)
+     
+     var defaultAbsorptionTimes: CarbStore.DefaultAbsorptionTimes = (fast: .minutes(30), medium: .hours(3), slow: .hours(5))
+     
++    var absorptionTimeOverrun = CarbMath.defaultAbsorptionTimeOverrun
++    
++    // copied from CarbStore.CarbModelSettings defaults
++    var absorptionModel: CarbAbsorptionComputable = PiecewiseLinearAbsorption()
++    var initialAbsorptionTimeOverrun: Double = 1.5
++    var adaptiveAbsorptionRateEnabled: Bool = false
++    var adaptiveRateStandbyIntervalFraction: Double = 0.2
++    
+     var authorizationRequired: Bool = false
+     
+     var sharingDenied: Bool = false
+-    
++        
+     func authorize(toShare: Bool, read: Bool, _ completion: @escaping (HealthKitSampleStoreResult<Bool>) -> Void) {
+         completion(.success(true))
+     }
+@@ -81,7 +92,44 @@ class MockCarbStore: CarbStoreProtocol {
+     }
+     
+     func glucoseEffects<Sample>(of samples: [Sample], startingAt start: Date, endingAt end: Date?, effectVelocities: [LoopKit.GlucoseEffectVelocity]) throws -> [LoopKit.GlucoseEffect] where Sample : LoopKit.CarbEntry {
+-        return []
++        
++        guard predictGlucose && samples.count > 0 else {
++            return []
++        }
++        
++        // this is basically copied over from CarbStore
++
++        let carbDates = samples.map { $0.startDate }
++        let maxCarbDate = carbDates.max()!
++        let minCarbDate = carbDates.min()!
++
++        guard let carbRatio = self.carbRatioScheduleApplyingOverrideHistory?.between(start: minCarbDate, end: maxCarbDate),
++              let insulinSensitivity = self.insulinSensitivityScheduleApplyingOverrideHistory?.quantitiesBetween(start: minCarbDate, end: maxCarbDate) else
++        {
++            return []
++        }
++
++        return samples.map(
++            to: effectVelocities,
++            carbRatio: carbRatio,
++            insulinSensitivity: insulinSensitivity,
++            absorptionTimeOverrun: absorptionTimeOverrun,
++            defaultAbsorptionTime: defaultAbsorptionTimes.medium,
++            delay: delay,
++            initialAbsorptionTimeOverrun: initialAbsorptionTimeOverrun,
++            absorptionModel: absorptionModel,
++            adaptiveAbsorptionRateEnabled: adaptiveAbsorptionRateEnabled,
++            adaptiveRateStandbyIntervalFraction: adaptiveRateStandbyIntervalFraction
++        ).dynamicGlucoseEffects(
++            from: start,
++            to: end,
++            carbRatios: carbRatio,
++            insulinSensitivities: insulinSensitivity,
++            defaultAbsorptionTime: defaultAbsorptionTimes.medium,
++            absorptionModel: absorptionModel,
++            delay: delay,
++            delta: delta
++        )
+     }
+     
+     func getCarbsOnBoardValues(start: Date, end: Date?, effectVelocities: [GlucoseEffectVelocity]?, completion: @escaping (CarbStoreResult<[CarbValue]>) -> Void) {
+diff --git a/Loop/LoopTests/ViewModels/BolusEntryViewModelTests.swift b/Loop/LoopTests/ViewModels/BolusEntryViewModelTests.swift
+index 32cb63ca..3d712788 100644
+--- a/Loop/LoopTests/ViewModels/BolusEntryViewModelTests.swift
++++ b/Loop/LoopTests/ViewModels/BolusEntryViewModelTests.swift
+@@ -699,17 +699,31 @@ class BolusEntryViewModelTests: XCTestCase {
+         XCTAssertNil(bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
+     }
+     
++    func is24Hour() -> Bool {
++        let dateFormat = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: Locale.current)!
++
++        return dateFormat.firstIndex(of: "a") == nil
++    }
++    
+     func testCarbEntryDateAndAbsorptionTimeString() async throws {
+         await setUpViewModel(originalCarbEntry: mockOriginalCarbEntry, potentialCarbEntry: mockPotentialCarbEntry)
+ 
+-        XCTAssertEqual("12:00 PM + 0m", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        if is24Hour() {
++            XCTAssertEqual("12:00 + 0m", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        } else {
++            XCTAssertEqual("12:00 PM + 0m", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        }
+     }
+     
+     func testCarbEntryDateAndAbsorptionTimeString2() async throws {
+         let potentialCarbEntry = NewCarbEntry(quantity: BolusEntryViewModelTests.exampleCarbQuantity, startDate: Self.exampleStartDate, foodType: nil, absorptionTime: nil)
+         await setUpViewModel(originalCarbEntry: mockOriginalCarbEntry, potentialCarbEntry: potentialCarbEntry)
+ 
+-        XCTAssertEqual("12:00 PM", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        if is24Hour() {
++            XCTAssertEqual("12:00", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        } else {
++            XCTAssertEqual("12:00 PM", bolusEntryViewModel.carbEntryDateAndAbsorptionTimeString)
++        }
+     }
+ 
+     func testIsManualGlucosePromptVisible() throws {
+Submodule LoopKit d1745ae...d54b3c4:
+diff --git a/LoopKit/LoopKit/InsulinKit/ManualBolusRecommendation.swift b/LoopKit/LoopKit/InsulinKit/ManualBolusRecommendation.swift
+index 7989853c..eaf2d478 100644
+--- a/LoopKit/LoopKit/InsulinKit/ManualBolusRecommendation.swift
++++ b/LoopKit/LoopKit/InsulinKit/ManualBolusRecommendation.swift
+@@ -87,15 +87,39 @@ extension BolusRecommendationNotice: Codable {
+     }
+ }
+ 
++public struct BolusBreakdown {
++    public let carbsAmount: Double?
++    public let cobCorrectionAmount: Double
++    public let bgCorrectionAmount: Double
++    
++    public init(fullCarbsAmount: Double? = nil, fullCobCorrectionAmount: Double, fullCorrectionAmount: Double) {
++        if let fullCarbsAmount = fullCarbsAmount {
++            carbsAmount = fullCarbsAmount
++            cobCorrectionAmount = max(fullCobCorrectionAmount - carbsAmount!, 0)
++        } else {
++            carbsAmount = nil
++            cobCorrectionAmount = fullCobCorrectionAmount
++        }
++        
++        bgCorrectionAmount = fullCorrectionAmount - cobCorrectionAmount
++    }
++}
++
++extension BolusBreakdown : Codable {}
++
+ public struct ManualBolusRecommendation {
+     public let amount: Double
+     public let pendingInsulin: Double
+     public var notice: BolusRecommendationNotice?
++    public let missingAmount: Double?
++    public let bolusBreakdown: BolusBreakdown?
+ 
+-    public init(amount: Double, pendingInsulin: Double, notice: BolusRecommendationNotice? = nil) {
++    public init(amount: Double, pendingInsulin: Double, notice: BolusRecommendationNotice? = nil, missingAmount: Double? = nil, bolusBreakdown: BolusBreakdown? = nil) {
+         self.amount = amount
+         self.pendingInsulin = pendingInsulin
+         self.notice = notice
++        self.missingAmount = missingAmount
++        self.bolusBreakdown = bolusBreakdown
+     }
+ }
+ 
+diff --git a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+index f4b8d44a..11e9bf3b 100644
+--- a/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
++++ b/LoopKit/LoopKit/LoopAlgorithm/DoseMath.swift
+@@ -94,13 +94,15 @@ extension InsulinCorrection {
+         volumeRounder: ((Double) -> Double)?
+     ) -> ManualBolusRecommendation {
+         var units = self.units - pendingInsulin
++        let excess = units - maxBolus
+         units = Swift.min(maxBolus, Swift.max(0, units))
+         units = volumeRounder?(units) ?? units
+ 
+         return ManualBolusRecommendation(
+             amount: units,
+             pendingInsulin: pendingInsulin,
+-            notice: bolusRecommendationNotice
++            notice: bolusRecommendationNotice,
++            missingAmount: excess > 0 ? excess : nil
+         )
+     }
+ 
+diff --git a/LoopKit/LoopKit/TemporaryScheduleOverrideSettings.swift b/LoopKit/LoopKit/TemporaryScheduleOverrideSettings.swift
+index 4b729c71..da19e827 100644
+--- a/LoopKit/LoopKit/TemporaryScheduleOverrideSettings.swift
++++ b/LoopKit/LoopKit/TemporaryScheduleOverrideSettings.swift
+@@ -12,6 +12,7 @@ import HealthKit
+ public struct TemporaryScheduleOverrideSettings: Hashable {
+     private var targetRangeInMgdl: DoubleRange?
+     public var insulinNeedsScaleFactor: Double?
++    public var autoBolusCarbsActive: Bool?
+ 
+     public var targetRange: ClosedRange<HKQuantity>? {
+         return targetRangeInMgdl.map { $0.quantityRange(for: .milligramsPerDeciliter) }
+@@ -32,14 +33,20 @@ public struct TemporaryScheduleOverrideSettings: Hashable {
+     public var effectiveInsulinNeedsScaleFactor: Double {
+         return insulinNeedsScaleFactor ?? 1.0
+     }
++    
++    public init() {
++        self.init(targetRange: nil)
++    }
++    
+ 
+-    public init(unit: HKUnit, targetRange: DoubleRange?, insulinNeedsScaleFactor: Double? = nil) {
+-        self.init(targetRange: targetRange?.quantityRange(for: unit), insulinNeedsScaleFactor: insulinNeedsScaleFactor)
++    public init(unit: HKUnit, targetRange: DoubleRange?, insulinNeedsScaleFactor: Double? = nil, autoBolusCarbsActive: Bool? = nil) {
++        self.init(targetRange: targetRange?.quantityRange(for: unit), insulinNeedsScaleFactor: insulinNeedsScaleFactor, autoBolusCarbsActive: autoBolusCarbsActive)
+     }
+ 
+-    public init(targetRange: ClosedRange<HKQuantity>?, insulinNeedsScaleFactor: Double? = nil) {
++    public init(targetRange: ClosedRange<HKQuantity>?, insulinNeedsScaleFactor: Double? = nil, autoBolusCarbsActive: Bool? = nil) {
+         self.targetRangeInMgdl = targetRange?.doubleRange(for: .milligramsPerDeciliter)
+         self.insulinNeedsScaleFactor = insulinNeedsScaleFactor
++        self.autoBolusCarbsActive = autoBolusCarbsActive
+     }
+ }
+ 
+@@ -49,6 +56,7 @@ extension TemporaryScheduleOverrideSettings: RawRepresentable {
+     private enum Key {
+         static let targetRange = "targetRange"
+         static let insulinNeedsScaleFactor = "insulinNeedsScaleFactor"
++        static let autoBolusCarbsActive = "autoBolusCarbsActive"
+         static let version = "version"
+     }
+ 
+@@ -65,6 +73,7 @@ extension TemporaryScheduleOverrideSettings: RawRepresentable {
+         }
+ 
+         self.insulinNeedsScaleFactor = rawValue[Key.insulinNeedsScaleFactor] as? Double
++        self.autoBolusCarbsActive = rawValue[Key.autoBolusCarbsActive] as? Bool
+     }
+ 
+     public var rawValue: RawValue {
+@@ -77,8 +86,12 @@ extension TemporaryScheduleOverrideSettings: RawRepresentable {
+         if let insulinNeedsScaleFactor = insulinNeedsScaleFactor {
+             raw[Key.insulinNeedsScaleFactor] = insulinNeedsScaleFactor
+         }
++        
++        if let autoBolusCarbsActive = autoBolusCarbsActive {
++            raw[Key.autoBolusCarbsActive] = autoBolusCarbsActive
++        }
+ 
+-        raw[Key.version] = 1
++        raw[Key.version] = 2
+ 
+         return raw
+     }
+diff --git a/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift b/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift
+index 58e948f8..3a123f80 100644
+--- a/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift	
++++ b/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift	
+@@ -7,6 +7,7 @@
+ //
+ 
+ import UIKit
++import SwiftUI
+ import HealthKit
+ import LoopKit
+ 
+@@ -53,8 +54,7 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+             case .newPreset:
+                 symbol = nil
+                 name = nil
+-                targetRange = nil
+-                insulinNeedsScaleFactor = 1.0
++                configure(with: TemporaryScheduleOverrideSettings())
+                 duration = .finite(.defaultOverrideDuration)
+             case .editPreset(let preset), .customizePresetOverride(let preset):
+                 symbol = preset.symbol
+@@ -64,8 +64,7 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+             case .customOverride:
+                 symbol = nil
+                 name = nil
+-                targetRange = nil
+-                insulinNeedsScaleFactor = 1.0
++                configure(with: TemporaryScheduleOverrideSettings())
+                 startDate = Date()
+                 duration = .finite(.defaultOverrideDuration)
+             case .editOverride(let override):
+@@ -104,6 +103,8 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+     // MARK: - Override properties
+ 
+     private let glucoseUnit: HKUnit
++    
++    private let autoBolusCarbsEnabled: Bool
+ 
+     private var symbol: String? { didSet { updateSaveButtonEnabled() } }
+ 
+@@ -112,6 +113,8 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+     private var targetRange: DoubleRange? { didSet { updateSaveButtonEnabled() } }
+ 
+     private var insulinNeedsScaleFactor = 1.0 { didSet { updateSaveButtonEnabled() }}
++    
++    private var autoBolusCarbsActive: AutoBolusCarbOptions = .useDefault { didSet {updateSaveButtonEnabled()} }
+ 
+     private var startDate = Date()
+ 
+@@ -121,6 +124,8 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+ 
+     private var syncIdentifier = UUID()
+     
++    private var initialSettings: TemporaryScheduleOverrideSettings?
++    
+     private var isConfiguringPreset: Bool {
+         switch inputMode {
+         case .newPreset, .editPreset:
+@@ -131,18 +136,23 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+     }
+ 
+     private func configure(with settings: TemporaryScheduleOverrideSettings) {
++        if self.initialSettings == nil {
++            self.initialSettings = settings
++        }
+         if let targetRange = settings.targetRange {
+             self.targetRange = DoubleRange(minValue: targetRange.lowerBound.doubleValue(for: glucoseUnit), maxValue: targetRange.upperBound.doubleValue(for: glucoseUnit))
+         } else {
+             self.targetRange = nil
+         }
+         insulinNeedsScaleFactor = settings.effectiveInsulinNeedsScaleFactor
++        autoBolusCarbsActive = AutoBolusCarbOptions.from(settings.autoBolusCarbsActive)
+     }
+ 
+     // MARK: - Initialization & view life cycle
+ 
+-    public init(glucoseUnit: HKUnit) {
++    public init(glucoseUnit: HKUnit, autoBolusCarbsEnabled: Bool) {
+         self.glucoseUnit = glucoseUnit
++        self.autoBolusCarbsEnabled = autoBolusCarbsEnabled
+         super.init(style: .grouped)
+     }
+     
+@@ -161,6 +171,7 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+         tableView.register(DecimalTextFieldTableViewCell.nib(), forCellReuseIdentifier: DecimalTextFieldTableViewCell.className)
+         tableView.register(InsulinSensitivityScalingTableViewCell.nib(), forCellReuseIdentifier: InsulinSensitivityScalingTableViewCell.className)
+         tableView.register(DateAndDurationTableViewCell.nib(), forCellReuseIdentifier: DateAndDurationTableViewCell.className)
++        tableView.register(SegmentedControlTableViewCell.self, forCellReuseIdentifier: SegmentedControlTableViewCell.className)
+         tableView.register(SwitchTableViewCell.self, forCellReuseIdentifier: SwitchTableViewCell.className)
+         tableView.register(TextButtonTableViewCell.self, forCellReuseIdentifier: TextButtonTableViewCell.className)
+     }
+@@ -181,24 +192,30 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+         case endDate
+         case durationFiniteness
+         case duration
++        case autoBolusCarbs
+     }
+ 
+     private var propertyRows: [PropertyRow] {
+         var rows: [PropertyRow] = {
+             if isConfiguringPreset {
+-                return [.symbol, .name, .insulinNeeds, .targetRange, .durationFiniteness]
++                return [.symbol, .name, .insulinNeeds, .targetRange, .autoBolusCarbs, .durationFiniteness]
+             } else if case let .viewOverride(override) = inputMode, override.hasFinished() {
+-                return [.insulinNeeds, .targetRange, .startDate, .endDate]
++                return [.insulinNeeds, .targetRange, .autoBolusCarbs, .startDate, .endDate]
+             } else {
+-                return [.insulinNeeds, .targetRange, .startDate, .durationFiniteness]
++                return [.insulinNeeds, .targetRange, .autoBolusCarbs, .startDate, .durationFiniteness]
+             }
+         }()
+ 
+         if duration.isFinite {
+             rows.append(.duration)
+         }
++        
++        if !autoBolusCarbsEnabled {
++            rows.remove(at: rows.firstIndex{$0 == .autoBolusCarbs}!)
++        }
+ 
+         rows.sort(by: { $0.rawValue < $1.rawValue })
++        
+         return rows
+     }
+ 
+@@ -274,6 +291,21 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+                 cell.range = targetRange
+                 cell.unitLabel.text = quantityFormatter.localizedUnitStringWithPlurality()
+                 cell.delegate = self
++                return cell
++            case .autoBolusCarbs:
++                var cell = tableView.dequeueReusableCell(withIdentifier: SegmentedControlTableViewCell.className, for: indexPath) as! SegmentedControlTableViewCell
++                
++                let items: [AutoBolusCarbOptions] = [.useDefault, .active, .inactive]
++                
++                // include spaces to be sure the segmented control leaves a gap
++                cell.textLabel?.text = LocalizedString("Auto-Bolus Carbs   ", comment:"The text for auto-bolus carbs setting")
++                
++                cell.options = items.map{$0.label}
++                cell.segmentedControl.selectedSegmentIndex = items.firstIndex(of: autoBolusCarbsActive)!
++                cell.onSelection { index in
++                    self.autoBolusCarbsActive = items[index]
++                }                
++
+                 return cell
+             case .startDate:
+                 let cell = tableView.dequeueReusableCell(withIdentifier: DateAndDurationTableViewCell.className, for: indexPath) as! DateAndDurationTableViewCell
+@@ -491,17 +523,20 @@ extension AddEditOverrideTableViewController {
+             guard targetRange.maxValue >= targetRange.minValue else {
+                 return nil
+             }
+-        } else {
+-            guard insulinNeedsScaleFactor != 1.0 else {
+-                return nil
+-            }
+         }
+-
+-        return TemporaryScheduleOverrideSettings(
++        
++        let result = TemporaryScheduleOverrideSettings(
+             unit: glucoseUnit,
+             targetRange: targetRange,
+-            insulinNeedsScaleFactor: insulinNeedsScaleFactor == 1.0 ? nil : insulinNeedsScaleFactor
++            insulinNeedsScaleFactor: insulinNeedsScaleFactor == 1.0 ? nil : insulinNeedsScaleFactor,
++            autoBolusCarbsActive: autoBolusCarbsActive.asBool
+         )
++        
++        guard result != initialSettings else {
++            return nil
++        }
++
++        return result
+     }
+ 
+     private var configuredPreset: TemporaryScheduleOverridePreset? {
+@@ -707,3 +742,30 @@ private extension UIFont {
+         return UIFont(descriptor: descriptor, size: pointSize)
+     }
+ }
++
++private enum AutoBolusCarbOptions : Int, Labeled {
++    case useDefault
++    case active
++    case inactive
++    
++    static func from(_ val: Bool?) -> AutoBolusCarbOptions {
++        return val == nil ? .useDefault : val! ? .active : .inactive
++    }
++    
++    var label: String {
++        switch self {
++        case .useDefault: return "\u{00002014}" // emdash
++        case .active: return "🔶"
++        case .inactive: return "❌"
++        }
++    }
++    
++    var asBool: Bool? {
++        switch self {
++        case .useDefault: return nil
++        case .active: return true
++        case .inactive: return false
++        }
++    }
++}
++
+diff --git a/LoopKit/LoopKitUI/View Controllers/HistoricalOverrideDetailView.swift b/LoopKit/LoopKitUI/View Controllers/HistoricalOverrideDetailView.swift
+index 791b131b..578fe6d6 100644
+--- a/LoopKit/LoopKitUI/View Controllers/HistoricalOverrideDetailView.swift	
++++ b/LoopKit/LoopKitUI/View Controllers/HistoricalOverrideDetailView.swift	
+@@ -14,19 +14,22 @@ public struct HistoricalOverrideDetailView: UIViewControllerRepresentable {
+     public var override: TemporaryScheduleOverride
+     public var glucoseUnit: HKUnit
+     public weak var delegate: AddEditOverrideTableViewControllerDelegate?
++    public var autoBolusCarbsEnabled: Bool
+     
+     public init(
+         override: TemporaryScheduleOverride,
+         glucoseUnit: HKUnit,
+-        delegate: AddEditOverrideTableViewControllerDelegate?
++        delegate: AddEditOverrideTableViewControllerDelegate?,
++        autoBolusCarbsEnabled: Bool
+     ) {
+         self.override = override
+         self.glucoseUnit = glucoseUnit
+         self.delegate = delegate
++        self.autoBolusCarbsEnabled = autoBolusCarbsEnabled
+     }
+     
+     public func makeUIViewController(context: Context) -> AddEditOverrideTableViewController {
+-        let viewController = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++        let viewController = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+         viewController.inputMode = .viewOverride(override)
+         viewController.delegate = delegate
+         viewController.view.isUserInteractionEnabled = false // disable interactions while viewing historical data
+diff --git a/LoopKit/LoopKitUI/View Controllers/OverrideSelectionViewController.swift b/LoopKit/LoopKitUI/View Controllers/OverrideSelectionViewController.swift
+index 956d14e7..7d1694ed 100644
+--- a/LoopKit/LoopKitUI/View Controllers/OverrideSelectionViewController.swift	
++++ b/LoopKit/LoopKitUI/View Controllers/OverrideSelectionViewController.swift	
+@@ -34,6 +34,8 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+     }
+     
+     public var overrideHistory: [TemporaryScheduleOverride] = []
++    
++    public var autoBolusCarbsEnabled: Bool = false
+ 
+     public weak var delegate: OverrideSelectionViewControllerDelegate?
+ 
+@@ -221,8 +223,21 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+     }
+ 
+     private func configure(_ cell: OverridePresetCollectionViewCell, with settings: TemporaryScheduleOverrideSettings, duration: TemporaryScheduleOverride.Duration) {
++        // FIXME - had issues with updating the storyboard; instead just leveraging targetRange
++        // note: UIKit doesn't support ZStack so we removed ZStack from the HistoryView
++        let autoBolusCarbsIcon: String
++        if autoBolusCarbsEnabled, let autoBolusCarbsActive = settings.autoBolusCarbsActive {
++            // FIXME need to either reimplement in SwiftUI or add another stack and label for
++            // implementing ZStack or change the history view to remove the ZStack
++            autoBolusCarbsIcon = autoBolusCarbsActive ? "🔶" : "❌"
++        } else {
++            autoBolusCarbsIcon = ""
++        }
++        
+         if let targetRange = settings.targetRange {
+-            cell.targetRangeLabel.text = makeTargetRangeText(from: targetRange)
++            cell.targetRangeLabel.text = autoBolusCarbsIcon + " " + makeTargetRangeText(from: targetRange)
++        } else if !autoBolusCarbsIcon.isEmpty {
++            cell.targetRangeLabel.text = autoBolusCarbsIcon
+         } else {
+             cell.targetRangeLabel.isHidden = true
+         }
+@@ -232,6 +247,9 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+         } else {
+             cell.insulinNeedsBar.isHidden = true
+         }
++                
++       
++        
+ 
+         switch duration {
+         case .finite(let interval):
+@@ -258,7 +276,7 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+             case .scheduledOverride, .customOverride, .history:
+                 break
+             case .preset(let preset):
+-                let editVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++                let editVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+                 editVC.inputMode = .editPreset(preset)
+                 editVC.delegate = self
+                 show(editVC, sender: collectionView.cellForItem(at: indexPath))
+@@ -266,7 +284,7 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+         } else {
+             switch cellContent(for: indexPath) {
+             case .scheduledOverride(let override):
+-                let editOverrideVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++                let editOverrideVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+                 editOverrideVC.inputMode = .editOverride(override)
+                 editOverrideVC.customDismissalMode = .dismissModal
+                 editOverrideVC.delegate = self
+@@ -275,7 +293,7 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+                 delegate?.overrideSelectionViewController(self, didConfirmPreset: preset)
+                 dismiss(animated: true)
+             case .customOverride:
+-                let customOverrideVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++                let customOverrideVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+                 customOverrideVC.inputMode = .customOverride
+                 customOverrideVC.delegate = self
+                 show(customOverrideVC, sender: collectionView.cellForItem(at: indexPath))
+@@ -284,7 +302,7 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+                     overrides: overrideHistory,
+                     glucoseUnit: glucoseUnit
+                 )
+-                let overrideHistoryView = OverrideSelectionHistory(model: model)
++                let overrideHistoryView = OverrideSelectionHistory(model: model, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+                 let hostedView = UIHostingController(rootView: overrideHistoryView)
+                 hostedView.title = LocalizedString("Override History", comment: "Title for override history view") // Hack to fix animations
+                 navigationController?.pushViewController(hostedView, animated: true)
+@@ -293,7 +311,7 @@ public final class OverrideSelectionViewController: UICollectionViewController,
+     }
+ 
+     @objc private func addNewPreset() {
+-        let addVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++        let addVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+         addVC.inputMode = .newPreset
+         addVC.delegate = self
+ 
+@@ -472,7 +490,7 @@ extension OverrideSelectionViewController: OverridePresetCollectionViewCellDeleg
+             return
+         }
+ 
+-        let customizePresetVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit)
++        let customizePresetVC = AddEditOverrideTableViewController(glucoseUnit: glucoseUnit, autoBolusCarbsEnabled: autoBolusCarbsEnabled)
+         customizePresetVC.inputMode = .customizePresetOverride(preset)
+         customizePresetVC.delegate = self
+         show(customizePresetVC, sender: nil)
+diff --git a/LoopKit/LoopKitUI/Views/OverrideSelectionHistory.swift b/LoopKit/LoopKitUI/Views/OverrideSelectionHistory.swift
+index b5f283ae..8fe25455 100644
+--- a/LoopKit/LoopKitUI/Views/OverrideSelectionHistory.swift
++++ b/LoopKit/LoopKitUI/Views/OverrideSelectionHistory.swift
+@@ -30,8 +30,9 @@ public struct OverrideSelectionHistory: View {
+     private var quantityFormatter: QuantityFormatter
+     private var glucoseNumberFormatter: NumberFormatter
+     private var durationFormatter: DateComponentsFormatter
++    private let autoBolusCarbsEnabled: Bool
+     
+-    public init(model: OverrideHistoryViewModel) {
++    public init(model: OverrideHistoryViewModel, autoBolusCarbsEnabled: Bool) {
+         self.model = model
+         self.quantityFormatter = {
+             let quantityFormatter = QuantityFormatter(for: model.glucoseUnit)
+@@ -46,6 +47,7 @@ public struct OverrideSelectionHistory: View {
+ 
+             return formatter
+         }()
++        self.autoBolusCarbsEnabled = autoBolusCarbsEnabled
+     }
+     
+     // Style conditionally based on iOS so we get a grouped list style
+@@ -101,6 +103,7 @@ public struct OverrideSelectionHistory: View {
+         }
+         
+         let insulinNeeds = override.settings.insulinNeedsScaleFactor
++        let autoBolusCarbsActive = autoBolusCarbsEnabled ? override.settings.autoBolusCarbsActive : nil
+         
+         switch override.context {
+         case .legacyWorkout:
+@@ -110,7 +113,8 @@ public struct OverrideSelectionHistory: View {
+                 targetRange: Text(targetRange),
+                 duration: Text(duration),
+                 subtitle: Text(startTime),
+-                insulinNeedsScaleFactor: insulinNeeds)
++                insulinNeedsScaleFactor: insulinNeeds,
++                autoBolusCarbsActive: autoBolusCarbsActive)
+         case .preMeal:
+             return OverrideViewCell(
+                 symbol: Text("🍽"),
+@@ -118,7 +122,8 @@ public struct OverrideSelectionHistory: View {
+                 targetRange: Text(targetRange),
+                 duration: Text(duration),
+                 subtitle: Text(startTime),
+-                insulinNeedsScaleFactor: insulinNeeds)
++                insulinNeedsScaleFactor: insulinNeeds,
++                autoBolusCarbsActive: autoBolusCarbsActive)
+         case .preset(let preset):
+             return OverrideViewCell(
+                 symbol: Text(preset.symbol),
+@@ -126,7 +131,8 @@ public struct OverrideSelectionHistory: View {
+                 targetRange: Text(targetRange),
+                 duration: Text(duration),
+                 subtitle: Text(startTime),
+-                insulinNeedsScaleFactor: insulinNeeds)
++                insulinNeedsScaleFactor: insulinNeeds,
++                autoBolusCarbsActive: autoBolusCarbsActive)
+         case .custom:
+             return OverrideViewCell(
+                 symbol: Text("···"),
+@@ -134,7 +140,8 @@ public struct OverrideSelectionHistory: View {
+                 targetRange: Text(targetRange),
+                 duration: Text(duration),
+                 subtitle: Text(startTime),
+-                insulinNeedsScaleFactor: insulinNeeds)
++                insulinNeedsScaleFactor: insulinNeeds,
++                autoBolusCarbsActive: autoBolusCarbsActive)
+         }
+     }
+     
+@@ -159,7 +166,8 @@ public struct OverrideSelectionHistory: View {
+         return HistoricalOverrideDetailView(
+             override: override,
+             glucoseUnit: model.glucoseUnit,
+-            delegate: nil
++            delegate: nil,
++            autoBolusCarbsEnabled: autoBolusCarbsEnabled
+         ).navigationBarTitle(editorTitle)
+     }
+ }
+diff --git a/LoopKit/LoopKitUI/Views/OverrideViewCell.swift b/LoopKit/LoopKitUI/Views/OverrideViewCell.swift
+index a6f8f937..16730ddc 100644
+--- a/LoopKit/LoopKitUI/Views/OverrideViewCell.swift
++++ b/LoopKit/LoopKitUI/Views/OverrideViewCell.swift
+@@ -20,6 +20,7 @@ public struct OverrideViewCell: View {
+     var durationLabel: Text
+     var subtitleLabel: Text
+     var insulinNeedsScaleFactor: Double?
++    var autoBolusCarbsActive: Bool?
+     
+     public init(
+         symbol: Text,
+@@ -27,7 +28,8 @@ public struct OverrideViewCell: View {
+         targetRange: Text,
+         duration: Text,
+         subtitle: Text,
+-        insulinNeedsScaleFactor: Double?
++        insulinNeedsScaleFactor: Double?,
++        autoBolusCarbsActive: Bool?
+     ) {
+         self.symbolLabel = symbol
+         self.nameLabel = name
+@@ -35,6 +37,7 @@ public struct OverrideViewCell: View {
+         self.durationLabel = duration
+         self.subtitleLabel = subtitle
+         self.insulinNeedsScaleFactor = insulinNeedsScaleFactor
++        self.autoBolusCarbsActive = autoBolusCarbsActive
+     }
+ 
+     public var body: some View {
+@@ -44,9 +47,14 @@ public struct OverrideViewCell: View {
+             .frame(width: Self.symbolWidth) // for alignment
+             VStack(alignment: .leading, spacing: 3) {
+                 nameLabel
+-                targetRangeLabel
+-                .font(.caption)
+-                .foregroundColor(Color.gray)
++                HStack(spacing: 4) {
++                    if autoBolusCarbsActive != nil {
++                        autoBolusCarbsActiveIconSmall
++                    }
++                    targetRangeLabel
++                    .font(.caption)
++                    .foregroundColor(Color.gray)
++                }
+                 if self.insulinNeedsScaleFactor != nil {
+                     insulinNeedsBar
+                 }
+@@ -65,7 +73,7 @@ public struct OverrideViewCell: View {
+         }
+         .frame(minHeight: 53)
+     }
+-    
++        
+     private var insulinNeedsBar: some View {
+         GeometryReader { geo in
+             HStack {
+@@ -79,6 +87,21 @@ public struct OverrideViewCell: View {
+             }
+         }
+     }
++    
++    private var autoBolusCarbsActiveIconSmall: some View {
++        /*
++        // We used this implementation before but because the Preset page is with UIKit, it
++        // wasn't possible to have a ZStack. So for consistency, we use just 1 character
++        ZStack{
++            
++            if !autoBolusCarbsActive! {
++                Text("❌").font(.caption)
++            }
++        }*/
++        
++        Text(autoBolusCarbsActive! ? "🔶" : "❌").font(.caption)
++    }
++
+ 
+     var timer: some View {
+         Image(systemName: "timer")
+diff --git a/LoopKit/LoopKitUI/Views/SegmentedControlTableViewCell.swift b/LoopKit/LoopKitUI/Views/SegmentedControlTableViewCell.swift
+index 4b3718b2..f7fd9c1c 100644
+--- a/LoopKit/LoopKitUI/Views/SegmentedControlTableViewCell.swift
++++ b/LoopKit/LoopKitUI/Views/SegmentedControlTableViewCell.swift
+@@ -22,6 +22,7 @@ open class SegmentedControlTableViewCell: UITableViewCell {
+     }
+ 
+     private var select: (_ index: Int) -> Void = { _ in }
++    
+ 
+     public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+         super.init(style: .value1, reuseIdentifier: Self.className)
