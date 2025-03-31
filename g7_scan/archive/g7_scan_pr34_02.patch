@@ -1,0 +1,72 @@
+Submodule G7SensorKit 2be3eb2..88a0d7b:
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+index 198d5b3..e575e82 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+@@ -323,6 +323,11 @@ extension G7CGMManager: G7SensorDelegate {
+         }
+     }
+ 
++    public func sensor(_ sensor: G7Sensor, logComms comms: String) {
++        logDeviceCommunication("Sensor comms \(comms)", type: .receive)
++    }
++
++
+     public func sensor(_ sensor: G7Sensor, didError error: Error) {
+         logDeviceCommunication("Sensor error \(error)", type: .error)
+     }
+@@ -335,6 +340,11 @@ extension G7CGMManager: G7SensorDelegate {
+             return
+         }
+ 
++        if message.algorithmState.sensorFailed {
++            logDeviceCommunication("Detected failed sensor... scanning for new sensor.", type: .receive)
++            scanForNewSensor()
++        }
++
+         guard let activationDate = sensor.activationDate else {
+             logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
+             return
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
+index b1745a1..a224ee4 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
+@@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
+ 
+     func sensor(_ sensor: G7Sensor, didError error: Error)
+ 
++    func sensor(_ sensor: G7Sensor, logComms comms: String)
++
+     func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
+ 
+     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
+@@ -194,7 +196,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+         if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
+ 
+             let suspectedEndOfSession: Bool
+-            if pendingAuth && wasRemoteDisconnect {
++
++            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
++            {
++                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
+                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
+             } else {
+                 suspectedEndOfSession = false
+@@ -233,7 +238,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+ 
+         guard response.count > 0 else { return }
+ 
+-        log.debug("Received control response: %{public}@", response.hexadecimalString)
++        log.default("Received control response: %{public}@", response.hexadecimalString)
+ 
+         switch G7Opcode(rawValue: response[0]) {
+         case .glucoseTx?:
+@@ -252,7 +257,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+                 }
+             }
+         default:
+-            // We ignore all other known opcodes
++            self.delegate?.sensor(self, logComms: response.hexadecimalString)
+             break
+         }
+     }
