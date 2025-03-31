@@ -1,6 +1,100 @@
-Submodule G7SensorKit 2be3eb2..88a0d7b:
+Submodule G7SensorKit 2be3eb2..50970ff:
+diff --git a/G7SensorKit/G7SensorKit/AlgorithmError.swift b/G7SensorKit/G7SensorKit/AlgorithmError.swift
+index e46f2be..9d83482 100644
+--- a/G7SensorKit/G7SensorKit/AlgorithmError.swift
++++ b/G7SensorKit/G7SensorKit/AlgorithmError.swift
+@@ -37,12 +37,14 @@ extension AlgorithmState {
+                 return LocalizedString("Sensor is OK", comment: "The description of sensor algorithm state when sensor is ok.")
+             case .stopped:
+                 return LocalizedString("Sensor is stopped", comment: "The description of sensor algorithm state when sensor is stopped.")
+-            case .warmup, .questionMarks:
++            case .warmup, .temporarySensorIssue:
+                 return LocalizedString("Sensor is warming up", comment: "The description of sensor algorithm state when sensor is warming up.")
+             case .expired:
+                 return LocalizedString("Sensor expired", comment: "The description of sensor algorithm state when sensor is expired.")
+             case .sensorFailed:
+                 return LocalizedString("Sensor failed", comment: "The description of sensor algorithm state when sensor failed.")
++            default:
++                return "Sensor state: \(String(describing: state))"
+             }
+         case .unknown(let rawValue):
+             return String(format: LocalizedString("Sensor is in unknown state %1$d", comment: "The description of sensor algorithm state when raw value is unknown. (1: missing data details)"), rawValue)
+diff --git a/G7SensorKit/G7SensorKit/AlgorithmState.swift b/G7SensorKit/G7SensorKit/AlgorithmState.swift
+index 93e5c40..34642e7 100644
+--- a/G7SensorKit/G7SensorKit/AlgorithmState.swift
++++ b/G7SensorKit/G7SensorKit/AlgorithmState.swift
+@@ -15,8 +15,26 @@ public enum AlgorithmState: RawRepresentable {
+     public enum State: RawValue {
+         case stopped = 1
+         case warmup = 2
++        case excessNoise = 3
++        case firstOfTwoBGsNeeded = 4
++        case secondOfTwoBGsNeeded = 5
+         case ok = 6
+-        case questionMarks = 18
++        case needsCalibration = 7
++        case calibrationError1 = 8
++        case calibrationError2 = 9
++        case calibrationLinearityFitFailure = 10
++        case sensorFailedDuetoCountsAberration = 11
++        case sensorFailedDuetoResidualAberration = 12
++        case outOfCalibrationDueToOutlier = 13
++        case outlierCalibrationRequest = 14
++        case sessionExpired = 15
++        case sessionFailedDueToUnrecoverableError = 16
++        case sessionFailedDueToTransmitterError = 17
++        case temporarySensorIssue = 18
++        case sensorFailedDueToProgressiveSensorDecline = 19
++        case sensorFailedDueToHighCountsAberration = 20
++        case sensorFailedDueToLowCountsAberration = 21
++        case sensorFailedDueToRestart = 22
+         case expired = 24
+         case sensorFailed = 25
+     }
+@@ -48,7 +66,7 @@ public enum AlgorithmState: RawRepresentable {
+         }
+ 
+         switch state {
+-        case .sensorFailed:
++        case .sensorFailed, .sensorFailedDuetoCountsAberration, .sensorFailedDuetoResidualAberration, .sessionFailedDueToTransmitterError, .sessionFailedDueToUnrecoverableError, .sensorFailedDueToProgressiveSensorDecline, .sensorFailedDueToHighCountsAberration, .sensorFailedDueToLowCountsAberration, .sensorFailedDueToRestart:
+             return true
+         default:
+             return false
+@@ -68,13 +86,13 @@ public enum AlgorithmState: RawRepresentable {
+         }
+     }
+ 
+-    public var isInSensorError: Bool {
++    public var hasTemporaryError: Bool {
+         guard case .known(let state) = self else {
+             return false
+         }
+ 
+         switch state {
+-        case .questionMarks:
++        case .temporarySensorIssue:
+             return true
+         default:
+             return false
+@@ -88,14 +106,10 @@ public enum AlgorithmState: RawRepresentable {
+         }
+ 
+         switch state {
+-        case .stopped,
+-             .warmup,
+-             .questionMarks,
+-             .expired,
+-             .sensorFailed:
+-            return false
+         case .ok:
+             return true
++        default:
++            return false
+         }
+     }
+ }
 diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
-index 198d5b3..e575e82 100644
+index 198d5b3..cc045d6 100644
 --- a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
 +++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
 @@ -323,6 +323,11 @@ extension G7CGMManager: G7SensorDelegate {
@@ -15,7 +109,7 @@ index 198d5b3..e575e82 100644
      public func sensor(_ sensor: G7Sensor, didError error: Error) {
          logDeviceCommunication("Sensor error \(error)", type: .error)
      }
-@@ -335,6 +340,11 @@ extension G7CGMManager: G7SensorDelegate {
+@@ -335,6 +340,12 @@ extension G7CGMManager: G7SensorDelegate {
              return
          }
  
@@ -23,6 +117,7 @@ index 198d5b3..e575e82 100644
 +            logDeviceCommunication("Detected failed sensor... scanning for new sensor.", type: .receive)
 +            scanForNewSensor()
 +        }
++
 +
          guard let activationDate = sensor.activationDate else {
              logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
@@ -70,3 +165,16 @@ index b1745a1..a224ee4 100644
              break
          }
      }
+diff --git a/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift b/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
+index f3e0306..fb91acb 100644
+--- a/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
++++ b/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
+@@ -74,7 +74,7 @@ extension G7CGMManager: CGMManagerUI {
+                 state: .warning)
+         }
+ 
+-        if let latestReading = latestReading, latestReading.algorithmState.isInSensorError {
++        if let latestReading = latestReading, latestReading.algorithmState.hasTemporaryError {
+             return G7DeviceStatusHighlight(
+                 localizedMessage: LocalizedString("Sensor\nIssue", comment: "G7 Status highlight text for sensor error"),
+                 imageName: "exclamationmark.circle.fill",
