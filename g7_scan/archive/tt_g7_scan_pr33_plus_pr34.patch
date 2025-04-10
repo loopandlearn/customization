@@ -1,0 +1,372 @@
+Submodule G7SensorKit 2be3eb2..9fdb052:
+diff --git a/G7SensorKit/G7SensorKit/AlgorithmError.swift b/G7SensorKit/G7SensorKit/AlgorithmError.swift
+index e46f2be..9d83482 100644
+--- a/G7SensorKit/G7SensorKit/AlgorithmError.swift
++++ b/G7SensorKit/G7SensorKit/AlgorithmError.swift
+@@ -37,12 +37,14 @@ extension AlgorithmState {
+                 return LocalizedString("Sensor is OK", comment: "The description of sensor algorithm state when sensor is ok.")
+             case .stopped:
+                 return LocalizedString("Sensor is stopped", comment: "The description of sensor algorithm state when sensor is stopped.")
+-            case .warmup, .questionMarks:
++            case .warmup, .temporarySensorIssue:
+                 return LocalizedString("Sensor is warming up", comment: "The description of sensor algorithm state when sensor is warming up.")
+             case .expired:
+                 return LocalizedString("Sensor expired", comment: "The description of sensor algorithm state when sensor is expired.")
+             case .sensorFailed:
+                 return LocalizedString("Sensor failed", comment: "The description of sensor algorithm state when sensor failed.")
++            default:
++                return "Sensor state: \(String(describing: state))"
+             }
+         case .unknown(let rawValue):
+             return String(format: LocalizedString("Sensor is in unknown state %1$d", comment: "The description of sensor algorithm state when raw value is unknown. (1: missing data details)"), rawValue)
+diff --git a/G7SensorKit/G7SensorKit/AlgorithmState.swift b/G7SensorKit/G7SensorKit/AlgorithmState.swift
+index 93e5c40..1bce93f 100644
+--- a/G7SensorKit/G7SensorKit/AlgorithmState.swift
++++ b/G7SensorKit/G7SensorKit/AlgorithmState.swift
+@@ -15,10 +15,29 @@ public enum AlgorithmState: RawRepresentable {
+     public enum State: RawValue {
+         case stopped = 1
+         case warmup = 2
++        case excessNoise = 3
++        case firstOfTwoBGsNeeded = 4
++        case secondOfTwoBGsNeeded = 5
+         case ok = 6
+-        case questionMarks = 18
++        case needsCalibration = 7
++        case calibrationError1 = 8
++        case calibrationError2 = 9
++        case calibrationLinearityFitFailure = 10
++        case sensorFailedDuetoCountsAberration = 11
++        case sensorFailedDuetoResidualAberration = 12
++        case outOfCalibrationDueToOutlier = 13
++        case outlierCalibrationRequest = 14
++        case sessionExpired = 15
++        case sessionFailedDueToUnrecoverableError = 16
++        case sessionFailedDueToTransmitterError = 17
++        case temporarySensorIssue = 18
++        case sensorFailedDueToProgressiveSensorDecline = 19
++        case sensorFailedDueToHighCountsAberration = 20
++        case sensorFailedDueToLowCountsAberration = 21
++        case sensorFailedDueToRestart = 22
+         case expired = 24
+         case sensorFailed = 25
++        case sessionEnded = 26
+     }
+ 
+     case known(State)
+@@ -48,7 +67,7 @@ public enum AlgorithmState: RawRepresentable {
+         }
+ 
+         switch state {
+-        case .sensorFailed:
++        case .sensorFailed, .sensorFailedDuetoCountsAberration, .sensorFailedDuetoResidualAberration, .sessionFailedDueToTransmitterError, .sessionFailedDueToUnrecoverableError, .sensorFailedDueToProgressiveSensorDecline, .sensorFailedDueToHighCountsAberration, .sensorFailedDueToLowCountsAberration, .sensorFailedDueToRestart:
+             return true
+         default:
+             return false
+@@ -68,13 +87,13 @@ public enum AlgorithmState: RawRepresentable {
+         }
+     }
+ 
+-    public var isInSensorError: Bool {
++    public var hasTemporaryError: Bool {
+         guard case .known(let state) = self else {
+             return false
+         }
+ 
+         switch state {
+-        case .questionMarks:
++        case .temporarySensorIssue:
+             return true
+         default:
+             return false
+@@ -88,14 +107,10 @@ public enum AlgorithmState: RawRepresentable {
+         }
+ 
+         switch state {
+-        case .stopped,
+-             .warmup,
+-             .questionMarks,
+-             .expired,
+-             .sensorFailed:
+-            return false
+         case .ok:
+             return true
++        default:
++            return false
+         }
+     }
+ }
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
+index 62ab5fc..5d9561e 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
+@@ -101,6 +101,9 @@ class G7BluetoothManager: NSObject {
+             return activePeripheralManager?.peripheral
+         }
+     }
++    
++    /// Isolated to `managerQueue`
++    private var eventRegistrationActive : Bool = false
+ 
+     /// Isolated to `managerQueue`
+     private var managedPeripherals: [UUID:G7PeripheralManager] = [:]
+@@ -131,7 +134,7 @@ class G7BluetoothManager: NSObject {
+             self.centralManager = CBCentralManager(delegate: self, queue: managerQueue, options: [CBCentralManagerOptionRestoreIdentifierKey: "com.loudnate.CGMBLEKit"])
+         }
+     }
+-
++    
+     // MARK: - Actions
+ 
+     func scanForPeripheral() {
+@@ -177,8 +180,24 @@ class G7BluetoothManager: NSObject {
+             }
+         }
+     }
+-
+-    private func managerQueue_scanForPeripheral() {
++    
++    func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
++    
++        managerQueue.async {
++            guard self.eventRegistrationActive else {
++                self.centralManager.registerForConnectionEvents(options: nil)
++                return
++            }
++            
++            self.managerQueue_establishActivePeripheral()
++            
++            if !self.eventRegistrationActive {
++                self.centralManager.registerForConnectionEvents(options: nil)
++            }
++        }
++    }
++                
++    private func managerQueue_establishActivePeripheral() {
+         dispatchPrecondition(condition: .onQueue(managerQueue))
+ 
+         guard centralManager.state == .poweredOn else {
+@@ -187,29 +206,49 @@ class G7BluetoothManager: NSObject {
+ 
+         let currentState = activePeripheral?.state ?? .disconnected
+         guard currentState != .connected else {
++            eventRegistrationActive = false
+             return
+         }
+ 
+         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
+-            log.debug("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
++            log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
+             handleDiscoveredPeripheral(peripheral)
+         } else {
+             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
+                 SensorServiceUUID.advertisement.cbUUID,
+                 SensorServiceUUID.cgmService.cbUUID
+             ]) {
++                log.default("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
+                 handleDiscoveredPeripheral(peripheral)
+             }
+         }
++        
++        if activePeripheral != nil {
++            eventRegistrationActive = false
++        }
++    }
++
++    private func managerQueue_scanForPeripheral() {
++        dispatchPrecondition(condition: .onQueue(managerQueue))
++        
++        managerQueue_establishActivePeripheral()
+ 
+         if activePeripheral == nil {
+-            log.debug("Scanning for peripherals")
++            log.default("Scanning for peripherals")
+             centralManager.scanForPeripherals(withServices: [
+                     SensorServiceUUID.advertisement.cbUUID
+                 ],
+                 options: nil
+             )
+             delegate?.bluetoothManagerScanningStatusDidChange(self)
++            
++            if !eventRegistrationActive {
++                eventRegistrationActive = true
++                centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: [
++                    SensorServiceUUID.advertisement.cbUUID,
++                    SensorServiceUUID.cgmService.cbUUID
++                ]])
++            }
+         }
+     }
+ 
+@@ -221,9 +260,9 @@ class G7BluetoothManager: NSObject {
+      The sleep gives the transmitter time to shut down, but keeps the app running.
+ 
+      */
+-    fileprivate func scanAfterDelay() {
++    func scanAfterDelay() {
+         DispatchQueue.global(qos: .utility).async {
+-            Thread.sleep(forTimeInterval: 2)
++            Thread.sleep(forTimeInterval: 5)
+ 
+             self.scanForPeripheral()
+         }
+@@ -257,7 +296,7 @@ class G7BluetoothManager: NSObject {
+         if let delegate = delegate {
+             switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
+             case .makeActive:
+-                log.debug("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
++                log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
+ 
+                 if let peripheralManager = activePeripheralManager {
+                     peripheralManager.peripheral = peripheral
+@@ -273,7 +312,7 @@ class G7BluetoothManager: NSObject {
+                 self.centralManager.connect(peripheral)
+ 
+             case .connect:
+-                log.debug("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
++                log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
+                 self.centralManager.connect(peripheral)
+                 let peripheralManager = G7PeripheralManager(
+                     peripheral: peripheral,
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+index 198d5b3..6b2322d 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+@@ -237,14 +237,14 @@ public class G7CGMManager: CGMManager {
+         return nil
+     }
+ 
+-    public func scanForNewSensor() {
++    public func scanForNewSensor(scanAfterDelay: Bool = false) {
+         logDeviceCommunication("Forgetting existing sensor and starting scan for new sensor.", type: .connection)
+ 
+         mutateState { state in
+             state.sensorID = nil
+             state.activatedAt = nil
+         }
+-        sensor.scanForNewSensor()
++        sensor.scanForNewSensor(scanAfterDelay: scanAfterDelay)
+     }
+ 
+     private var device: HKDevice? {
+@@ -319,10 +319,15 @@ extension G7CGMManager: G7SensorDelegate {
+     public func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {
+         logDeviceCommunication("Sensor disconnected: suspectedEndOfSession=\(suspectedEndOfSession)", type: .connection)
+         if suspectedEndOfSession {
+-            scanForNewSensor()
++            scanForNewSensor(scanAfterDelay: true)
+         }
+     }
+ 
++    public func sensor(_ sensor: G7Sensor, logComms comms: String) {
++        logDeviceCommunication("Sensor comms \(comms)", type: .receive)
++    }
++
++
+     public func sensor(_ sensor: G7Sensor, didError error: Error) {
+         logDeviceCommunication("Sensor error \(error)", type: .error)
+     }
+@@ -335,6 +340,17 @@ extension G7CGMManager: G7SensorDelegate {
+             return
+         }
+ 
++        if message.algorithmState.sensorFailed {
++            logDeviceCommunication("Detected failed sensor... scanning for new sensor.", type: .receive)
++            scanForNewSensor()
++        }
++
++        if message.algorithmState == .known(.sessionEnded) {
++            logDeviceCommunication("Detected session ended... scanning for new sensor.", type: .receive)
++            scanForNewSensor()
++        }
++
++
+         guard let activationDate = sensor.activationDate else {
+             logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
+             return
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
+index b1745a1..4d38c23 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
+@@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
+ 
+     func sensor(_ sensor: G7Sensor, didError error: Error)
+ 
++    func sensor(_ sensor: G7Sensor, logComms comms: String)
++
+     func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
+ 
+     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
+@@ -99,11 +101,15 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+         bluetoothManager.delegate = self
+     }
+ 
+-    public func scanForNewSensor() {
++    public func scanForNewSensor(scanAfterDelay: Bool = false) {
+         self.sensorID = nil
+         bluetoothManager.disconnect()
+         bluetoothManager.forgetPeripheral()
+-        bluetoothManager.scanForPeripheral()
++        if scanAfterDelay {
++            bluetoothManager.scanAfterDelay()
++        } else {
++            bluetoothManager.scanForPeripheral()
++        }
+     }
+ 
+     public func resumeScanning() {
+@@ -194,7 +200,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+         if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
+ 
+             let suspectedEndOfSession: Bool
+-            if pendingAuth && wasRemoteDisconnect {
++
++            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
++            {
++                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
+                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
+             } else {
+                 suspectedEndOfSession = false
+@@ -233,7 +242,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+ 
+         guard response.count > 0 else { return }
+ 
+-        log.debug("Received control response: %{public}@", response.hexadecimalString)
++        log.default("Received control response: %{public}@", response.hexadecimalString)
+ 
+         switch G7Opcode(rawValue: response[0]) {
+         case .glucoseTx?:
+@@ -252,7 +261,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+                 }
+             }
+         default:
+-            // We ignore all other known opcodes
++            self.delegate?.sensor(self, logComms: response.hexadecimalString)
+             break
+         }
+     }
+diff --git a/G7SensorKit/G7SensorKit/Messages/G7Opcode.swift b/G7SensorKit/G7SensorKit/Messages/G7Opcode.swift
+index 3f4272f..5198462 100644
+--- a/G7SensorKit/G7SensorKit/Messages/G7Opcode.swift
++++ b/G7SensorKit/G7SensorKit/Messages/G7Opcode.swift
+@@ -10,6 +10,7 @@ import Foundation
+ 
+ enum G7Opcode: UInt8 {
+     case authChallengeRx = 0x05
++    case sessionStopTx = 0x28
+     case glucoseTx = 0x4e
+     case backfillFinished = 0x59
+ }
+diff --git a/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift b/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
+index f3e0306..fb91acb 100644
+--- a/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
++++ b/G7SensorKit/G7SensorKitUI/G7CGMManager/G7CGMManager+UI.swift
+@@ -74,7 +74,7 @@ extension G7CGMManager: CGMManagerUI {
+                 state: .warning)
+         }
+ 
+-        if let latestReading = latestReading, latestReading.algorithmState.isInSensorError {
++        if let latestReading = latestReading, latestReading.algorithmState.hasTemporaryError {
+             return G7DeviceStatusHighlight(
+                 localizedMessage: LocalizedString("Sensor\nIssue", comment: "G7 Status highlight text for sensor error"),
+                 imageName: "exclamationmark.circle.fill",
