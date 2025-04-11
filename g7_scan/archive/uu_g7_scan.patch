@@ -1,4 +1,4 @@
-Submodule G7SensorKit 2be3eb2..b0d424d:
+Submodule G7SensorKit 2be3eb2..59bad50:
 diff --git a/G7SensorKit/G7SensorKit/AlgorithmError.swift b/G7SensorKit/G7SensorKit/AlgorithmError.swift
 index e46f2be..9d83482 100644
 --- a/G7SensorKit/G7SensorKit/AlgorithmError.swift
@@ -96,111 +96,8 @@ index 93e5c40..1bce93f 100644
          }
      }
  }
-diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
-index 62ab5fc..156bb80 100644
---- a/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
-+++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7BluetoothManager.swift
-@@ -156,7 +156,7 @@ class G7BluetoothManager: NSObject {
- 
-     private func managerQueue_stopScanning() {
-         if centralManager.isScanning {
--            log.debug("Stopping scan")
-+            log.default("Stopping scan")
-             centralManager.stopScan()
-             delegate?.bluetoothManagerScanningStatusDidChange(self)
-         }
-@@ -167,7 +167,7 @@ class G7BluetoothManager: NSObject {
- 
-         managerQueue.sync {
-             if centralManager.isScanning {
--                log.debug("Stopping scan on disconnect")
-+                log.default("Stopping scan on disconnect")
-                 centralManager.stopScan()
-                 delegate?.bluetoothManagerScanningStatusDidChange(self)
-             }
-@@ -178,6 +178,15 @@ class G7BluetoothManager: NSObject {
-         }
-     }
- 
-+    func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
-+        managerQueue.async {
-+            if self.activePeripheralIdentifier == nil {
-+                self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
-+                self.handleDiscoveredPeripheral(peripheral)
-+            }
-+        }
-+    }
-+
-     private func managerQueue_scanForPeripheral() {
-         dispatchPrecondition(condition: .onQueue(managerQueue))
- 
-@@ -191,19 +200,26 @@ class G7BluetoothManager: NSObject {
-         }
- 
-         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
--            log.debug("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
-+            log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
-             handleDiscoveredPeripheral(peripheral)
-         } else {
-             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
-                 SensorServiceUUID.advertisement.cbUUID,
-                 SensorServiceUUID.cgmService.cbUUID
-             ]) {
-+                log.default("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
-                 handleDiscoveredPeripheral(peripheral)
-             }
-         }
- 
-         if activePeripheral == nil {
--            log.debug("Scanning for peripherals")
-+            log.default("Scanning for peripherals and listening for connection events")
-+
-+            centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: [
-+                SensorServiceUUID.advertisement.cbUUID,
-+                SensorServiceUUID.cgmService.cbUUID
-+            ]])
-+
-             centralManager.scanForPeripherals(withServices: [
-                     SensorServiceUUID.advertisement.cbUUID
-                 ],
-@@ -257,7 +273,7 @@ class G7BluetoothManager: NSObject {
-         if let delegate = delegate {
-             switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
-             case .makeActive:
--                log.debug("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
-+                log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
- 
-                 if let peripheralManager = activePeripheralManager {
-                     peripheralManager.peripheral = peripheral
-@@ -273,7 +289,7 @@ class G7BluetoothManager: NSObject {
-                 self.centralManager.connect(peripheral)
- 
-             case .connect:
--                log.debug("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
-+                log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
-                 self.centralManager.connect(peripheral)
-                 let peripheralManager = G7PeripheralManager(
-                     peripheral: peripheral,
-@@ -311,7 +327,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
-             fallthrough
-         @unknown default:
-             if central.isScanning {
--                log.debug("Stopping scan on central not powered on")
-+                log.default("Stopping scan on central not powered on")
-                 central.stopScan()
-                 delegate?.bluetoothManagerScanningStatusDidChange(self)
-             }
-@@ -332,7 +348,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
-     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-         dispatchPrecondition(condition: .onQueue(managerQueue))
- 
--        log.info("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
-+        log.default("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
- 
-         managerQueue.async {
-             self.handleDiscoveredPeripheral(peripheral)
 diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
-index 198d5b3..ccddaeb 100644
+index 198d5b3..e1793d4 100644
 --- a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
 +++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
 @@ -323,6 +323,11 @@ extension G7CGMManager: G7SensorDelegate {
@@ -215,7 +112,7 @@ index 198d5b3..ccddaeb 100644
      public func sensor(_ sensor: G7Sensor, didError error: Error) {
          logDeviceCommunication("Sensor error \(error)", type: .error)
      }
-@@ -335,6 +340,17 @@ extension G7CGMManager: G7SensorDelegate {
+@@ -335,6 +340,16 @@ extension G7CGMManager: G7SensorDelegate {
              return
          }
  
@@ -229,12 +126,11 @@ index 198d5b3..ccddaeb 100644
 +            scanForNewSensor()
 +        }
 +
-+
          guard let activationDate = sensor.activationDate else {
              logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
              return
 diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
-index b1745a1..ea215d1 100644
+index b1745a1..a224ee4 100644
 --- a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
 +++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
 @@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
@@ -246,18 +142,19 @@ index b1745a1..ea215d1 100644
      func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
  
      func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
-@@ -194,7 +196,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -194,7 +196,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
          if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
  
              let suspectedEndOfSession: Bool
 -            if pendingAuth && wasRemoteDisconnect {
 +
-+            self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
-+            if pendingAuth, wasRemoteDisconnect {
++            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
++            {
++                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
                  suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
              } else {
                  suspectedEndOfSession = false
-@@ -233,7 +237,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -233,7 +238,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
  
          guard response.count > 0 else { return }
  
@@ -266,7 +163,7 @@ index b1745a1..ea215d1 100644
  
          switch G7Opcode(rawValue: response[0]) {
          case .glucoseTx?:
-@@ -252,7 +256,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -252,7 +257,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                  }
              }
          default:

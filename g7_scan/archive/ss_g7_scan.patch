@@ -1,4 +1,4 @@
-Submodule G7SensorKit 2be3eb2..b0d424d:
+Submodule G7SensorKit 2be3eb2..8ae21df:
 diff --git a/G7SensorKit/G7SensorKit/AlgorithmError.swift b/G7SensorKit/G7SensorKit/AlgorithmError.swift
 index e46f2be..9d83482 100644
 --- a/G7SensorKit/G7SensorKit/AlgorithmError.swift
@@ -234,7 +234,7 @@ index 198d5b3..ccddaeb 100644
              logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
              return
 diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
-index b1745a1..ea215d1 100644
+index b1745a1..a224ee4 100644
 --- a/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
 +++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7Sensor.swift
 @@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
@@ -246,18 +246,19 @@ index b1745a1..ea215d1 100644
      func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
  
      func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
-@@ -194,7 +196,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -194,7 +196,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
          if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
  
              let suspectedEndOfSession: Bool
 -            if pendingAuth && wasRemoteDisconnect {
 +
-+            self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
-+            if pendingAuth, wasRemoteDisconnect {
++            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
++            {
++                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
                  suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
              } else {
                  suspectedEndOfSession = false
-@@ -233,7 +237,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -233,7 +238,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
  
          guard response.count > 0 else { return }
  
@@ -266,7 +267,7 @@ index b1745a1..ea215d1 100644
  
          switch G7Opcode(rawValue: response[0]) {
          case .glucoseTx?:
-@@ -252,7 +256,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
+@@ -252,7 +257,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                  }
              }
          default:
