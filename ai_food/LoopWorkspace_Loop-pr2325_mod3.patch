@@ -15061,7 +15061,7 @@ diff --git a/Loop/Loop/Info.plist b/Loop/Loop/Info.plist
 index ddad5426..317bbf2c 100644
 --- a/Loop/Loop/Info.plist
 +++ b/Loop/Loop/Info.plist
-@@ -62,15 +62,19 @@
+@@ -62,12 +62,16 @@
  	<key>NSBluetoothPeripheralUsageDescription</key>
  	<string>The app needs to use Bluetooth to send and receive data from your diabetes devices.</string>
  	<key>NSCameraUsageDescription</key>
@@ -15075,13 +15075,10 @@ index ddad5426..317bbf2c 100644
  	<string>Carbohydrate meal data entered in the app and on the watch is stored in the Health database. Glucose data retrieved from the CGM is stored securely in HealthKit.</string>
 +	<key>NSMicrophoneUsageDescription</key>
 +	<string>The app uses the microphone for voice search to find foods by speaking their names.</string>
- 	<key>NSSiriUsageDescription</key>
- 	<string>Loop uses Siri to allow you to enact presets with your voice.</string>
 +	<key>NSSpeechRecognitionUsageDescription</key>
 +	<string>The app uses speech recognition to convert spoken food names into text for search.</string>
- 	<key>NSUserActivityTypes</key>
- 	<array>
- 		<string>EnableOverridePresetIntent</string>
+ 	<key>NSSiriUsageDescription</key>
+ 	<string>Loop uses Siri to allow you to enact presets with your voice.</string>
 diff --git a/Loop/Loop/Managers/OpenFoodFactsService.swift b/Loop/Loop/Managers/OpenFoodFactsService.swift
 new file mode 100644
 index 00000000..c8f2999b
@@ -26058,31 +26055,23 @@ diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.s
 index c3ec98b8..ef43d7b0 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -51,6 +51,7 @@ public struct SettingsView: View {
+@@ -51,3 +51,4 @@ public struct SettingsView: View {
              
++            case aiSettings
              case favoriteFoods
              case therapySettings
-+            case aiSettings
-         }
-     }
-     
-@@ -84,6 +85,7 @@ public struct SettingsView: View {
+@@ -84,4 +85,5 @@ public struct SettingsView: View {
                      deviceSettingsSection
                      if FeatureFlags.allowExperimentalFeatures {
                          favoriteFoodsSection
 +                        aiSettingsSection
                      }
-                     if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
-                         deleteDataSection
-@@ -157,6 +159,8 @@ public struct SettingsView: View {
+@@ -157,3 +159,5 @@ public struct SettingsView: View {
                      .environment(\.insulinTintColor, self.insulinTintColor)
-                 case .favoriteFoods:
-                     FavoriteFoodsView()
 +                case .aiSettings:
 +                    AISettingsView()
-                 }
-             }
-         }
+                 case .favoriteFoods:
+                     FavoriteFoodsView()
 @@ -374,6 +378,16 @@ extension SettingsView {
          }
      }
@@ -26097,9 +26086,9 @@ index c3ec98b8..ef43d7b0 100644
 +        }
 +    }
 +    
-     private var cgmChoices: [ActionSheet.Button] {
-         var result = viewModel.cgmManagerSettingsViewModel.availableDevices
-             .sorted(by: {$0.localizedTitle < $1.localizedTitle})
+     private var favoriteFoodsSection: some View {
+         Section {
+             LargeButton(action: { sheet = .favoriteFoods },
 diff --git a/Loop/Loop/Views/VoiceSearchView.swift b/Loop/Loop/Views/VoiceSearchView.swift
 new file mode 100644
 index 00000000..7d9271d0
