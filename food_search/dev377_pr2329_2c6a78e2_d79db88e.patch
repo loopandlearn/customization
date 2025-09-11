@@ -27101,24 +27101,19 @@ index 435f11cc..f4097a9f 100644
 +            case aiSettings
              case favoriteFoods
              case therapySettings
-@@ -84,6 +85,7 @@ public struct SettingsView: View {
+@@ -84,4 +85,5 @@ public struct SettingsView: View {
                      deviceSettingsSection
                      if FeatureFlags.allowExperimentalFeatures {
                          favoriteFoodsSection
 +                        aiSettingsSection
                      }
-                     if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
-                         deleteDataSection
 @@ -157,3 +159,5 @@ public struct SettingsView: View {
                      .environment(\.insulinTintColor, self.insulinTintColor)
 +                case .aiSettings:
 +                    AISettingsView()
                  case .favoriteFoods:
                      FavoriteFoodsView()
-@@ -374,6 +378,19 @@ extension SettingsView {
-         }
-     }
-     
+@@ -374,3 +378,16 @@ extension SettingsView {
 +    private var aiSettingsSection: some View {
 +        Section {
 +            LargeButton(action: { sheet = .aiSettings },
