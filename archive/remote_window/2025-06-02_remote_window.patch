@@ -1,5 +1,6 @@
+Submodule Loop e45f137..87cce26:
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index e928c5e2..f9f4b763 100644
+index 2751f18f..81c11b1c 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
 @@ -818,13 +818,14 @@ extension DeviceDataManager {
@@ -124,10 +125,10 @@ index e928c5e2..f9f4b763 100644
  
  // MARK: - Critical Event Log Export
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index c9aef285..ff60c424 100644
+index 2319f4ec..737b9a9a 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -2497,7 +2497,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2478,7 +2478,7 @@ extension LoopDataManager: ServicesManagerDelegate {
      
      //Overrides
      
@@ -136,7 +137,7 @@ index c9aef285..ff60c424 100644
          
          guard let preset = settings.overridePresets.first(where: { $0.name == name }) else {
              throw EnactOverrideError.unknownPreset(name)
-@@ -2510,11 +2510,27 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2491,11 +2491,27 @@ extension LoopDataManager: ServicesManagerDelegate {
          }
          
          await enactOverride(remoteOverride)
@@ -165,7 +166,7 @@ index c9aef285..ff60c424 100644
      }
      
      func enactOverride(_ override: TemporaryScheduleOverride?) async {
-@@ -2535,7 +2551,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2516,7 +2532,7 @@ extension LoopDataManager: ServicesManagerDelegate {
      
      //Carb Entry
      
@@ -174,7 +175,7 @@ index c9aef285..ff60c424 100644
          
          let absorptionTime = absorptionTime ?? carbStore.defaultAbsorptionTimes.medium
          if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
-@@ -2550,6 +2566,19 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2531,6 +2547,19 @@ extension LoopDataManager: ServicesManagerDelegate {
              throw CarbActionError.exceedsMaxCarbs
          }
          
@@ -194,7 +195,7 @@ index c9aef285..ff60c424 100644
          if let startDate = startDate {
              let maxStartDate = Date().addingTimeInterval(LoopConstants.maxCarbEntryFutureTime)
              let minStartDate = Date().addingTimeInterval(LoopConstants.maxCarbEntryPastTime)
-@@ -2561,7 +2590,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2542,7 +2571,7 @@ extension LoopDataManager: ServicesManagerDelegate {
          let quantity = HKQuantity(unit: .gram(), doubleValue: amountInGrams)
          let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate ?? Date(), foodType: foodType, absorptionTime: absorptionTime)
          
@@ -203,7 +204,7 @@ index c9aef285..ff60c424 100644
      }
      
      enum CarbActionError: LocalizedError {
-@@ -2570,9 +2599,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2551,9 +2580,10 @@ extension LoopDataManager: ServicesManagerDelegate {
          case invalidStartDate(Date)
          case exceedsMaxCarbs
          case invalidCarbs
@@ -215,7 +216,7 @@ index c9aef285..ff60c424 100644
              case .exceedsMaxCarbs:
                  return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
              case .invalidCarbs:
-@@ -2583,6 +2613,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2564,6 +2594,10 @@ extension LoopDataManager: ServicesManagerDelegate {
              case .invalidStartDate(let startDate):
                  let startDateFormatted = Self.dateFormatter.string(from: startDate)
                  return String(format: NSLocalizedString("Start time is out of range: %@", comment: "Carb error description: invalid start time is out of range."), startDateFormatted)
@@ -226,7 +227,7 @@ index c9aef285..ff60c424 100644
              }
          }
          
-@@ -2600,7 +2634,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -2581,7 +2615,7 @@ extension LoopDataManager: ServicesManagerDelegate {
      }
      
      //Can't add this concurrency wrapper method to LoopKit due to the minimum iOS version
@@ -405,11 +406,12 @@ index a86f20e0..a4432efc 100644
      
      func getGlucoseSamples(start: Date?, end: Date?, completion: @escaping (_ samples: Swift.Result<[StoredGlucoseSample], Error>) -> Void)
  
+Submodule LoopKit a03be57..5fb5cb2:
 diff --git a/LoopKit/LoopKit/InsulinKit/DoseStore.swift b/LoopKit/LoopKit/InsulinKit/DoseStore.swift
-index 712f9048..be7c17dd 100644
+index 5efe99ff..9381d75b 100644
 --- a/LoopKit/LoopKit/InsulinKit/DoseStore.swift
 +++ b/LoopKit/LoopKit/InsulinKit/DoseStore.swift
-@@ -1274,8 +1274,18 @@ extension DoseStore {
+@@ -1268,8 +1268,18 @@ extension DoseStore {
      public func getDoses(start: Date? = nil, end: Date? = nil) async throws -> [DoseEntry] {
          return try await insulinDeliveryStore.getDoses(start: start, end: end)
      }
@@ -447,14 +449,16 @@ index 7fdc53ad..e4279746 100644
 +    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws -> StoredCarbEntry
 +    func deliverRemoteBolus(amountInUnits: Double, userCreatedDate: Date) async throws -> DoseEntry
  }
+Submodule NightscoutService d839b66..676e4f0:
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
-index 4a85888..fa35651 100644
+index 4a85888..fd9290c 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
-@@ -117,25 +117,27 @@ extension NightscoutClient {
+@@ -116,15 +116,13 @@ extension NightscoutClient {
+ }
  
  extension NightscoutClient {
- 
+-
 -    func createDoses(_ data: [DoseEntry], usingObjectIdCache objectIdCache: ObjectIdCache, completion: @escaping (Result<[String], Error>) -> Void) {
 -        guard !data.isEmpty else {
 -            completion(.success([]))
@@ -463,6 +467,7 @@ index 4a85888..fa35651 100644
 -
 -        let source = "loop://\(UIDevice.current.name)"
 -        
++    
 +    func createDoses(
 +        _ data: [DoseEntry],
 +        sourceMessage: (DoseEntry) -> String,
@@ -471,37 +476,33 @@ index 4a85888..fa35651 100644
 +    ) {
          let treatments = data.compactMap { (dose) -> NightscoutTreatment? in
              var objectId: String? = nil
--            
-+
-             if let syncIdentifier = dose.syncIdentifier {
+             
+@@ -132,9 +130,13 @@ extension NightscoutClient {
                  objectId = objectIdCache.findObjectIdBySyncIdentifier(syncIdentifier)
              }
--            
+             
 -            return dose.treatment(enteredBy: source, withObjectId: objectId)
-+
 +            return dose.treatment(enteredBy: sourceMessage(dose), withObjectId: objectId)
          }
--        
--        
-+
+         
 +        guard !treatments.isEmpty else {
 +            completion(.success([]))
 +            return
 +        }
-+
+         
          self.upload(treatments) { (result) in
              switch result {
-             case .failure(let error):
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index 4626630..c7b86e9 100644
+index 2d9b5d3..cbc127b 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-@@ -65,10 +65,12 @@ public final class NightscoutService: Service {
+@@ -64,11 +64,13 @@ public final class NightscoutService: Service {
+     private let commandSourceV1: RemoteCommandSourceV1
  
      private let log = OSLog(category: "NightscoutService")
- 
++    
 +    private let notificationExpirationInMinutes = 15.0
-+
+ 
      public init() {
          self.isOnboarded = false
          self.lockedObjectIdCache = Locked(ObjectIdCache())
@@ -510,34 +511,22 @@ index 4626630..c7b86e9 100644
          self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
          self.commandSourceV1.delegate = self
      }
-@@ -83,11 +85,11 @@ public final class NightscoutService: Service {
-         } else {
-             self.lockedObjectIdCache = Locked(ObjectIdCache())
-         }
--        
--        self.otpManager = OTPManager(secretStore: KeychainManager())
-+
-+        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
-         self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
-         self.commandSourceV1.delegate = self
--        
-+
-         restoreCredentials()
+@@ -236,14 +238,37 @@ extension NightscoutService: RemoteDataService {
      }
  
-@@ -238,12 +240,35 @@ extension NightscoutService: RemoteDataService {
      public var doseDataLimit: Int? { return 1000 }
- 
+-
++    
      public func uploadDoseData(created: [DoseEntry], deleted: [DoseEntry], completion: @escaping (_ result: Result<Bool, Error>) -> Void) {
 +        Task {
 +            let notificationHistory = await notificationHistory()
 +            uploadDoseData(created: created, deleted: deleted, notificationHistory: notificationHistory, completion: completion)
-+
++            
 +            // Upload pending stored notifications
 +            await uploadPendingNotifications()
 +        }
 +    }
-+
++    
 +    func uploadPendingNotifications() async {
 +        await commandSourceV1.uploadPendingNotifications()
 +    }
@@ -547,8 +536,9 @@ index 4626630..c7b86e9 100644
              completion(.success(true))
              return
          }
- 
+-
 -        uploader.createDoses(created, usingObjectIdCache: self.objectIdCache) { (result) in
++        
 +        let deviceName = UIDevice.current.name
 +        let sourceMessage: (DoseEntry) -> String = { (dose) -> String in
 +            if notificationHistory.contains(where: { $0.containsDose(dose) }) {
@@ -557,12 +547,21 @@ index 4626630..c7b86e9 100644
 +                return "loop://\(deviceName)"
 +            }
 +        }
-+
++        
 +        uploader.createDoses(created, sourceMessage: sourceMessage, usingObjectIdCache: objectIdCache) { (result) in
              switch (result) {
              case .failure(let error):
                  completion(.failure(error))
-@@ -399,10 +424,34 @@ extension NightscoutService: RemoteDataService {
+@@ -256,7 +281,7 @@ extension NightscoutService: RemoteDataService {
+                     }
+                 }
+                 self.stateDelegate?.pluginDidUpdateState(self)
+-
++                
+                 uploader.deleteDoses(deleted.filter { !$0.isMutable }, usingObjectIdCache: self.objectIdCache) { result in
+                     switch result {
+                     case .failure(let error):
+@@ -399,8 +424,32 @@ extension NightscoutService: RemoteDataService {
  
      
      public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
@@ -577,121 +576,61 @@ index 4626630..c7b86e9 100644
 +            let expirationDate = sentDate.addingTimeInterval(60 * notificationExpirationInMinutes)
 +            notification["expiration"] = dateFormatter.string(from: expirationDate) as AnyObject
 +        }
-+
++        
          let commandSource = try commandSource(notification: notification)
 -        await commandSource.remoteNotificationWasReceived(notification)
 +        await commandSource.remoteNotificationWasReceived(notification, serviceDelegate: serviceDelegate)
-     }
--    
-+
++    }
++    
 +    public func notificationHistory() async -> [StoredRemoteNotification] {
 +        return await commandSourceV1.notificationHistory()
 +    }
-+
++    
 +    public func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]> {
 +        return await commandSourceV1.notificationPublisher()
 +    }
-+
++    
 +    public func deleteNotificationHistory() {
 +        commandSourceV1.deleteNotificationHistory()
-+    }
-+
-     private func commandSource(notification: [String: AnyObject]) throws -> RemoteCommandSource {
-         return commandSourceV1
      }
-@@ -410,103 +459,29 @@ extension NightscoutService: RemoteDataService {
+     
+     private func commandSource(notification: [String: AnyObject]) throws -> RemoteCommandSource {
+@@ -410,31 +459,7 @@ extension NightscoutService: RemoteDataService {
  }
  
  extension NightscoutService: RemoteCommandSourceV1Delegate {
 -    
--    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action, remoteNotification: RemoteNotification) async throws {
+-    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action) async throws {
 -        
--        let returnInfo = remoteNotification.getReturnNotificationInfo()
--        if returnInfo == nil {
--            os_log("No return notification info available, response will not be sent", log: .default, type: .info)
--        } else {
--            os_log("Return notification info available, will send response after command processing", log: .default, type: .info)
--        }
--        
--        var commandType: RemoteNotificationResponseManager.CommandType = .bolus // Default, will be set in switch
--        var success = false
--        var message = ""
--        
--        do {
--            switch action {
--            case .temporaryScheduleOverride(let overrideCommand):
--                commandType = .override
--                try await self.serviceDelegate?.enactRemoteOverride(
--                    name: overrideCommand.name,
--                    durationTime: overrideCommand.durationTime,
--                    remoteAddress: overrideCommand.remoteAddress
--                )
--                success = true
--                message = "Override '\(overrideCommand.name)' enacted successfully"
--                
--            case .cancelTemporaryOverride:
--                commandType = .cancelOverride
--                try await self.serviceDelegate?.cancelRemoteOverride()
--                success = true
--                message = "Override cancelled successfully"
--                
--            case .bolusEntry(let bolusCommand):
--                commandType = .bolus
--                try await self.serviceDelegate?.deliverRemoteBolus(amountInUnits: bolusCommand.amountInUnits)
--                success = true
--                message = String(format: "Bolus of %.2f units delivered successfully", bolusCommand.amountInUnits)
--                
--            case .carbsEntry(let carbCommand):
--                commandType = .carbs
--                try await self.serviceDelegate?.deliverRemoteCarbs(
--                    amountInGrams: carbCommand.amountInGrams,
--                    absorptionTime: carbCommand.absorptionTime,
--                    foodType: carbCommand.foodType,
--                    startDate: carbCommand.startDate
--                )
--                success = true
--                message = String(format: "Carbs entry of %.1f g delivered successfully", carbCommand.amountInGrams)
--            }
--        } catch {
--            message = "Command failed: \(error.localizedDescription)"
--            // Send failure response before rethrowing
--            if let returnInfo = returnInfo {
--                await RemoteNotificationResponseManager.shared.sendResponseNotification(
--                    to: returnInfo,
--                    commandType: commandType,
--                    success: false,
--                    message: message
--                )
--            }
--            throw error
--        }
--        
--        // Send success response
--        if let returnInfo = returnInfo {
--            await RemoteNotificationResponseManager.shared.sendResponseNotification(
--                to: returnInfo,
--                commandType: commandType,
--                success: success,
--                message: message
+-        switch action {
+-        case .temporaryScheduleOverride(let overrideCommand):
+-            try await self.serviceDelegate?.enactRemoteOverride(
+-                name: overrideCommand.name,
+-                durationTime: overrideCommand.durationTime,
+-                remoteAddress: overrideCommand.remoteAddress
+-            )
+-        case .cancelTemporaryOverride:
+-            try await self.serviceDelegate?.cancelRemoteOverride()
+-        case .bolusEntry(let bolusCommand):
+-            try await self.serviceDelegate?.deliverRemoteBolus(amountInUnits: bolusCommand.amountInUnits)
+-        case .carbsEntry(let carbCommand):
+-            try await self.serviceDelegate?.deliverRemoteCarbs(
+-                amountInGrams: carbCommand.amountInGrams,
+-                absorptionTime: carbCommand.absorptionTime,
+-                foodType: carbCommand.foodType,
+-                startDate: carbCommand.startDate
 -            )
 -        }
 -    }
 -    
 -    func commandSourceV1(_: RemoteCommandSourceV1, uploadError error: Error, notification: [String: AnyObject]) async throws {
--        
 +    func commandSourceV1(_: RemoteCommandSourceV1, uploadError errorMessage: String, receivedDate: Date, notification: [String: AnyObject]) async throws {
-+
+         
          guard let uploader = self.uploader else {throw NightscoutServiceError.missingCredentials}
          var commandDescription = "Loop Remote Action Error"
-         if let remoteNotification = try? notification.toRemoteNotification() {
-             commandDescription = remoteNotification.toRemoteAction().description
-         }
--        
-+
-         let notificationJSON = try JSONSerialization.data(withJSONObject: notification)
+@@ -446,12 +471,12 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
          let notificationJSONString = String(data: notificationJSON, encoding: .utf8) ?? ""
--        
-+
+         
          let noteBody = """
 -        \(error.localizedDescription)
 +        \(errorMessage)
@@ -704,24 +643,17 @@ index 4626630..c7b86e9 100644
              enteredBy: commandDescription,
              notes: noteBody,
              eventType: .note
-         )
--        
-+
-         return try await withCheckedThrowingContinuation { continuation in
-             uploader.upload([treatment], completionHandler: { result in
-                 switch result {
 diff --git a/NightscoutService/NightscoutServiceKit/OTPManager.swift b/NightscoutService/NightscoutServiceKit/OTPManager.swift
-index 3d51b72..7a572d3 100644
+index 3d51b72..07eeb07 100644
 --- a/NightscoutService/NightscoutServiceKit/OTPManager.swift
 +++ b/NightscoutService/NightscoutServiceKit/OTPManager.swift
-@@ -77,8 +77,19 @@ public class OTPManager {
+@@ -77,7 +77,18 @@ public class OTPManager {
      let maxOTPsToAccept: Int
      
      public static var defaultTokenPeriod: TimeInterval = 30
 -    public static var defaultMaxOTPsToAccept = 2
--    
 +    public static var defaultMaxOTPsToAccept = 30
-+
++    
 +    public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, maxMinutesValid: Double) {
 +        self.secretStore = secretStore
 +        self.nowDateSource = nowDateSource
@@ -732,42 +664,36 @@ index 3d51b72..7a572d3 100644
 +            resetSecretKey()
 +        }
 +    }
-+
+     
      public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, tokenPeriod: TimeInterval = OTPManager.defaultTokenPeriod, maxOTPsToAccept: Int = OTPManager.defaultMaxOTPsToAccept) {
          self.secretStore = secretStore
-         self.nowDateSource = nowDateSource
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
-index 3a56d81..6db615c 100644
+index 3a56d81..b9fa438 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
-@@ -9,10 +9,12 @@
- import Foundation
- 
+@@ -11,8 +11,10 @@ import Foundation
  public struct BolusAction: Codable {
--    
-+
+     
      public let amountInUnits: Double
--    
--    public init(amountInUnits: Double) {
 +    public let userCreatedDate: Date
-+
+     
+-    public init(amountInUnits: Double) {
 +    public init(amountInUnits: Double, userCreatedDate: Date) {
          self.amountInUnits = amountInUnits
 +        self.userCreatedDate = userCreatedDate
      }
  }
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
-index 3865989..b315b16 100644
+index 3865989..1a59d88 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
 @@ -14,11 +14,13 @@ public struct CarbAction: Codable{
      public let absorptionTime: TimeInterval?
      public let foodType: String?
      public let startDate: Date?
--    
--    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil) {
 +    public let userCreatedDate: Date
-+
+     
+-    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil) {
 +    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil, userCreatedDate: Date) {
          self.amountInGrams = amountInGrams
          self.absorptionTime = absorptionTime
@@ -789,10 +715,10 @@ index e3cea7f..eb57fac 100644
 +    func notificationHistory() async -> [StoredRemoteNotification]
  }
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
-index 1c14cdf..869abc2 100644
+index a0c00e9..22de5f2 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
-@@ -14,11 +14,11 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
+@@ -14,7 +14,7 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
      public let amount: Double
      public let remoteAddress: String
      public let expiration: Date?
@@ -800,30 +726,22 @@ index 1c14cdf..869abc2 100644
 +    public let sentAt: Date
      public let otp: String?
      public let enteredBy: String?
-     public let encryptedReturnNotification: String?
--    
-+
-     enum CodingKeys: String, CodingKey {
-         case remoteAddress = "remote-address"
-         case amount = "bolus-entry"
-@@ -28,9 +28,13 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
-         case enteredBy = "entered-by"
-         case encryptedReturnNotification = "encrypted_return_notification"
+     
+@@ -28,7 +28,11 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
      }
--    
-+
+     
      func toRemoteAction() -> Action {
 -        return .bolusEntry(BolusAction(amountInUnits: amount))
 +        return .bolusEntry(toBolusAction())
 +    }
-+
++    
 +    func toBolusAction() -> BolusAction {
 +        return BolusAction(amountInUnits: amount, userCreatedDate: sentAt)
      }
      
      func otpValidationRequired() -> Bool {
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
-index 6c238ed..c069c34 100644
+index 39d4b9e..283924b 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
 @@ -17,7 +17,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
@@ -834,8 +752,8 @@ index 6c238ed..c069c34 100644
 +    public let sentAt: Date
      public let otp: String?
      public let enteredBy: String?
-     public let encryptedReturnNotification: String?
-@@ -43,7 +43,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
+ 
+@@ -41,7 +41,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
      }
      
      func toRemoteAction() -> Action {
@@ -845,7 +763,7 @@ index 6c238ed..c069c34 100644
      }
      
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
-index fdd6d6b..babb71f 100644
+index ac72b11..f3f8d20 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
 @@ -13,7 +13,7 @@ public struct OverrideCancelRemoteNotification: RemoteNotification, Codable {
@@ -858,7 +776,7 @@ index fdd6d6b..babb71f 100644
      public let enteredBy: String?
      public let otp: String?
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
-index 2060a74..426ff89 100644
+index 65ff33f..19a5750 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
 @@ -15,7 +15,7 @@ public struct OverrideRemoteNotification: RemoteNotification, Codable {
@@ -869,12 +787,12 @@ index 2060a74..426ff89 100644
 +    public let sentAt: Date
      public let enteredBy: String?
      public let otp: String?
-     public let encryptedReturnNotification: String?
+     
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-index 0c5f8e3..24e63d7 100644
+index bf629e8..0bc7ca1 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-@@ -14,7 +14,7 @@ protocol RemoteNotification: Codable {
+@@ -13,7 +13,7 @@ protocol RemoteNotification: Codable {
      
      var id: String {get}
      var expiration: Date? {get}
@@ -883,7 +801,7 @@ index 0c5f8e3..24e63d7 100644
      var otp: String? {get}
      var remoteAddress: String {get}
      var enteredBy: String? {get}
-@@ -30,12 +30,8 @@ protocol RemoteNotification: Codable {
+@@ -27,12 +27,8 @@ protocol RemoteNotification: Codable {
  extension RemoteNotification {
      
      var id: String {
@@ -897,12 +815,12 @@ index 0c5f8e3..24e63d7 100644
 +        return "\(sentAt.timeIntervalSince1970)"
      }
      
-     func getReturnNotificationInfo() -> ReturnNotificationInfo? {
+     init(dictionary: [String: Any]) throws {
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
-index 0165004..84ff118 100644
+index 26d9de0..5e075d3 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
-@@ -7,69 +7,478 @@
+@@ -7,6 +7,7 @@
  //
  
  import Foundation
@@ -910,68 +828,38 @@ index 0165004..84ff118 100644
  import OSLog
  
  class RemoteCommandSourceV1: RemoteCommandSource {
--    
-+
-     weak var delegate: RemoteCommandSourceV1Delegate?
-     private let otpManager: OTPManager
-     private let log = OSLog(category: "Remote Command Source V1")
-     private var commandValidator: RemoteCommandValidator
-     private var recentNotifications = RecentNotifications()
--    
-+
-     init(otpManager: OTPManager) {
-         self.otpManager = otpManager
-         self.commandValidator = RemoteCommandValidator(otpManager: otpManager)
-     }
--    
-+
+@@ -24,38 +25,431 @@ class RemoteCommandSourceV1: RemoteCommandSource {
+     
      //MARK: RemoteCommandSource
--    
+     
 -    func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async {
--        
--        if let encryptedReturnNotification = notification["encrypted_return_notification"] {
--            log.info("Found encrypted_return_notification in notification: %{public}@", String(describing: encryptedReturnNotification))
--        } else {
--            log.info("No encrypted_return_notification found in notification. Available keys: %{public}@", Array(notification.keys).joined(separator: ", "))
-+
 +    func remoteNotificationWasReceived(_ notification: [String: AnyObject], serviceDelegate: ServiceDelegate) async {
-+
+         
 +        guard let remoteNotification = try? notification.toRemoteNotification() else {
 +            log.error("Remote Notification: Malformed notification payload")
 +            return
 +        }
-+
++        
 +        guard await !recentNotifications.contains(pushIdentifier: remoteNotification.id) else {
 +            // Duplicate notifications are expected after app is force killed
 +            // https://github.com/LoopKit/Loop/issues/2174
 +            return
 +        }
 +
-+        // Extract APNS return info for sending responses back to the caregiver
-+        let returnInfo = remoteNotification.getReturnNotificationInfo()
-+        if returnInfo != nil {
-+            log.info("Return notification info available, will send APNS response after command processing")
-         }
--        
-+
-+        var commandType: RemoteNotificationResponseManager.CommandType = .bolus
-+        var successMessage = ""
-+
          do {
 -            guard let delegate = delegate else {return}
 -            let remoteNotification = try notification.toRemoteNotification()
--            
--            // Log after parsing to see if the field was preserved
--            if let encryptedReturnNotification = remoteNotification.encryptedReturnNotification {
--                log.info("Parsed encrypted_return_notification successfully, length: %d", encryptedReturnNotification.count)
--            } else {
--                log.info("encrypted_return_notification is nil after parsing")
+-            guard await !recentNotifications.isDuplicate(remoteNotification) else {
+-                // Duplicate notifications are expected after app is force killed
+-                // https://github.com/LoopKit/Loop/issues/2174
+-                return
+-            }
 +            try await recentNotifications.trackReceivedRemoteNotification(remoteNotification, rawNotification: notification)
-+            try commandValidator.validate(remoteNotification: remoteNotification)
-+
+             try commandValidator.validate(remoteNotification: remoteNotification)
+-            try await delegate.commandSourceV1(self, handleAction: remoteNotification.toRemoteAction())
++            
 +            switch remoteNotification.toRemoteAction() {
 +            case .bolusEntry(let bolusCommand):
-+                commandType = .bolus
 +                let doseEntry = try await serviceDelegate.deliverRemoteBolus(
 +                    amountInUnits: bolusCommand.amountInUnits,
 +                    userCreatedDate: bolusCommand.userCreatedDate
@@ -984,23 +872,19 @@ index 0165004..84ff118 100644
 +                        adjustmentMessage = "Bolus amount was reduced from \(bolusAmountDescription) U to \(doseAmountDescription) U due to other recent treatments."
 +                    }
 +                }
-+                successMessage = String(format: "Bolus of %.2f units delivered successfully", doseEntry.programmedUnits)
 +                await handleEnactmentCompletion(
 +                    remoteNotification: remoteNotification,
 +                    status: .success(date: Date(), syncIdentifier: doseEntry.syncIdentifier ?? "", completionMessage: adjustmentMessage),
 +                    notificationJSON: notification
 +                )
 +            case .cancelTemporaryOverride:
-+                commandType = .cancelOverride
 +                let cancelledOverride = try await serviceDelegate.cancelRemoteOverride()
-+                successMessage = "Override cancelled successfully"
 +                await handleEnactmentCompletion(
 +                    remoteNotification: remoteNotification,
 +                    status: .success(date: Date(), syncIdentifier: cancelledOverride.syncIdentifier.uuidString, completionMessage: nil),
 +                    notificationJSON: notification
 +                )
 +            case .carbsEntry(let carbCommand):
-+                commandType = .carbs
 +                let carbEntry = try await serviceDelegate.deliverRemoteCarbs(
 +                    amountInGrams: carbCommand.amountInGrams,
 +                    absorptionTime: carbCommand.absorptionTime,
@@ -1008,43 +892,23 @@ index 0165004..84ff118 100644
 +                    startDate: carbCommand.startDate,
 +                    userCreatedDate: carbCommand.userCreatedDate
 +                )
-+                successMessage = String(format: "Carbs entry of %.1f g delivered successfully", carbCommand.amountInGrams)
 +                await handleEnactmentCompletion(
 +                    remoteNotification: remoteNotification,
 +                    status: .success(date: Date(), syncIdentifier: carbEntry.syncIdentifier ?? "", completionMessage: nil),
 +                    notificationJSON: notification
 +                )
 +            case .temporaryScheduleOverride(let overrideCommand):
-+                commandType = .override
 +                let override = try await serviceDelegate.enactRemoteOverride(
 +                    name: overrideCommand.name,
 +                    durationTime: overrideCommand.durationTime,
 +                    remoteAddress: overrideCommand.remoteAddress
 +                )
-+                successMessage = "Override '\(overrideCommand.name)' enacted successfully"
 +                await handleEnactmentCompletion(
 +                    remoteNotification: remoteNotification,
 +                    status: .success(date: Date(), syncIdentifier: override.syncIdentifier.uuidString, completionMessage: nil),
 +                    notificationJSON: notification
 +                )
-             }
--            
--            guard await !recentNotifications.isDuplicate(remoteNotification) else {
--                // Duplicate notifications are expected after app is force killed
--                // https://github.com/LoopKit/Loop/issues/2174
--                return
-+
-+            // Send APNS success response back to caregiver
-+            if let returnInfo = returnInfo {
-+                await RemoteNotificationResponseManager.shared.sendResponseNotification(
-+                    to: returnInfo,
-+                    commandType: commandType,
-+                    success: true,
-+                    message: successMessage
-+                )
-             }
--            try commandValidator.validate(remoteNotification: remoteNotification)
--            try await delegate.commandSourceV1(self, handleAction: remoteNotification.toRemoteAction(), remoteNotification: remoteNotification)
++            }
          } catch {
              log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: notification), String(describing: error))
 -            try? await self.delegate?.commandSourceV1(self, uploadError: error, notification: notification)
@@ -1053,19 +917,9 @@ index 0165004..84ff118 100644
 +                status: .failure(date: Date(), errorMessage: error.localizedDescription),
 +                notificationJSON: notification
 +            )
-+
-+            // Send APNS failure response back to caregiver
-+            if let returnInfo = returnInfo {
-+                await RemoteNotificationResponseManager.shared.sendResponseNotification(
-+                    to: returnInfo,
-+                    commandType: commandType,
-+                    success: false,
-+                    message: "Command failed: \(error.localizedDescription)"
-+                )
-+            }
 +        }
 +    }
-+
++    
 +    func handleEnactmentCompletion(
 +        remoteNotification: RemoteNotification,
 +        status: RemoteNotificationStatus,
@@ -1078,7 +932,7 @@ index 0165004..84ff118 100644
 +            log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: notificationJSON), String(describing: error))
 +        }
 +    }
-+
++    
 +    func uploadStoredNotification(_ storedNotification: StoredRemoteNotification) async {
 +        do {
 +            switch storedNotification.status {
@@ -1097,11 +951,11 @@ index 0165004..84ff118 100644
 +            log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: storedNotification), String(describing: error))
 +        }
 +    }
-+
++    
 +    func notificationHistory() async -> [StoredRemoteNotification] {
 +        return await recentNotifications.notifications
 +    }
-+
++    
 +    /// Uploads pending notifications. Limited to a few at a time to avoid long background delays.
 +    func uploadPendingNotifications() async {
 +        guard let mostRecentPendingNotification = await notificationHistory().filter({$0.isPendingUpload}).sorted(by: {$0.receivedDate > $1.receivedDate}).last else {
@@ -1109,11 +963,11 @@ index 0165004..84ff118 100644
 +        }
 +        await uploadStoredNotification(mostRecentPendingNotification)
 +    }
-+
++    
 +    func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]> {
 +        return await recentNotifications.notificationPublisher()
 +    }
-+
++    
 +    func deleteNotificationHistory() {
 +        Task {
 +            await recentNotifications.deleteNotificationHistory()
@@ -1122,16 +976,13 @@ index 0165004..84ff118 100644
  }
  
  protocol RemoteCommandSourceV1Delegate: AnyObject {
--    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action, remoteNotification: RemoteNotification) async throws
+-    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action) async throws
 -    func commandSourceV1(_: RemoteCommandSourceV1, uploadError error: Error, notification: [String: AnyObject]) async throws
 +    func commandSourceV1(_: RemoteCommandSourceV1, uploadError errorMessage: String, receivedDate: Date, notification: [String: AnyObject]) async throws
  }
  
 -private actor RecentNotifications {
 -    private var recentNotifications = [RemoteNotification]()
--    
--    func isDuplicate(_ remoteNotification: RemoteNotification) -> Bool {
--        if recentNotifications.contains(where: {remoteNotification.id == $0.id}) {
 +// MARK: Notification history
 +
 +public class StoredRemoteNotification: NSObject, Codable {
@@ -1140,34 +991,36 @@ index 0165004..84ff118 100644
 +    public var status: RemoteNotificationStatus? = nil
 +    public var receivedDate: Date
 +    public var uploaded: Bool = false
-+
++    
 +    init(notificationType: RemoteNotificationType, notificationJSONData: Data) {
 +        self.remoteNotificationType = notificationType
 +        self.notificationJSONData = notificationJSONData
 +        self.receivedDate = Date()
 +        self.uploaded = false
 +    }
-+
++    
 +    convenience init(bolusNotification: BolusRemoteNotification, notificationJSONData: Data) {
 +        self.init(notificationType: .bolus(bolusNotification), notificationJSONData: notificationJSONData)
 +    }
-+
+     
+-    func isDuplicate(_ remoteNotification: RemoteNotification) -> Bool {
+-        if recentNotifications.contains(where: {remoteNotification.id == $0.id}) {
 +    convenience init(carbNotification: CarbRemoteNotification, notificationJSONData: Data) {
 +        self.init(notificationType: .carbs(carbNotification), notificationJSONData: notificationJSONData)
 +    }
-+
++    
 +    convenience init(overrideNotification: OverrideRemoteNotification, notificationJSONData: Data) {
 +        self.init(notificationType: .override(overrideNotification), notificationJSONData: notificationJSONData)
 +    }
-+
++    
 +    convenience init(overrideCancelNotification: OverrideCancelRemoteNotification, notificationJSONData: Data) {
 +        self.init(notificationType: .overrideCancel(overrideCancelNotification), notificationJSONData: notificationJSONData)
 +    }
-+
++    
 +    public var pushIdentifier: String {
 +        return remoteNotification().id
 +    }
-+
++    
 +    var isPendingUpload: Bool {
 +        guard !uploaded else {
 +            return false
@@ -1179,16 +1032,16 @@ index 0165004..84ff118 100644
 +            return false
 +        }
 +    }
-+
++    
 +    func containsDose(_ dose: DoseEntry) -> Bool {
 +        guard case let .bolus(bolusNotification) = remoteNotificationType else {
 +            return false
 +        }
-+
++        
 +        if case let .success(_, syncIdentifier: syncIdentifier, _) = status {
 +            return dose.syncIdentifier == syncIdentifier
 +        }
-+
++        
 +        // If sync identifier not set yet, that could mean either a failure occurred
 +        // or we are in the middle of processing this notification.
 +        // Doses start uploading during remote bolus action,
@@ -1197,32 +1050,30 @@ index 0165004..84ff118 100644
 +        guard isDateWithinEnactmentPeriod(dose.startDate) else {
 +            return false
 +        }
-+
++        
 +        return dose.programmedUnits <= bolusNotification.amount
 +    }
-+
++    
 +    func isDateWithinEnactmentPeriod(_ date: Date) -> Bool {
 +        guard date.isAfterOrEqual(otherDate: receivedDate) else {
 +            return false
 +        }
-+
++        
 +        guard let completionDate else {
 +            // Either enactment is in progress or there was an app crash during enactment
 +            // For the corner case of an app crash, we want only want to match if the
 +            // received date is within a few minutes. It should be within seconds really
 +            // but minutes help when paused in the Xcode debugger.
 +            return date.timeIntervalSince(receivedDate) < 60 * 5
-         }
--        recentNotifications.append(remoteNotification)
--        return false
-+
++        }
++        
 +        guard date.isBeforeOrEqual(otherDate: completionDate) else {
 +            return false
 +        }
-+
++        
 +        return true
 +    }
-+
++    
 +    var completionDate: Date? {
 +        guard let status else {
 +            return nil
@@ -1234,7 +1085,7 @@ index 0165004..84ff118 100644
 +            return completionDate
 +        }
 +    }
-+
++    
 +    func remoteNotification() -> RemoteNotification {
 +        switch remoteNotificationType {
 +            case let .bolus(bolusNotification):
@@ -1247,11 +1098,11 @@ index 0165004..84ff118 100644
 +            return overrideCancelNotification
 +        }
 +    }
-+
++    
 +    public func remoteAction() -> Action {
 +        return remoteNotification().toRemoteAction()
 +    }
-+
++    
 +    func notificationJSON() throws -> [String: AnyObject] {
 +        let jsonObject = try JSONSerialization.jsonObject(with: notificationJSONData, options: [])
 +        guard let notificationJSON = jsonObject as? [String: AnyObject] else {
@@ -1259,11 +1110,11 @@ index 0165004..84ff118 100644
 +        }
 +        return notificationJSON
 +    }
-+
++    
 +    enum StoredRemoteNotificationError: Error {
 +        case notificationJSONTypeIncorrect
 +    }
-+
++    
 +    public enum RemoteNotificationType: Codable {
 +        case bolus(BolusRemoteNotification)
 +        case carbs(CarbRemoteNotification)
@@ -1280,37 +1131,37 @@ index 0165004..84ff118 100644
 +actor RecentNotifications {
 +    var notifications: [StoredRemoteNotification] = []
 +    private var continuation: AsyncStream<[StoredRemoteNotification]>.Continuation?
-+
++    
 +    init() {
 +        Task {
 +            await loadNotifications()
 +        }
 +    }
-+
++    
 +    // Publish
-+
++    
 +    func notificationPublisher() -> AsyncStream<[StoredRemoteNotification]> {
 +        return AsyncStream { continuation in
 +            self.continuation = continuation
 +            continuation.yield(notifications)
 +        }
 +    }
-+
++    
 +    private func publish(notifications: [StoredRemoteNotification]) {
 +        self.notifications = notifications
 +        continuation?.yield(notifications)
 +    }
-+
++    
 +    // Misc
-+
++    
 +    func contains(pushIdentifier: String) -> Bool {
 +        return storedNotification(for: pushIdentifier) != nil
 +    }
-+
++    
 +    func storedNotification(for id: String) -> StoredRemoteNotification? {
 +        return notifications.first(where: {$0.pushIdentifier == id})
 +    }
-+
++    
 +    func trackReceivedRemoteNotification(_ remoteNotification: RemoteNotification, rawNotification: [String : AnyObject]) throws {
 +        let data = try JSONSerialization.data(withJSONObject: rawNotification, options: [])
 +        if let bolusNotification = remoteNotification as? BolusRemoteNotification {
@@ -1329,7 +1180,7 @@ index 0165004..84ff118 100644
 +            fatalError()
 +        }
 +    }
-+
++    
 +    func updateStatus(_ status: RemoteNotificationStatus, for pushIdentifier: String) throws -> StoredRemoteNotification {
 +        guard let storedNotification = storedNotification(for: pushIdentifier) else {
 +            throw RemoteNotificationError.notificationNotFound(pushIdentifier)
@@ -1338,114 +1189,115 @@ index 0165004..84ff118 100644
 +        try storeNotification(storedNotification)
 +        return storedNotification
 +    }
-+
++    
 +    func updateUploadStatus(_ uploaded: Bool, for pushIdentifier: String) throws {
 +        guard let storedNotification = storedNotification(for: pushIdentifier) else {
 +            throw RemoteNotificationError.notificationNotFound(pushIdentifier)
-+        }
+         }
+-        recentNotifications.append(remoteNotification)
+-        return false
++        
 +        storedNotification.uploaded = uploaded
 +        try storeNotification(storedNotification)
 +    }
-+
-+    // Disk Storage
-+
-+    static let maxStoredNotifications = 50
-+
-+    static var storageURL: URL {
-+        let appSupportDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-+        return appSupportDir.appendingPathComponent("remote_notifications.json")
-+    }
-+
-+    private func storeNotification(_ notification: StoredRemoteNotification) throws {
-+        if let existingIndex = notifications.firstIndex(where: {$0.pushIdentifier == notification.pushIdentifier}) {
-+            notifications[existingIndex] = notification
++    
++    func storeNotification(_ storedNotification: StoredRemoteNotification) throws {
++        var updatedNotifications = notifications
++        if let index = updatedNotifications.firstIndex(where: {$0.pushIdentifier == storedNotification.pushIdentifier}) {
++            updatedNotifications.remove(at: index)
++            updatedNotifications.insert(storedNotification, at: index)
 +        } else {
-+            notifications.append(notification)
++            updatedNotifications.append(storedNotification)
 +        }
-+
-+        if notifications.count > Self.maxStoredNotifications {
-+            notifications = Array(notifications.suffix(Self.maxStoredNotifications))
++        
++        let maxCountToStore = 50
++        if updatedNotifications.count > maxCountToStore {
++            updatedNotifications = Array(updatedNotifications.dropFirst(updatedNotifications.count - maxCountToStore))
 +        }
-+
-+        try saveNotifications()
-+        publish(notifications: notifications)
++        
++        try storeNotifications(updatedNotifications)
 +    }
-+
-+    private func saveNotifications() throws {
-+        let encoder = JSONEncoder()
-+        encoder.dateEncodingStrategy = .iso8601
-+        let data = try encoder.encode(notifications)
-+        try data.write(to: Self.storageURL)
-+    }
-+
-+    private func loadNotifications() {
-+        let decoder = JSONDecoder()
-+        decoder.dateDecodingStrategy = .iso8601
-+        guard let data = try? Data(contentsOf: Self.storageURL) else {
-+            return
-+        }
-+        guard let loaded = try? decoder.decode([StoredRemoteNotification].self, from: data) else {
-+            return
-+        }
-+        self.notifications = loaded
-+    }
-+
++    
 +    func deleteNotificationHistory() {
-+        notifications = []
-+        try? saveNotifications()
++        do {
++            try storeNotifications([])
++        } catch {
++            print(error)
++        }
++    }
++    
++    // Disk Operations
++    
++    private func loadNotifications() {
++        do {
++            let notifications = try notificationsFromDisk()
++            publish(notifications: notifications)
++        } catch {
++            print("Error decoding JSON - will delete history: \(error)")
++            // Error in history - deleting
++            deleteNotificationHistory()
++        }
++    }
++    
++    private func notificationsFromDisk() throws -> [StoredRemoteNotification] {
++        let data = try Data(contentsOf: remoteHistoryJSONURL)
++        return try JSONDecoder().decode([StoredRemoteNotification].self, from: data)
++    }
++    
++    private func storeNotifications(_ notifications: [StoredRemoteNotification]) throws {
++        let notificationJSON = try JSONEncoder().encode(notifications)
++        try notificationJSON.write(to: remoteHistoryJSONURL)
 +        publish(notifications: notifications)
++    }
++    
++    private var remoteHistoryJSONURL: URL {
++        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!.appendingPathComponent("remote_notifications.json")
 +    }
 +}
 +
 +enum RemoteNotificationError: LocalizedError {
++    case unhandledNotification([String: AnyObject])
 +    case notificationNotFound(String)
-+
++    
 +    var errorDescription: String? {
 +        switch self {
-+        case .notificationNotFound(let id):
-+            return "Notification not found: \(id)"
++        case .unhandledNotification(let notification):
++            return String(format: NSLocalizedString("Unhandled Notification: %1$@", comment: "The prefix for the remote unhandled notification error. (1: notification payload)"), notification)
++        case .notificationNotFound(let notificationID):
++            return String(format: NSLocalizedString("Notification Not Found: %1$@", comment: "The remote notification not found error. (1: notification ID)"), notificationID)
 +        }
 +    }
 +}
 +
 +extension Date {
 +    func isBeforeOrEqual(otherDate: Date) -> Bool {
-+        return self <= otherDate
++        return timeIntervalSince(otherDate) <= 0
 +    }
-+
++    
 +    func isAfterOrEqual(otherDate: Date) -> Bool {
-+        return self >= otherDate
++        return timeIntervalSince(otherDate) >= 0
      }
  }
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
-index 634eb4e..fce4623 100644
+index 634eb4e..035dcb4 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
-@@ -23,13 +23,13 @@ struct RemoteCommandValidator {
-     }
-     
-     private func validateExpirationDate(remoteNotification: RemoteNotification) throws {
--        
-+
-         guard let expirationDate = remoteNotification.expiration else {
-             return //Skip validation if no date included
+@@ -29,7 +29,7 @@ struct RemoteCommandValidator {
          }
--        
-+
+         
          if nowDateSource() > expirationDate {
 -            throw NotificationValidationError.expiredNotification
 +            throw NotificationValidationError.expiredNotification(sentDate: remoteNotification.sentAt, receivedDate: nowDateSource())
          }
      }
      
-@@ -44,14 +44,16 @@ struct RemoteCommandValidator {
+@@ -44,14 +44,19 @@ struct RemoteCommandValidator {
      
      enum NotificationValidationError: LocalizedError {
          case missingOTP
 -        case expiredNotification
--        
 +        case expiredNotification(sentDate: Date, receivedDate: Date)
-+
+         
          var errorDescription: String? {
              switch  self {
              case .missingOTP:
@@ -1453,85 +1305,145 @@ index 634eb4e..fce4623 100644
 -            case .expiredNotification:
 -                return LocalizedString("Expired", comment: "Remote command error description: expired.")
 +            case .expiredNotification(let sentDate, let receivedDate):
-+                let dateFormatter = DateFormatter()
-+                dateFormatter.dateFormat = "h:mm:ss a"
-+                return String(format: LocalizedString("Expired. Sent: %@. Received: %@", comment: "Remote command error description: expired."), dateFormatter.string(from: sentDate), dateFormatter.string(from: receivedDate))
++                let errorMessage = String(
++                    format: "Remote Command expired. It was sent at %@ and received by Loop at %@.",
++                    sentDate.formatted(date: .omitted, time: .shortened),
++                    receivedDate.formatted(date: .omitted, time: .shortened)
++                )
++                return LocalizedString(errorMessage, comment: "Remote command error description: expired.")
              }
          }
      }
 diff --git a/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift b/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
-index 3d54080..2a3fff3 100644
+index 3d54080..74a37dd 100644
 --- a/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
 +++ b/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
-@@ -14,6 +14,9 @@ import LoopKit
+@@ -13,6 +13,9 @@ import LoopKit
+ 
  protocol ServiceStatusViewModelDelegate {
      func verifyConfiguration(completion: @escaping (Error?) -> Void)
-     var siteURL: URL? { get }
 +    func notificationHistory() async -> [StoredRemoteNotification]
 +    func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]>
 +    func deleteNotificationHistory()
+     var siteURL: URL? { get }
  }
  
- enum ServiceStatus {
-@@ -35,19 +38,88 @@ extension ServiceStatus: CustomStringConvertible {
+@@ -37,7 +40,8 @@ extension ServiceStatus: CustomStringConvertible {
+ 
+ class ServiceStatusViewModel: ObservableObject {
+     @Published var status: ServiceStatus = .checking
+-        
++    @Published var notificationHistory = [StoredRemoteNotification]()
++    @Published var remoteCommands = [RemoteCommand]()
+     let delegate: ServiceStatusViewModelDelegate
+     var didLogout: (() -> Void)?
+     
+@@ -47,6 +51,14 @@ class ServiceStatusViewModel: ObservableObject {
+ 
+     init(delegate: ServiceStatusViewModelDelegate) {
+         self.delegate = delegate
++        listenForNotifications(from: delegate)
++        
++        Task {
++            do {
++                let notifications = await delegate.notificationHistory()
++                await updateNotifications(with: notifications)
++            }
++        }
+         
+         delegate.verifyConfiguration { (error) in
+             DispatchQueue.main.async {
+@@ -58,4 +70,102 @@ class ServiceStatusViewModel: ObservableObject {
+             }
+         }
      }
- }
- 
-+struct RemoteCommand: Identifiable {
++    
++    func deleteNotificationHistory() {
++        delegate.deleteNotificationHistory()
++    }
++    
++    func listenForNotifications(from delegate: ServiceStatusViewModelDelegate) {
++        Task {
++            let notificationsStream = await delegate.notificationPublisher()
++            for await notifications in notificationsStream {
++                await updateNotifications(with: notifications)
++            }
++        }
++    }
++    
++    @MainActor
++    func updateNotifications(with notifications: [StoredRemoteNotification]) {
++        remoteCommands = notifications.map({.init(notification: $0)})
++            .sorted { (lhs: RemoteCommand, rhs: RemoteCommand) in
++                return lhs.receivedDate > rhs.receivedDate
++            }
++    }
++}
++
++struct RemoteCommand: Equatable, Hashable {
 +    let id: String
++    let receivedDate: Date
 +    let actionName: String
-+    let createdDate: String
++    let createdDateDescription: String
 +    let details: String
 +    let statusMessage: String
 +    let isError: Bool
++    
++    init(notification: StoredRemoteNotification) {
++        self.id = notification.pushIdentifier
++        self.receivedDate = notification.receivedDate
++        self.actionName = notification.actionName
++        self.createdDateDescription = notification.createdDateDescription
++        self.details = notification.details
++        self.statusMessage = notification.statusMessage
++        self.isError = notification.isError
++    }
 +}
 +
 +extension StoredRemoteNotification {
++    
 +    var actionName: String {
-+        switch remoteNotificationType {
-+        case .bolus:
++        switch remoteAction() {
++        case .bolusEntry:
 +            return "Bolus"
-+        case .carbs:
++        case .carbsEntry:
 +            return "Carbs"
-+        case .override:
-+            return "Override"
-+        case .overrideCancel:
++        case .cancelTemporaryOverride:
 +            return "Cancel Override"
++        case .temporaryScheduleOverride:
++            return "Override"
 +        }
 +    }
-+
++    
 +    var createdDateDescription: String {
-+        let formatter = DateFormatter()
-+        formatter.dateStyle = .short
-+        formatter.timeStyle = .medium
-+        return formatter.string(from: receivedDate)
++        return receivedDate.formatted(.dateTime)
 +    }
-+
++    
 +    var details: String {
-+        switch remoteNotificationType {
-+        case .bolus(let notification):
-+            return String(format: "%.2f U", notification.amount)
-+        case .carbs(let notification):
-+            return String(format: "%.0f g", notification.amount)
-+        case .override(let notification):
-+            return notification.name
-+        case .overrideCancel:
++        switch remoteAction() {
++        case .bolusEntry(let bolusEntry):
++            return "\(bolusEntry.amountInUnits.formatted()) U"
++        case .carbsEntry(let carbAction):
++            return "\(carbAction.amountInGrams.formatted()) G"
++        case .cancelTemporaryOverride:
 +            return ""
++        case .temporaryScheduleOverride(let override):
++            return override.name
 +        }
 +    }
-+
++    
 +    var statusMessage: String {
 +        guard let status else {
-+            return "Pending..."
++            return ""
 +        }
 +        switch status {
 +        case .success(_, _, let completionMessage):
-+            return completionMessage ?? "Success"
++            return completionMessage ?? ""
 +        case .failure(_, let errorMessage):
 +            return errorMessage
 +        }
 +    }
-+
++    
 +    var isError: Bool {
 +        guard let status else {
 +            return false
@@ -1543,168 +1455,87 @@ index 3d54080..2a3fff3 100644
 +            return true
 +        }
 +    }
-+}
-+
- class ServiceStatusViewModel: ObservableObject {
-     @Published var status: ServiceStatus = .checking
--        
-+    @Published var remoteCommands: [RemoteCommand] = []
-+
-     let delegate: ServiceStatusViewModelDelegate
-     var didLogout: (() -> Void)?
--    
-+
-     var urlString: String {
-         return delegate.siteURL?.absoluteString ?? LocalizedString("Not Available", comment: "Error when nightscout service url is not set")
-     }
- 
-     init(delegate: ServiceStatusViewModelDelegate) {
-         self.delegate = delegate
--        
-+
-         delegate.verifyConfiguration { (error) in
-             DispatchQueue.main.async {
-                 if let error = error {
-@@ -57,5 +129,24 @@ class ServiceStatusViewModel: ObservableObject {
-                 }
-             }
-         }
-+
-+        Task {
-+            let stream = await delegate.notificationPublisher()
-+            for await notifications in stream {
-+                let commands = notifications.reversed().map { notification in
-+                    RemoteCommand(
-+                        id: notification.pushIdentifier,
-+                        actionName: notification.actionName,
-+                        createdDate: notification.createdDateDescription,
-+                        details: notification.details,
-+                        statusMessage: notification.statusMessage,
-+                        isError: notification.isError
-+                    )
-+                }
-+                await MainActor.run {
-+                    self.remoteCommands = commands
-+                }
-+            }
-+        }
-     }
  }
 diff --git a/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift b/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
-index 4ecbdde..f213ccb 100644
+index 4ecbdde..a450bd1 100644
 --- a/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
 +++ b/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
-@@ -17,56 +17,86 @@ struct ServiceStatusView: View, HorizontalSizeClassOverride {
-     @ObservedObject var otpViewModel: OTPViewModel
-     @State private var selectedItem: String?
-     var body: some View {
--        VStack {
--            Text("Nightscout")
--                .font(.largeTitle)
--                .fontWeight(.semibold)
--            Image(frameworkImage: "nightscout", decorative: true)
--                .resizable()
--                .aspectRatio(contentMode: .fill)
--                .frame(width: 150, height: 150)
--            
-+        List {
-+            Section {
-+                VStack {
-+                    Text("Nightscout")
-+                        .font(.largeTitle)
-+                        .fontWeight(.semibold)
-+                    Image(frameworkImage: "nightscout", decorative: true)
-+                        .resizable()
-+                        .aspectRatio(contentMode: .fill)
-+                        .frame(width: 150, height: 150)
-+                }
-+                .frame(maxWidth: .infinity)
-+                .listRowBackground(Color.clear)
-+            }
- 
+@@ -26,35 +26,45 @@ struct ServiceStatusView: View, HorizontalSizeClassOverride {
+                 .aspectRatio(contentMode: .fill)
+                 .frame(width: 150, height: 150)
+             
+-
 -            VStack(spacing: 0) {
-+            Section {
-                 HStack {
-                     Text("URL")
-                     Spacer()
-                     Text(viewModel.urlString)
-                 }
+-                HStack {
+-                    Text("URL")
+-                    Spacer()
+-                    Text(viewModel.urlString)
+-                }
 -                .padding()
 -                Divider()
-                 HStack {
-                     Text("Status")
-                     Spacer()
-                     Text(String(describing: viewModel.status))
-                 }
+-                HStack {
+-                    Text("Status")
+-                    Spacer()
+-                    Text(String(describing: viewModel.status))
+-                }
 -                .padding()
 -                Divider()
-                 NavigationLink(destination: OTPSelectionView(otpViewModel: otpViewModel), tag: "otp-view", selection: $selectedItem) {
+-                NavigationLink(destination: OTPSelectionView(otpViewModel: otpViewModel), tag: "otp-view", selection: $selectedItem) {
++            List {
++                Section() {
++                    HStack {
++                        Text("URL")
++                        Spacer()
++                        Text(viewModel.urlString)
++                    }
                      HStack {
-                         Text("One-Time Password")
+-                        Text("One-Time Password")
++                        Text("Status")
                          Spacer()
-                         Text(otpViewModel.otpCode)
+-                        Text(otpViewModel.otpCode)
 -                        Image(systemName: "chevron.right")
 -                            .font(.caption)
++                        Text(String(describing: viewModel.status))
                      }
 -                }.foregroundColor(Color.primary)
 -                .padding()
++                    NavigationLink(destination: OTPSelectionView(otpViewModel: otpViewModel), tag: "otp-view", selection: $selectedItem) {
++                        HStack {
++                            Text("One-Time Password")
++                            Spacer()
++                            Text(otpViewModel.otpCode)
++                        }
++                    }
++                }
++                Section("Remote Commands") {
++                    ForEach(viewModel.remoteCommands, id: \.id){ command in
++                        VStack(alignment: .leading) {
++                            HStack {
++                                Text(command.actionName)
++                                Spacer()
++                                Text(command.createdDateDescription)
++                            }
++                            Text(command.details)
++                            Text(command.statusMessage)
++                                .foregroundStyle(command.isError ? .red : .primary)
++                            
++                        }
++                    }
++                    Button("Remove History") {
++                        viewModel.deleteNotificationHistory()
++                    }
 +                }
              }
 -            .background(Color(UIColor.secondarySystemBackground))
 -            .cornerRadius(10)
--            
--            Button(action: {
--                viewModel.didLogout?()
--            } ) {
--                Text("Logout").padding(.top, 20)
-+
-+            Section(header: Text("Remote Commands")) {
-+                if viewModel.remoteCommands.isEmpty {
-+                    Text("No remote commands received")
-+                        .foregroundColor(.secondary)
-+                } else {
-+                    ForEach(viewModel.remoteCommands) { command in
-+                        VStack(alignment: .leading, spacing: 4) {
-+                            HStack {
-+                                Text(command.actionName)
-+                                    .fontWeight(.medium)
-+                                if !command.details.isEmpty {
-+                                    Text(command.details)
-+                                        .foregroundColor(.secondary)
-+                                }
-+                                Spacer()
-+                                Text(command.createdDate)
-+                                    .font(.caption)
-+                                    .foregroundColor(.secondary)
-+                            }
-+                            Text(command.statusMessage)
-+                                .font(.caption)
-+                                .foregroundColor(command.isError ? .red : .secondary)
-+                        }
-+                    }
-+                }
-+                Button(role: .destructive) {
-+                    viewModel.delegate.deleteNotificationHistory()
-+                } label: {
-+                    Text("Remove History")
-+                }
-+            }
-+
-+            Section {
-+                Button(action: {
-+                    viewModel.didLogout?()
-+                } ) {
-+                    Text("Logout")
-+                        .foregroundColor(.red)
-+                }
+             
+             Button(action: {
+                 viewModel.didLogout?()
+@@ -62,7 +72,6 @@ struct ServiceStatusView: View, HorizontalSizeClassOverride {
+                 Text("Logout").padding(.top, 20)
              }
          }
 -        .padding([.leading, .trailing])
          .navigationBarTitle("")
          .navigationBarItems(trailing: dismissButton)
      }
--    
-+
-     private var dismissButton: some View {
-         Button(action: dismiss) {
-             Text("Done").bold()
