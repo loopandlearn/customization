@@ -501,7 +501,7 @@ index 2d9b5d3..cbc127b 100644
  
      private let log = OSLog(category: "NightscoutService")
 +    
-+    private let notificationExpirationInMinutes = 15.0
++    private let notificationExpirationInMinutes = 10.0
  
      public init() {
          self.isOnboarded = false
