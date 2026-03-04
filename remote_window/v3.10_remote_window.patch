@@ -1,0 +1,1541 @@
+Submodule Loop e45f137..87cce26:
+diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
+index 2751f18f..81c11b1c 100644
+--- a/Loop/Loop/Managers/DeviceDataManager.swift
++++ b/Loop/Loop/Managers/DeviceDataManager.swift
+@@ -818,13 +818,14 @@ extension DeviceDataManager {
+ 
+ // MARK: - Client API
+ extension DeviceDataManager {
+-    func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping (_ error: Error?) -> Void = { _ in }) {
++    func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping (_ result: Swift.Result<DoseEntry, Error>) -> Void = { _ in }) {
+         guard let pumpManager = pumpManager else {
+-            completion(LoopError.configurationError(.pumpManager))
++            completion(.failure(LoopError.configurationError(.pumpManager)))
+             return
+         }
+ 
+-        self.loopManager.addRequestedBolus(DoseEntry(type: .bolus, startDate: Date(), value: units, unit: .units, isMutable: true)) {
++        let doseEntry = DoseEntry(type: .bolus, startDate: Date(), value: units, unit: .units, isMutable: true)
++        self.loopManager.addRequestedBolus(doseEntry) {
+             pumpManager.enactBolus(units: units, activationType: activationType) { (error) in
+                 if let error = error {
+                     self.log.error("%{public}@", String(describing: error))
+@@ -840,11 +841,23 @@ extension DeviceDataManager {
+                     }
+                     
+                     self.loopManager.bolusRequestFailed(error) {
+-                        completion(error)
++                        completion(.failure(error))
+                     }
+                 } else {
+                     self.loopManager.bolusConfirmed() {
+-                        completion(nil)
++                        // The DoseEntry from the store is returned as it has the syncIdentifier set.
++                        self.doseStore.getDoses(start: doseEntry.startDate, includeMutable: true) { result in
++                            switch result {
++                                case .success(let doses):
++                                if let storedEntry = doses.filter({ $0.programmedUnits == doseEntry.programmedUnits }).first {
++                                    completion(.success(storedEntry))
++                                } else {
++                                    completion(.failure(EnactBolusError.storageFailure))
++                                }
++                            case .failure:
++                                completion(.failure(EnactBolusError.storageFailure))
++                            }
++                        }
+                     }
+                 }
+             }
+@@ -853,17 +866,17 @@ extension DeviceDataManager {
+         }
+     }
+     
+-    func enactBolus(units: Double, activationType: BolusActivationType) async throws {
++    func enactBolus(units: Double, activationType: BolusActivationType) async throws -> DoseEntry {
+         return try await withCheckedThrowingContinuation { continuation in
+-            enactBolus(units: units, activationType: activationType) { error in
+-                if let error = error {
+-                    continuation.resume(throwing: error)
+-                    return
+-                }
+-                continuation.resume()
++            enactBolus(units: units, activationType: activationType) { result in
++                continuation.resume(with: result)
+             }
+         }
+     }
++    
++    enum EnactBolusError: Error {
++        case storageFailure
++    }
+ 
+     var pumpManagerStatus: PumpManagerStatus? {
+         return pumpManager?.status
+@@ -1438,10 +1451,49 @@ extension Notification.Name {
+ 
+ extension DeviceDataManager: ServicesManagerDosingDelegate {
+     
+-    func deliverBolus(amountInUnits: Double) async throws {
+-        try await enactBolus(units: amountInUnits, activationType: .manualNoRecommendation)
++    func deliverBolus(amountInUnits: Double, userCreatedDate: Date) async throws -> DoseEntry {
++        let minTreatmentIntervalInMinutes = 10.0
++        let boluses = try await doseStore.getBoluses(start: Date().addingTimeInterval(-.days(1)))
++        // Look back further for safety in case caregiver didn't know about other treatments before they send this (i.e. Upload delays)
++        let conflictStartDate = userCreatedDate.addingTimeInterval(-.minutes(minTreatmentIntervalInMinutes))
++        let conflictingEntries = boluses.filter({$0.startDate >= conflictStartDate})
++        let conflictingBolusAmount = conflictingEntries.map({$0.programmedUnits}).reduce(0, {$0 + $1})
++        let adjustedDoseAmount = amountInUnits - conflictingBolusAmount
++        guard adjustedDoseAmount <= amountInUnits else { // Added safety check for the bolus math
++            throw BolusActionError.invalidCalculation
++        }
++        guard adjustedDoseAmount > 0.0 else {
++            throw BolusActionError.bolusAmountAdjustedToZero(amountInUnits, conflictStartDate)
++        }
++        return try await enactBolus(units: adjustedDoseAmount, activationType: .manualNoRecommendation)
+     }
+     
++    enum BolusActionError: LocalizedError {
++        case bolusAmountAdjustedToZero( _ requestedAmountInUnits: Double, _ conflictStartDate: Date)
++        case invalidCalculation
++        
++        var errorDescription: String? {
++            switch self {
++            case .bolusAmountAdjustedToZero(let amountInUnits, let conflictStartDate):
++                let treatmentAmountFormatted = Self.numberFormatter.string(from: HKQuantity(unit: .internationalUnit(), doubleValue: amountInUnits), unit: .internationalUnit()) ?? ""
++                return String(format: NSLocalizedString("All boluses delivered after %1$@ were subtracted from the requested bolus amount for safety. Those amount(s) exceed the requested amount of %2$@ so the remote bolus was not delivered.", comment: "Bolus error description: no remote bolus delivered."),  conflictStartDate.formatted(date: .omitted, time: .complete), treatmentAmountFormatted)
++            case .invalidCalculation:
++                return String(format: NSLocalizedString("An invalid bolus calculation occurred.", comment: "Bolus error description: invalid calculation."))
++            }
++        }
++        
++        static var numberFormatter: NumberFormatter = {
++            let formatter = NumberFormatter()
++            formatter.numberStyle = .decimal
++            return formatter
++        }()
++        
++        static var dateFormatter: DateFormatter = {
++            let formatter = DateFormatter()
++            formatter.timeStyle = .medium
++            return formatter
++        }()
++    }
+ }
+ 
+ // MARK: - Critical Event Log Export
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index 2319f4ec..737b9a9a 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -2478,7 +2478,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+     
+     //Overrides
+     
+-    func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws {
++    func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws -> TemporaryScheduleOverride {
+         
+         guard let preset = settings.overridePresets.first(where: { $0.name == name }) else {
+             throw EnactOverrideError.unknownPreset(name)
+@@ -2491,11 +2491,27 @@ extension LoopDataManager: ServicesManagerDelegate {
+         }
+         
+         await enactOverride(remoteOverride)
++        return remoteOverride
+     }
+     
+     
+-    func cancelCurrentOverride() async throws {
++    func cancelCurrentOverride() async throws -> TemporaryScheduleOverride {
++        guard let currentOverride = settings.scheduleOverride else {
++            throw OverrideCancelError.overrideNotActive
++        }
+         await enactOverride(nil)
++        return currentOverride
++    }
++    
++    enum OverrideCancelError: LocalizedError {
++        case overrideNotActive
++        
++        var errorDescription: String? {
++            switch self {
++            case .overrideNotActive:
++                return String(format: NSLocalizedString("No overrides active for cancellation", comment: "Cancel Override error description: override not active for cancellation."))
++            }
++        }
+     }
+     
+     func enactOverride(_ override: TemporaryScheduleOverride?) async {
+@@ -2516,7 +2532,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+     
+     //Carb Entry
+     
+-    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws {
++    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws -> StoredCarbEntry {
+         
+         let absorptionTime = absorptionTime ?? carbStore.defaultAbsorptionTimes.medium
+         if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
+@@ -2531,6 +2547,19 @@ extension LoopDataManager: ServicesManagerDelegate {
+             throw CarbActionError.exceedsMaxCarbs
+         }
+         
++        let maxAllowedConflictingAmountInGrams = 0.0 // Not allowing any carbs
++        let minTreatmentIntervalInMinutes = 10.0
++        let entries = try await carbStore.getCarbEntries(start: Date().addingTimeInterval(-.days(1)), end: Date().addingTimeInterval(.days(1)))
++        let conflictStartDate = userCreatedDate.addingTimeInterval(-.minutes(minTreatmentIntervalInMinutes)) // Look back a little further for added safety (i.e. Network delays)
++        let conflictingEntries = entries.filter({ entry in
++            let createdDate = entry.userCreatedDate ?? entry.startDate
++            return createdDate >= conflictStartDate
++        })
++        let conflictingCarbAmount = conflictingEntries.map({$0.quantity.doubleValue(for: .gram())}).reduce(0, {$0 + $1})
++        guard conflictingCarbAmount <= maxAllowedConflictingAmountInGrams else {
++            throw CarbActionError.conflictingTreatments(conflictingCarbAmount, minTreatmentIntervalInMinutes)
++        }
++        
+         if let startDate = startDate {
+             let maxStartDate = Date().addingTimeInterval(LoopConstants.maxCarbEntryFutureTime)
+             let minStartDate = Date().addingTimeInterval(LoopConstants.maxCarbEntryPastTime)
+@@ -2542,7 +2571,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+         let quantity = HKQuantity(unit: .gram(), doubleValue: amountInGrams)
+         let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate ?? Date(), foodType: foodType, absorptionTime: absorptionTime)
+         
+-        let _ = try await devliverCarbEntry(candidateCarbEntry)
++        return try await deliverCarbEntry(candidateCarbEntry)
+     }
+     
+     enum CarbActionError: LocalizedError {
+@@ -2551,9 +2580,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+         case invalidStartDate(Date)
+         case exceedsMaxCarbs
+         case invalidCarbs
++        case conflictingTreatments(_ conflictingAmountInGrams: Double, _ minutesRequiredBetweenTreatments: TimeInterval)
+         
+         var errorDescription: String? {
+-            switch  self {
++            switch self {
+             case .exceedsMaxCarbs:
+                 return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
+             case .invalidCarbs:
+@@ -2564,6 +2594,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+             case .invalidStartDate(let startDate):
+                 let startDateFormatted = Self.dateFormatter.string(from: startDate)
+                 return String(format: NSLocalizedString("Start time is out of range: %@", comment: "Carb error description: invalid start time is out of range."), startDateFormatted)
++            case .conflictingTreatments(let conflictingAmountInGrams, let minutesRequiredBetweenTreatments):
++                let treatmentAmountFormatted = Self.numberFormatter.string(from: HKQuantity(unit: .gram(), doubleValue: conflictingAmountInGrams), unit: .gram()) ?? ""
++                let minutesRequiredBetweenTreatmentsFormatted = Self.numberFormatter.string(from: minutesRequiredBetweenTreatments) ?? ""
++                return String(format: NSLocalizedString("Conflicting carb treatments (%1$@) have occurred. At least %2$@ minutes must pass between carb entries.", comment: "Carb error description: conflicting treatments occurred."), treatmentAmountFormatted, minutesRequiredBetweenTreatmentsFormatted)
+             }
+         }
+         
+@@ -2581,7 +2615,7 @@ extension LoopDataManager: ServicesManagerDelegate {
+     }
+     
+     //Can't add this concurrency wrapper method to LoopKit due to the minimum iOS version
+-    func devliverCarbEntry(_ carbEntry: NewCarbEntry) async throws -> StoredCarbEntry {
++    func deliverCarbEntry(_ carbEntry: NewCarbEntry) async throws -> StoredCarbEntry {
+         return try await withCheckedThrowingContinuation { continuation in
+             carbStore.addCarbEntry(carbEntry) { result in
+                 switch result {
+diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
+index 2393ceb0..9d1d3502 100644
+--- a/Loop/Loop/Managers/ServicesManager.swift
++++ b/Loop/Loop/Managers/ServicesManager.swift
+@@ -232,13 +232,13 @@ class ServicesManager {
+ }
+ 
+ public protocol ServicesManagerDosingDelegate: AnyObject {
+-    func deliverBolus(amountInUnits: Double) async throws
++    func deliverBolus(amountInUnits: Double, userCreatedDate: Date) async throws -> DoseEntry
+ }
+ 
+ public protocol ServicesManagerDelegate: AnyObject {
+-    func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws
+-    func cancelCurrentOverride() async throws
+-    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
++    func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws -> TemporaryScheduleOverride
++    func cancelCurrentOverride() async throws -> TemporaryScheduleOverride
++    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws -> StoredCarbEntry
+ }
+ 
+ // MARK: - StatefulPluggableDelegate
+@@ -273,7 +273,10 @@ extension ServicesManager: ServiceDelegate {
+         return semanticVersion
+     }
+     
+-    func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws {
++    func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws -> TemporaryScheduleOverride {
++        guard let servicesManagerDelegate else {
++            throw OverrideActionError.internalError
++        }
+         
+         var duration: TemporaryScheduleOverride.Duration? = nil
+         if let durationTime = durationTime {
+@@ -293,14 +296,16 @@ extension ServicesManager: ServiceDelegate {
+             }
+         }
+         
+-        try await servicesManagerDelegate?.enactOverride(name: name, duration: duration, remoteAddress: remoteAddress)
++        let override = try await servicesManagerDelegate.enactOverride(name: name, duration: duration, remoteAddress: remoteAddress)
+         await remoteDataServicesManager.triggerUpload(for: .overrides)
++        return override
+     }
+     
+     enum OverrideActionError: LocalizedError {
+         
+         case durationExceedsMax(TimeInterval)
+         case negativeDuration
++        case internalError
+         
+         var errorDescription: String? {
+             switch self {
+@@ -308,29 +313,55 @@ extension ServicesManager: ServiceDelegate {
+                 return String(format: NSLocalizedString("Duration exceeds: %1$.1f hours", comment: "Override error description: duration exceed max (1: max duration in hours)."), maxDurationTime.hours)
+             case .negativeDuration:
+                 return String(format: NSLocalizedString("Negative duration not allowed", comment: "Override error description: negative duration error."))
++            case .internalError:
++                return String(format: NSLocalizedString("Internal error", comment: "Override error description: Internal error."))
+             }
+         }
+     }
+     
+-    func cancelRemoteOverride() async throws {
+-        try await servicesManagerDelegate?.cancelCurrentOverride()
++    func cancelRemoteOverride() async throws -> TemporaryScheduleOverride {
++        guard let servicesManagerDelegate else {
++            throw CarbActionError.internalError
++        }
++        
++        let cancelledOverride = try await servicesManagerDelegate.cancelCurrentOverride()
+         await remoteDataServicesManager.triggerUpload(for: .overrides)
++        return cancelledOverride
+     }
+     
+-    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws {
++    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws -> StoredCarbEntry {
+         do {
+-            try await servicesManagerDelegate?.deliverCarbs(amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate)
++            guard let servicesManagerDelegate else {
++                throw CarbActionError.internalError
++            }
++            
++            let carbEntry = try await servicesManagerDelegate.deliverCarbs(amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate, userCreatedDate: userCreatedDate)
+             await NotificationManager.sendRemoteCarbEntryNotification(amountInGrams: amountInGrams)
+             await remoteDataServicesManager.triggerUpload(for: .carb)
+             analyticsServicesManager.didAddCarbs(source: "Remote", amount: amountInGrams)
++            return carbEntry
+         } catch {
+             await NotificationManager.sendRemoteCarbEntryFailureNotification(for: error, amountInGrams: amountInGrams)
+             throw error
+         }
+     }
+     
+-    func deliverRemoteBolus(amountInUnits: Double) async throws {
++    enum CarbActionError: LocalizedError {
++        case internalError
++        
++        var errorDescription: String? {
++            switch self {
++            case .internalError:
++                return NSLocalizedString("Internal error", comment: "Carb error description: internal error.")
++            }
++        }
++    }
++    
++    func deliverRemoteBolus(amountInUnits: Double, userCreatedDate: Date) async throws -> DoseEntry {
+         do {
++            guard let servicesManagerDosingDelegate else {
++                throw BolusActionError.internalError
++            }
+             
+             guard amountInUnits > 0 else {
+                 throw BolusActionError.invalidBolus
+@@ -344,10 +375,11 @@ extension ServicesManager: ServiceDelegate {
+                 throw BolusActionError.exceedsMaxBolus
+             }
+             
+-            try await servicesManagerDosingDelegate?.deliverBolus(amountInUnits: amountInUnits)
+-            await NotificationManager.sendRemoteBolusNotification(amount: amountInUnits)
++            let doseEntry = try await servicesManagerDosingDelegate.deliverBolus(amountInUnits: amountInUnits, userCreatedDate: userCreatedDate)
++            await NotificationManager.sendRemoteBolusNotification(amount: doseEntry.programmedUnits)
+             await remoteDataServicesManager.triggerUpload(for: .dose)
+             analyticsServicesManager.didBolus(source: "Remote", units: amountInUnits)
++            return doseEntry
+         } catch {
+             await NotificationManager.sendRemoteBolusFailureNotification(for: error, amountInUnits: amountInUnits)
+             throw error
+@@ -359,6 +391,7 @@ extension ServicesManager: ServiceDelegate {
+         case invalidBolus
+         case missingMaxBolus
+         case exceedsMaxBolus
++        case internalError
+         
+         var errorDescription: String? {
+             switch self {
+@@ -368,6 +401,8 @@ extension ServicesManager: ServiceDelegate {
+                 return NSLocalizedString("Missing maximum allowed bolus in settings", comment: "Bolus error description: missing maximum bolus in settings.")
+             case .exceedsMaxBolus:
+                 return NSLocalizedString("Exceeds maximum allowed bolus in settings", comment: "Bolus error description: bolus exceeds maximum bolus in settings.")
++            case .internalError:
++                return NSLocalizedString("Internal error", comment: "Bolus error description: internal error.")
+             }
+         }
+     }
+diff --git a/Loop/Loop/Managers/Store Protocols/CarbStoreProtocol.swift b/Loop/Loop/Managers/Store Protocols/CarbStoreProtocol.swift
+index a7ffef2e..41221127 100644
+--- a/Loop/Loop/Managers/Store Protocols/CarbStoreProtocol.swift	
++++ b/Loop/Loop/Managers/Store Protocols/CarbStoreProtocol.swift	
+@@ -51,6 +51,8 @@ protocol CarbStoreProtocol: AnyObject {
+     func getTotalCarbs(since start: Date, completion: @escaping (_ result: CarbStoreResult<CarbValue>) -> Void)
+     
+     func deleteCarbEntry(_ entry: StoredCarbEntry, completion: @escaping (_ result: CarbStoreResult<Bool>) -> Void)
++    
++    func getCarbEntries(start: Date?, end: Date?) async throws -> [StoredCarbEntry]
+ }
+ 
+ extension CarbStore: CarbStoreProtocol { }
+diff --git a/Loop/Loop/View Models/BolusEntryViewModel.swift b/Loop/Loop/View Models/BolusEntryViewModel.swift
+index a86f20e0..a4432efc 100644
+--- a/Loop/Loop/View Models/BolusEntryViewModel.swift	
++++ b/Loop/Loop/View Models/BolusEntryViewModel.swift	
+@@ -29,7 +29,7 @@ protocol BolusEntryViewModelDelegate: AnyObject {
+ 
+     func storeManualBolusDosingDecision(_ bolusDosingDecision: BolusDosingDecision, withDate date: Date)
+     
+-    func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping (_ error: Error?) -> Void)
++    func enactBolus(units: Double, activationType: BolusActivationType, completion: @escaping  (_ result: Swift.Result<DoseEntry, Error>) -> Void)
+     
+     func getGlucoseSamples(start: Date?, end: Date?, completion: @escaping (_ samples: Swift.Result<[StoredGlucoseSample], Error>) -> Void)
+ 
+Submodule LoopKit a03be57..5fb5cb2:
+diff --git a/LoopKit/LoopKit/InsulinKit/DoseStore.swift b/LoopKit/LoopKit/InsulinKit/DoseStore.swift
+index 5efe99ff..9381d75b 100644
+--- a/LoopKit/LoopKit/InsulinKit/DoseStore.swift
++++ b/LoopKit/LoopKit/InsulinKit/DoseStore.swift
+@@ -1268,8 +1268,18 @@ extension DoseStore {
+     public func getDoses(start: Date? = nil, end: Date? = nil) async throws -> [DoseEntry] {
+         return try await insulinDeliveryStore.getDoses(start: start, end: end)
+     }
+-
+-
++    
++    /// Retrieves doses overlapping supplied range
++    ///
++    /// - Parameters:
++    ///   - start: The earliest date of dose entries to retrieve.
++    ///   - end: The latest date of dose entries to retrieve, if provided.
++    ///   - includeMutable: Whether to include mutable dose entries or not.
++    ///   - completion: A closure called once the dose entries have been retrieved.
++    ///   - result: An array of dose entries, in chronological order by startDate, or error.
++    public func getDoses(start: Date, end: Date? = nil, includeMutable: Bool, completion: @escaping (_ result: Swift.Result<[DoseEntry], Error>) -> Void) {
++        insulinDeliveryStore.getDoseEntries(start: start, end: end, includeMutable: includeMutable, completion: completion)
++    }
+ 
+     /// Retrieves the maximum insulin on-board value from the two timeline values nearest to the specified date
+     ///
+diff --git a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
+index 7fdc53ad..e4279746 100644
+--- a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
++++ b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
+@@ -9,8 +9,8 @@
+ import Foundation
+ 
+ public protocol RemoteActionDelegate: AnyObject {
+-    func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws
+-    func cancelRemoteOverride() async throws
+-    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
+-    func deliverRemoteBolus(amountInUnits: Double) async throws
++    func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws -> TemporaryScheduleOverride
++    func cancelRemoteOverride() async throws -> TemporaryScheduleOverride
++    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws -> StoredCarbEntry
++    func deliverRemoteBolus(amountInUnits: Double, userCreatedDate: Date) async throws -> DoseEntry
+ }
+Submodule NightscoutService d839b66..676e4f0:
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
+index 4a85888..fd9290c 100644
+--- a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
++++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
+@@ -116,15 +116,13 @@ extension NightscoutClient {
+ }
+ 
+ extension NightscoutClient {
+-
+-    func createDoses(_ data: [DoseEntry], usingObjectIdCache objectIdCache: ObjectIdCache, completion: @escaping (Result<[String], Error>) -> Void) {
+-        guard !data.isEmpty else {
+-            completion(.success([]))
+-            return
+-        }
+-
+-        let source = "loop://\(UIDevice.current.name)"
+-        
++    
++    func createDoses(
++        _ data: [DoseEntry],
++        sourceMessage: (DoseEntry) -> String,
++        usingObjectIdCache objectIdCache: ObjectIdCache,
++        completion: @escaping (Result<[String], Error>) -> Void
++    ) {
+         let treatments = data.compactMap { (dose) -> NightscoutTreatment? in
+             var objectId: String? = nil
+             
+@@ -132,9 +130,13 @@ extension NightscoutClient {
+                 objectId = objectIdCache.findObjectIdBySyncIdentifier(syncIdentifier)
+             }
+             
+-            return dose.treatment(enteredBy: source, withObjectId: objectId)
++            return dose.treatment(enteredBy: sourceMessage(dose), withObjectId: objectId)
+         }
+         
++        guard !treatments.isEmpty else {
++            completion(.success([]))
++            return
++        }
+         
+         self.upload(treatments) { (result) in
+             switch result {
+diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+index 2d9b5d3..cbc127b 100644
+--- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
++++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+@@ -64,11 +64,13 @@ public final class NightscoutService: Service {
+     private let commandSourceV1: RemoteCommandSourceV1
+ 
+     private let log = OSLog(category: "NightscoutService")
++    
++    private let notificationExpirationInMinutes = 15.0
+ 
+     public init() {
+         self.isOnboarded = false
+         self.lockedObjectIdCache = Locked(ObjectIdCache())
+-        self.otpManager = OTPManager(secretStore: KeychainManager())
++        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
+         self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
+         self.commandSourceV1.delegate = self
+     }
+@@ -236,14 +238,37 @@ extension NightscoutService: RemoteDataService {
+     }
+ 
+     public var doseDataLimit: Int? { return 1000 }
+-
++    
+     public func uploadDoseData(created: [DoseEntry], deleted: [DoseEntry], completion: @escaping (_ result: Result<Bool, Error>) -> Void) {
++        Task {
++            let notificationHistory = await notificationHistory()
++            uploadDoseData(created: created, deleted: deleted, notificationHistory: notificationHistory, completion: completion)
++            
++            // Upload pending stored notifications
++            await uploadPendingNotifications()
++        }
++    }
++    
++    func uploadPendingNotifications() async {
++        await commandSourceV1.uploadPendingNotifications()
++    }
++
++    public func uploadDoseData(created: [DoseEntry], deleted: [DoseEntry], notificationHistory: [StoredRemoteNotification], completion: @escaping (_ result: Result<Bool, Error>) -> Void) {
+         guard hasConfiguration, let uploader = uploader else {
+             completion(.success(true))
+             return
+         }
+-
+-        uploader.createDoses(created, usingObjectIdCache: self.objectIdCache) { (result) in
++        
++        let deviceName = UIDevice.current.name
++        let sourceMessage: (DoseEntry) -> String = { (dose) -> String in
++            if notificationHistory.contains(where: { $0.containsDose(dose) }) {
++                return "Loop (via remote command)"
++            } else {
++                return "loop://\(deviceName)"
++            }
++        }
++        
++        uploader.createDoses(created, sourceMessage: sourceMessage, usingObjectIdCache: objectIdCache) { (result) in
+             switch (result) {
+             case .failure(let error):
+                 completion(.failure(error))
+@@ -256,7 +281,7 @@ extension NightscoutService: RemoteDataService {
+                     }
+                 }
+                 self.stateDelegate?.pluginDidUpdateState(self)
+-
++                
+                 uploader.deleteDoses(deleted.filter { !$0.isMutable }, usingObjectIdCache: self.objectIdCache) { result in
+                     switch result {
+                     case .failure(let error):
+@@ -399,8 +424,32 @@ extension NightscoutService: RemoteDataService {
+ 
+     
+     public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
++        guard let serviceDelegate else {
++            return
++        }
++
++        // Set the expiration to longer duration. Ideally this would be done in Nightscout instead.
++        var notification = notification
++        let dateFormatter = DateFormatter.iso8601DateDecoder
++        if let sentDateString = notification["sent-at"] as? String, let sentDate = dateFormatter.date(from: sentDateString) {
++            let expirationDate = sentDate.addingTimeInterval(60 * notificationExpirationInMinutes)
++            notification["expiration"] = dateFormatter.string(from: expirationDate) as AnyObject
++        }
++        
+         let commandSource = try commandSource(notification: notification)
+-        await commandSource.remoteNotificationWasReceived(notification)
++        await commandSource.remoteNotificationWasReceived(notification, serviceDelegate: serviceDelegate)
++    }
++    
++    public func notificationHistory() async -> [StoredRemoteNotification] {
++        return await commandSourceV1.notificationHistory()
++    }
++    
++    public func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]> {
++        return await commandSourceV1.notificationPublisher()
++    }
++    
++    public func deleteNotificationHistory() {
++        commandSourceV1.deleteNotificationHistory()
+     }
+     
+     private func commandSource(notification: [String: AnyObject]) throws -> RemoteCommandSource {
+@@ -410,31 +459,7 @@ extension NightscoutService: RemoteDataService {
+ }
+ 
+ extension NightscoutService: RemoteCommandSourceV1Delegate {
+-    
+-    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action) async throws {
+-        
+-        switch action {
+-        case .temporaryScheduleOverride(let overrideCommand):
+-            try await self.serviceDelegate?.enactRemoteOverride(
+-                name: overrideCommand.name,
+-                durationTime: overrideCommand.durationTime,
+-                remoteAddress: overrideCommand.remoteAddress
+-            )
+-        case .cancelTemporaryOverride:
+-            try await self.serviceDelegate?.cancelRemoteOverride()
+-        case .bolusEntry(let bolusCommand):
+-            try await self.serviceDelegate?.deliverRemoteBolus(amountInUnits: bolusCommand.amountInUnits)
+-        case .carbsEntry(let carbCommand):
+-            try await self.serviceDelegate?.deliverRemoteCarbs(
+-                amountInGrams: carbCommand.amountInGrams,
+-                absorptionTime: carbCommand.absorptionTime,
+-                foodType: carbCommand.foodType,
+-                startDate: carbCommand.startDate
+-            )
+-        }
+-    }
+-    
+-    func commandSourceV1(_: RemoteCommandSourceV1, uploadError error: Error, notification: [String: AnyObject]) async throws {
++    func commandSourceV1(_: RemoteCommandSourceV1, uploadError errorMessage: String, receivedDate: Date, notification: [String: AnyObject]) async throws {
+         
+         guard let uploader = self.uploader else {throw NightscoutServiceError.missingCredentials}
+         var commandDescription = "Loop Remote Action Error"
+@@ -446,12 +471,12 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+         let notificationJSONString = String(data: notificationJSON, encoding: .utf8) ?? ""
+         
+         let noteBody = """
+-        \(error.localizedDescription)
++        \(errorMessage)
+         \(notificationJSONString)
+         """
+ 
+         let treatment = NightscoutTreatment(
+-            timestamp: Date(),
++            timestamp: receivedDate,
+             enteredBy: commandDescription,
+             notes: noteBody,
+             eventType: .note
+diff --git a/NightscoutService/NightscoutServiceKit/OTPManager.swift b/NightscoutService/NightscoutServiceKit/OTPManager.swift
+index 3d51b72..07eeb07 100644
+--- a/NightscoutService/NightscoutServiceKit/OTPManager.swift
++++ b/NightscoutService/NightscoutServiceKit/OTPManager.swift
+@@ -77,7 +77,18 @@ public class OTPManager {
+     let maxOTPsToAccept: Int
+     
+     public static var defaultTokenPeriod: TimeInterval = 30
+-    public static var defaultMaxOTPsToAccept = 2
++    public static var defaultMaxOTPsToAccept = 30
++    
++    public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, maxMinutesValid: Double) {
++        self.secretStore = secretStore
++        self.nowDateSource = nowDateSource
++        self.tokenPeriod = OTPManager.defaultTokenPeriod
++        let secondsValid = 60.0 * maxMinutesValid
++        self.maxOTPsToAccept = Int(secondsValid / OTPManager.defaultTokenPeriod)
++        if secretStore.tokenSecretKey() == nil || secretStore.tokenSecretKeyName() == nil {
++            resetSecretKey()
++        }
++    }
+     
+     public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, tokenPeriod: TimeInterval = OTPManager.defaultTokenPeriod, maxOTPsToAccept: Int = OTPManager.defaultMaxOTPsToAccept) {
+         self.secretStore = secretStore
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
+index 3a56d81..b9fa438 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
+@@ -11,8 +11,10 @@ import Foundation
+ public struct BolusAction: Codable {
+     
+     public let amountInUnits: Double
++    public let userCreatedDate: Date
+     
+-    public init(amountInUnits: Double) {
++    public init(amountInUnits: Double, userCreatedDate: Date) {
+         self.amountInUnits = amountInUnits
++        self.userCreatedDate = userCreatedDate
+     }
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
+index 3865989..1a59d88 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
+@@ -14,11 +14,13 @@ public struct CarbAction: Codable{
+     public let absorptionTime: TimeInterval?
+     public let foodType: String?
+     public let startDate: Date?
++    public let userCreatedDate: Date
+     
+-    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil) {
++    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil, userCreatedDate: Date) {
+         self.amountInGrams = amountInGrams
+         self.absorptionTime = absorptionTime
+         self.foodType = foodType
+         self.startDate = startDate
++        self.userCreatedDate = userCreatedDate
+     }
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteCommandSource.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteCommandSource.swift
+index e3cea7f..eb57fac 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteCommandSource.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteCommandSource.swift
+@@ -9,5 +9,6 @@
+ import LoopKit
+ 
+ protocol RemoteCommandSource {
+-    func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async
++    func remoteNotificationWasReceived(_ notification: [String: AnyObject], serviceDelegate: ServiceDelegate) async
++    func notificationHistory() async -> [StoredRemoteNotification]
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
+index a0c00e9..22de5f2 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
+@@ -14,7 +14,7 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
+     public let amount: Double
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let otp: String?
+     public let enteredBy: String?
+     
+@@ -28,7 +28,11 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
+     }
+     
+     func toRemoteAction() -> Action {
+-        return .bolusEntry(BolusAction(amountInUnits: amount))
++        return .bolusEntry(toBolusAction())
++    }
++    
++    func toBolusAction() -> BolusAction {
++        return BolusAction(amountInUnits: amount, userCreatedDate: sentAt)
+     }
+     
+     func otpValidationRequired() -> Bool {
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
+index 39d4b9e..283924b 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
+@@ -17,7 +17,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
+     public let startDate: Date?
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let otp: String?
+     public let enteredBy: String?
+ 
+@@ -41,7 +41,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
+     }
+     
+     func toRemoteAction() -> Action {
+-        let action = CarbAction(amountInGrams: amount, absorptionTime: absorptionTime(), foodType: foodType, startDate: startDate)
++        let action = CarbAction(amountInGrams: amount, absorptionTime: absorptionTime(), foodType: foodType, startDate: startDate, userCreatedDate: sentAt)
+         return .carbsEntry(action)
+     }
+     
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
+index ac72b11..f3f8d20 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
+@@ -13,7 +13,7 @@ public struct OverrideCancelRemoteNotification: RemoteNotification, Codable {
+     
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let cancelOverride: String
+     public let enteredBy: String?
+     public let otp: String?
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
+index 65ff33f..19a5750 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
+@@ -15,7 +15,7 @@ public struct OverrideRemoteNotification: RemoteNotification, Codable {
+     public let durationInMinutes: Double?
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let enteredBy: String?
+     public let otp: String?
+     
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
+index bf629e8..0bc7ca1 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
+@@ -13,7 +13,7 @@ protocol RemoteNotification: Codable {
+     
+     var id: String {get}
+     var expiration: Date? {get}
+-    var sentAt: Date? {get}
++    var sentAt: Date {get}
+     var otp: String? {get}
+     var remoteAddress: String {get}
+     var enteredBy: String? {get}
+@@ -27,12 +27,8 @@ protocol RemoteNotification: Codable {
+ extension RemoteNotification {
+     
+     var id: String {
+-        //There is no unique identifier so we use the sent date when available
+-        if let sentAt = sentAt {
+-            return "\(sentAt.timeIntervalSince1970)"
+-        } else {
+-            return UUID().uuidString
+-        }
++        //There is no unique identifier so we use the sent date
++        return "\(sentAt.timeIntervalSince1970)"
+     }
+     
+     init(dictionary: [String: Any]) throws {
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
+index 26d9de0..5e075d3 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/RemoteCommandSourceV1.swift
+@@ -7,6 +7,7 @@
+ //
+ 
+ import Foundation
++import LoopKit
+ import OSLog
+ 
+ class RemoteCommandSourceV1: RemoteCommandSource {
+@@ -24,38 +25,431 @@ class RemoteCommandSourceV1: RemoteCommandSource {
+     
+     //MARK: RemoteCommandSource
+     
+-    func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async {
++    func remoteNotificationWasReceived(_ notification: [String: AnyObject], serviceDelegate: ServiceDelegate) async {
+         
++        guard let remoteNotification = try? notification.toRemoteNotification() else {
++            log.error("Remote Notification: Malformed notification payload")
++            return
++        }
++        
++        guard await !recentNotifications.contains(pushIdentifier: remoteNotification.id) else {
++            // Duplicate notifications are expected after app is force killed
++            // https://github.com/LoopKit/Loop/issues/2174
++            return
++        }
++
+         do {
+-            guard let delegate = delegate else {return}
+-            let remoteNotification = try notification.toRemoteNotification()
+-            guard await !recentNotifications.isDuplicate(remoteNotification) else {
+-                // Duplicate notifications are expected after app is force killed
+-                // https://github.com/LoopKit/Loop/issues/2174
+-                return
+-            }
++            try await recentNotifications.trackReceivedRemoteNotification(remoteNotification, rawNotification: notification)
+             try commandValidator.validate(remoteNotification: remoteNotification)
+-            try await delegate.commandSourceV1(self, handleAction: remoteNotification.toRemoteAction())
++            
++            switch remoteNotification.toRemoteAction() {
++            case .bolusEntry(let bolusCommand):
++                let doseEntry = try await serviceDelegate.deliverRemoteBolus(
++                    amountInUnits: bolusCommand.amountInUnits,
++                    userCreatedDate: bolusCommand.userCreatedDate
++                )
++                var adjustmentMessage: String? = nil
++                if bolusCommand.amountInUnits > doseEntry.programmedUnits {
++                    let quantityFormatter = QuantityFormatter(for: .internationalUnit())
++                    if let bolusAmountDescription = quantityFormatter.numberFormatter.string(from: bolusCommand.amountInUnits as NSNumber),
++                       let doseAmountDescription = quantityFormatter.numberFormatter.string(from: doseEntry.programmedUnits as NSNumber){
++                        adjustmentMessage = "Bolus amount was reduced from \(bolusAmountDescription) U to \(doseAmountDescription) U due to other recent treatments."
++                    }
++                }
++                await handleEnactmentCompletion(
++                    remoteNotification: remoteNotification,
++                    status: .success(date: Date(), syncIdentifier: doseEntry.syncIdentifier ?? "", completionMessage: adjustmentMessage),
++                    notificationJSON: notification
++                )
++            case .cancelTemporaryOverride:
++                let cancelledOverride = try await serviceDelegate.cancelRemoteOverride()
++                await handleEnactmentCompletion(
++                    remoteNotification: remoteNotification,
++                    status: .success(date: Date(), syncIdentifier: cancelledOverride.syncIdentifier.uuidString, completionMessage: nil),
++                    notificationJSON: notification
++                )
++            case .carbsEntry(let carbCommand):
++                let carbEntry = try await serviceDelegate.deliverRemoteCarbs(
++                    amountInGrams: carbCommand.amountInGrams,
++                    absorptionTime: carbCommand.absorptionTime,
++                    foodType: carbCommand.foodType,
++                    startDate: carbCommand.startDate,
++                    userCreatedDate: carbCommand.userCreatedDate
++                )
++                await handleEnactmentCompletion(
++                    remoteNotification: remoteNotification,
++                    status: .success(date: Date(), syncIdentifier: carbEntry.syncIdentifier ?? "", completionMessage: nil),
++                    notificationJSON: notification
++                )
++            case .temporaryScheduleOverride(let overrideCommand):
++                let override = try await serviceDelegate.enactRemoteOverride(
++                    name: overrideCommand.name,
++                    durationTime: overrideCommand.durationTime,
++                    remoteAddress: overrideCommand.remoteAddress
++                )
++                await handleEnactmentCompletion(
++                    remoteNotification: remoteNotification,
++                    status: .success(date: Date(), syncIdentifier: override.syncIdentifier.uuidString, completionMessage: nil),
++                    notificationJSON: notification
++                )
++            }
+         } catch {
+             log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: notification), String(describing: error))
+-            try? await self.delegate?.commandSourceV1(self, uploadError: error, notification: notification)
++            await handleEnactmentCompletion(
++                remoteNotification: remoteNotification,
++                status: .failure(date: Date(), errorMessage: error.localizedDescription),
++                notificationJSON: notification
++            )
++        }
++    }
++    
++    func handleEnactmentCompletion(
++        remoteNotification: RemoteNotification,
++        status: RemoteNotificationStatus,
++        notificationJSON: [String: AnyObject]
++    ) async {
++        do {
++            let storedNotification = try await recentNotifications.updateStatus(status, for: remoteNotification.id)
++            await uploadStoredNotification(storedNotification)
++        } catch {
++            log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: notificationJSON), String(describing: error))
++        }
++    }
++    
++    func uploadStoredNotification(_ storedNotification: StoredRemoteNotification) async {
++        do {
++            switch storedNotification.status {
++            case .success(_, _, let completionMessage):
++                if let completionMessage {
++                    // Store adjustments as an error note to Nightscout
++                    // try await self.delegate?.commandSourceV1(self, uploadError: completionMessage, receivedDate: storedNotification.receivedDate, notification: storedNotification.notificationJSON())
++                }
++            case .failure(_, let errorMessage):
++                try await self.delegate?.commandSourceV1(self, uploadError: errorMessage, receivedDate: storedNotification.receivedDate, notification: storedNotification.notificationJSON())
++            case .none:
++                return
++            }
++            try await recentNotifications.updateUploadStatus(true, for: storedNotification.pushIdentifier)
++        } catch {
++            log.error("Remote Notification: %{public}@. Error: %{public}@", String(describing: storedNotification), String(describing: error))
++        }
++    }
++    
++    func notificationHistory() async -> [StoredRemoteNotification] {
++        return await recentNotifications.notifications
++    }
++    
++    /// Uploads pending notifications. Limited to a few at a time to avoid long background delays.
++    func uploadPendingNotifications() async {
++        guard let mostRecentPendingNotification = await notificationHistory().filter({$0.isPendingUpload}).sorted(by: {$0.receivedDate > $1.receivedDate}).last else {
++            return
++        }
++        await uploadStoredNotification(mostRecentPendingNotification)
++    }
++    
++    func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]> {
++        return await recentNotifications.notificationPublisher()
++    }
++    
++    func deleteNotificationHistory() {
++        Task {
++            await recentNotifications.deleteNotificationHistory()
+         }
+     }
+ }
+ 
+ protocol RemoteCommandSourceV1Delegate: AnyObject {
+-    func commandSourceV1(_: RemoteCommandSourceV1, handleAction action: Action) async throws
+-    func commandSourceV1(_: RemoteCommandSourceV1, uploadError error: Error, notification: [String: AnyObject]) async throws
++    func commandSourceV1(_: RemoteCommandSourceV1, uploadError errorMessage: String, receivedDate: Date, notification: [String: AnyObject]) async throws
+ }
+ 
+-private actor RecentNotifications {
+-    private var recentNotifications = [RemoteNotification]()
++// MARK: Notification history
++
++public class StoredRemoteNotification: NSObject, Codable {
++    public let remoteNotificationType: RemoteNotificationType
++    public let notificationJSONData: Data
++    public var status: RemoteNotificationStatus? = nil
++    public var receivedDate: Date
++    public var uploaded: Bool = false
++    
++    init(notificationType: RemoteNotificationType, notificationJSONData: Data) {
++        self.remoteNotificationType = notificationType
++        self.notificationJSONData = notificationJSONData
++        self.receivedDate = Date()
++        self.uploaded = false
++    }
++    
++    convenience init(bolusNotification: BolusRemoteNotification, notificationJSONData: Data) {
++        self.init(notificationType: .bolus(bolusNotification), notificationJSONData: notificationJSONData)
++    }
+     
+-    func isDuplicate(_ remoteNotification: RemoteNotification) -> Bool {
+-        if recentNotifications.contains(where: {remoteNotification.id == $0.id}) {
++    convenience init(carbNotification: CarbRemoteNotification, notificationJSONData: Data) {
++        self.init(notificationType: .carbs(carbNotification), notificationJSONData: notificationJSONData)
++    }
++    
++    convenience init(overrideNotification: OverrideRemoteNotification, notificationJSONData: Data) {
++        self.init(notificationType: .override(overrideNotification), notificationJSONData: notificationJSONData)
++    }
++    
++    convenience init(overrideCancelNotification: OverrideCancelRemoteNotification, notificationJSONData: Data) {
++        self.init(notificationType: .overrideCancel(overrideCancelNotification), notificationJSONData: notificationJSONData)
++    }
++    
++    public var pushIdentifier: String {
++        return remoteNotification().id
++    }
++    
++    var isPendingUpload: Bool {
++        guard !uploaded else {
++            return false
++        }
++        switch status {
++        case .success, .failure:
+             return true
++        case nil:
++            return false
++        }
++    }
++    
++    func containsDose(_ dose: DoseEntry) -> Bool {
++        guard case let .bolus(bolusNotification) = remoteNotificationType else {
++            return false
++        }
++        
++        if case let .success(_, syncIdentifier: syncIdentifier, _) = status {
++            return dose.syncIdentifier == syncIdentifier
++        }
++        
++        // If sync identifier not set yet, that could mean either a failure occurred
++        // or we are in the middle of processing this notification.
++        // Doses start uploading during remote bolus action,
++        // before syncIdentifier is set to StoredRemoteAction.
++        // Heuristics are used to match the dose.
++        guard isDateWithinEnactmentPeriod(dose.startDate) else {
++            return false
++        }
++        
++        return dose.programmedUnits <= bolusNotification.amount
++    }
++    
++    func isDateWithinEnactmentPeriod(_ date: Date) -> Bool {
++        guard date.isAfterOrEqual(otherDate: receivedDate) else {
++            return false
++        }
++        
++        guard let completionDate else {
++            // Either enactment is in progress or there was an app crash during enactment
++            // For the corner case of an app crash, we want only want to match if the
++            // received date is within a few minutes. It should be within seconds really
++            // but minutes help when paused in the Xcode debugger.
++            return date.timeIntervalSince(receivedDate) < 60 * 5
++        }
++        
++        guard date.isBeforeOrEqual(otherDate: completionDate) else {
++            return false
++        }
++        
++        return true
++    }
++    
++    var completionDate: Date? {
++        guard let status else {
++            return nil
++        }
++        switch status {
++        case .success(let completionDate, _, _):
++            return completionDate
++        case .failure(let completionDate, _):
++            return completionDate
++        }
++    }
++    
++    func remoteNotification() -> RemoteNotification {
++        switch remoteNotificationType {
++            case let .bolus(bolusNotification):
++            return bolusNotification
++        case let .carbs(carbNotification):
++            return carbNotification
++        case let .override(overrideNotification):
++            return overrideNotification
++        case let .overrideCancel(overrideCancelNotification):
++            return overrideCancelNotification
++        }
++    }
++    
++    public func remoteAction() -> Action {
++        return remoteNotification().toRemoteAction()
++    }
++    
++    func notificationJSON() throws -> [String: AnyObject] {
++        let jsonObject = try JSONSerialization.jsonObject(with: notificationJSONData, options: [])
++        guard let notificationJSON = jsonObject as? [String: AnyObject] else {
++            throw StoredRemoteNotificationError.notificationJSONTypeIncorrect
++        }
++        return notificationJSON
++    }
++    
++    enum StoredRemoteNotificationError: Error {
++        case notificationJSONTypeIncorrect
++    }
++    
++    public enum RemoteNotificationType: Codable {
++        case bolus(BolusRemoteNotification)
++        case carbs(CarbRemoteNotification)
++        case override(OverrideRemoteNotification)
++        case overrideCancel(OverrideCancelRemoteNotification)
++    }
++}
++
++public enum RemoteNotificationStatus: Codable, Equatable {
++    case success(date: Date, syncIdentifier: String, completionMessage: String?)
++    case failure(date: Date, errorMessage: String)
++}
++
++actor RecentNotifications {
++    var notifications: [StoredRemoteNotification] = []
++    private var continuation: AsyncStream<[StoredRemoteNotification]>.Continuation?
++    
++    init() {
++        Task {
++            await loadNotifications()
++        }
++    }
++    
++    // Publish
++    
++    func notificationPublisher() -> AsyncStream<[StoredRemoteNotification]> {
++        return AsyncStream { continuation in
++            self.continuation = continuation
++            continuation.yield(notifications)
++        }
++    }
++    
++    private func publish(notifications: [StoredRemoteNotification]) {
++        self.notifications = notifications
++        continuation?.yield(notifications)
++    }
++    
++    // Misc
++    
++    func contains(pushIdentifier: String) -> Bool {
++        return storedNotification(for: pushIdentifier) != nil
++    }
++    
++    func storedNotification(for id: String) -> StoredRemoteNotification? {
++        return notifications.first(where: {$0.pushIdentifier == id})
++    }
++    
++    func trackReceivedRemoteNotification(_ remoteNotification: RemoteNotification, rawNotification: [String : AnyObject]) throws {
++        let data = try JSONSerialization.data(withJSONObject: rawNotification, options: [])
++        if let bolusNotification = remoteNotification as? BolusRemoteNotification {
++            let storedNotification = StoredRemoteNotification(bolusNotification: bolusNotification, notificationJSONData: data)
++            try storeNotification(storedNotification)
++        } else if let carbNotification = remoteNotification as? CarbRemoteNotification {
++            let storedNotification = StoredRemoteNotification(carbNotification: carbNotification, notificationJSONData: data)
++            try storeNotification(storedNotification)
++        } else if let overrideNotification = remoteNotification as? OverrideRemoteNotification {
++            let storedNotification = StoredRemoteNotification(overrideNotification: overrideNotification, notificationJSONData: data)
++            try storeNotification(storedNotification)
++        } else if let overrideCancelNotification = remoteNotification as? OverrideCancelRemoteNotification {
++            let storedNotification = StoredRemoteNotification(overrideCancelNotification: overrideCancelNotification, notificationJSONData: data)
++            try storeNotification(storedNotification)
++        } else {
++            fatalError()
++        }
++    }
++    
++    func updateStatus(_ status: RemoteNotificationStatus, for pushIdentifier: String) throws -> StoredRemoteNotification {
++        guard let storedNotification = storedNotification(for: pushIdentifier) else {
++            throw RemoteNotificationError.notificationNotFound(pushIdentifier)
++        }
++        storedNotification.status = status
++        try storeNotification(storedNotification)
++        return storedNotification
++    }
++    
++    func updateUploadStatus(_ uploaded: Bool, for pushIdentifier: String) throws {
++        guard let storedNotification = storedNotification(for: pushIdentifier) else {
++            throw RemoteNotificationError.notificationNotFound(pushIdentifier)
+         }
+-        recentNotifications.append(remoteNotification)
+-        return false
++        
++        storedNotification.uploaded = uploaded
++        try storeNotification(storedNotification)
++    }
++    
++    func storeNotification(_ storedNotification: StoredRemoteNotification) throws {
++        var updatedNotifications = notifications
++        if let index = updatedNotifications.firstIndex(where: {$0.pushIdentifier == storedNotification.pushIdentifier}) {
++            updatedNotifications.remove(at: index)
++            updatedNotifications.insert(storedNotification, at: index)
++        } else {
++            updatedNotifications.append(storedNotification)
++        }
++        
++        let maxCountToStore = 50
++        if updatedNotifications.count > maxCountToStore {
++            updatedNotifications = Array(updatedNotifications.dropFirst(updatedNotifications.count - maxCountToStore))
++        }
++        
++        try storeNotifications(updatedNotifications)
++    }
++    
++    func deleteNotificationHistory() {
++        do {
++            try storeNotifications([])
++        } catch {
++            print(error)
++        }
++    }
++    
++    // Disk Operations
++    
++    private func loadNotifications() {
++        do {
++            let notifications = try notificationsFromDisk()
++            publish(notifications: notifications)
++        } catch {
++            print("Error decoding JSON - will delete history: \(error)")
++            // Error in history - deleting
++            deleteNotificationHistory()
++        }
++    }
++    
++    private func notificationsFromDisk() throws -> [StoredRemoteNotification] {
++        let data = try Data(contentsOf: remoteHistoryJSONURL)
++        return try JSONDecoder().decode([StoredRemoteNotification].self, from: data)
++    }
++    
++    private func storeNotifications(_ notifications: [StoredRemoteNotification]) throws {
++        let notificationJSON = try JSONEncoder().encode(notifications)
++        try notificationJSON.write(to: remoteHistoryJSONURL)
++        publish(notifications: notifications)
++    }
++    
++    private var remoteHistoryJSONURL: URL {
++        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last!.appendingPathComponent("remote_notifications.json")
++    }
++}
++
++enum RemoteNotificationError: LocalizedError {
++    case unhandledNotification([String: AnyObject])
++    case notificationNotFound(String)
++    
++    var errorDescription: String? {
++        switch self {
++        case .unhandledNotification(let notification):
++            return String(format: NSLocalizedString("Unhandled Notification: %1$@", comment: "The prefix for the remote unhandled notification error. (1: notification payload)"), notification)
++        case .notificationNotFound(let notificationID):
++            return String(format: NSLocalizedString("Notification Not Found: %1$@", comment: "The remote notification not found error. (1: notification ID)"), notificationID)
++        }
++    }
++}
++
++extension Date {
++    func isBeforeOrEqual(otherDate: Date) -> Bool {
++        return timeIntervalSince(otherDate) <= 0
++    }
++    
++    func isAfterOrEqual(otherDate: Date) -> Bool {
++        return timeIntervalSince(otherDate) >= 0
+     }
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
+index 634eb4e..035dcb4 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
+@@ -29,7 +29,7 @@ struct RemoteCommandValidator {
+         }
+         
+         if nowDateSource() > expirationDate {
+-            throw NotificationValidationError.expiredNotification
++            throw NotificationValidationError.expiredNotification(sentDate: remoteNotification.sentAt, receivedDate: nowDateSource())
+         }
+     }
+     
+@@ -44,14 +44,19 @@ struct RemoteCommandValidator {
+     
+     enum NotificationValidationError: LocalizedError {
+         case missingOTP
+-        case expiredNotification
++        case expiredNotification(sentDate: Date, receivedDate: Date)
+         
+         var errorDescription: String? {
+             switch  self {
+             case .missingOTP:
+                 return LocalizedString("Missing OTP", comment: "Remote command error description: Missing OTP.")
+-            case .expiredNotification:
+-                return LocalizedString("Expired", comment: "Remote command error description: expired.")
++            case .expiredNotification(let sentDate, let receivedDate):
++                let errorMessage = String(
++                    format: "Remote Command expired. It was sent at %@ and received by Loop at %@.",
++                    sentDate.formatted(date: .omitted, time: .shortened),
++                    receivedDate.formatted(date: .omitted, time: .shortened)
++                )
++                return LocalizedString(errorMessage, comment: "Remote command error description: expired.")
+             }
+         }
+     }
+diff --git a/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift b/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
+index 3d54080..74a37dd 100644
+--- a/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
++++ b/NightscoutService/NightscoutServiceKitUI/Models/ServiceStatusViewModel.swift
+@@ -13,6 +13,9 @@ import LoopKit
+ 
+ protocol ServiceStatusViewModelDelegate {
+     func verifyConfiguration(completion: @escaping (Error?) -> Void)
++    func notificationHistory() async -> [StoredRemoteNotification]
++    func notificationPublisher() async -> AsyncStream<[StoredRemoteNotification]>
++    func deleteNotificationHistory()
+     var siteURL: URL? { get }
+ }
+ 
+@@ -37,7 +40,8 @@ extension ServiceStatus: CustomStringConvertible {
+ 
+ class ServiceStatusViewModel: ObservableObject {
+     @Published var status: ServiceStatus = .checking
+-        
++    @Published var notificationHistory = [StoredRemoteNotification]()
++    @Published var remoteCommands = [RemoteCommand]()
+     let delegate: ServiceStatusViewModelDelegate
+     var didLogout: (() -> Void)?
+     
+@@ -47,6 +51,14 @@ class ServiceStatusViewModel: ObservableObject {
+ 
+     init(delegate: ServiceStatusViewModelDelegate) {
+         self.delegate = delegate
++        listenForNotifications(from: delegate)
++        
++        Task {
++            do {
++                let notifications = await delegate.notificationHistory()
++                await updateNotifications(with: notifications)
++            }
++        }
+         
+         delegate.verifyConfiguration { (error) in
+             DispatchQueue.main.async {
+@@ -58,4 +70,102 @@ class ServiceStatusViewModel: ObservableObject {
+             }
+         }
+     }
++    
++    func deleteNotificationHistory() {
++        delegate.deleteNotificationHistory()
++    }
++    
++    func listenForNotifications(from delegate: ServiceStatusViewModelDelegate) {
++        Task {
++            let notificationsStream = await delegate.notificationPublisher()
++            for await notifications in notificationsStream {
++                await updateNotifications(with: notifications)
++            }
++        }
++    }
++    
++    @MainActor
++    func updateNotifications(with notifications: [StoredRemoteNotification]) {
++        remoteCommands = notifications.map({.init(notification: $0)})
++            .sorted { (lhs: RemoteCommand, rhs: RemoteCommand) in
++                return lhs.receivedDate > rhs.receivedDate
++            }
++    }
++}
++
++struct RemoteCommand: Equatable, Hashable {
++    let id: String
++    let receivedDate: Date
++    let actionName: String
++    let createdDateDescription: String
++    let details: String
++    let statusMessage: String
++    let isError: Bool
++    
++    init(notification: StoredRemoteNotification) {
++        self.id = notification.pushIdentifier
++        self.receivedDate = notification.receivedDate
++        self.actionName = notification.actionName
++        self.createdDateDescription = notification.createdDateDescription
++        self.details = notification.details
++        self.statusMessage = notification.statusMessage
++        self.isError = notification.isError
++    }
++}
++
++extension StoredRemoteNotification {
++    
++    var actionName: String {
++        switch remoteAction() {
++        case .bolusEntry:
++            return "Bolus"
++        case .carbsEntry:
++            return "Carbs"
++        case .cancelTemporaryOverride:
++            return "Cancel Override"
++        case .temporaryScheduleOverride:
++            return "Override"
++        }
++    }
++    
++    var createdDateDescription: String {
++        return receivedDate.formatted(.dateTime)
++    }
++    
++    var details: String {
++        switch remoteAction() {
++        case .bolusEntry(let bolusEntry):
++            return "\(bolusEntry.amountInUnits.formatted()) U"
++        case .carbsEntry(let carbAction):
++            return "\(carbAction.amountInGrams.formatted()) G"
++        case .cancelTemporaryOverride:
++            return ""
++        case .temporaryScheduleOverride(let override):
++            return override.name
++        }
++    }
++    
++    var statusMessage: String {
++        guard let status else {
++            return ""
++        }
++        switch status {
++        case .success(_, _, let completionMessage):
++            return completionMessage ?? ""
++        case .failure(_, let errorMessage):
++            return errorMessage
++        }
++    }
++    
++    var isError: Bool {
++        guard let status else {
++            return false
++        }
++        switch status {
++        case .success:
++            return false
++        case .failure:
++            return true
++        }
++    }
+ }
+diff --git a/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift b/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
+index 4ecbdde..a450bd1 100644
+--- a/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
++++ b/NightscoutService/NightscoutServiceKitUI/Views/ServiceStatusView.swift
+@@ -26,35 +26,45 @@ struct ServiceStatusView: View, HorizontalSizeClassOverride {
+                 .aspectRatio(contentMode: .fill)
+                 .frame(width: 150, height: 150)
+             
+-
+-            VStack(spacing: 0) {
+-                HStack {
+-                    Text("URL")
+-                    Spacer()
+-                    Text(viewModel.urlString)
+-                }
+-                .padding()
+-                Divider()
+-                HStack {
+-                    Text("Status")
+-                    Spacer()
+-                    Text(String(describing: viewModel.status))
+-                }
+-                .padding()
+-                Divider()
+-                NavigationLink(destination: OTPSelectionView(otpViewModel: otpViewModel), tag: "otp-view", selection: $selectedItem) {
++            List {
++                Section() {
++                    HStack {
++                        Text("URL")
++                        Spacer()
++                        Text(viewModel.urlString)
++                    }
+                     HStack {
+-                        Text("One-Time Password")
++                        Text("Status")
+                         Spacer()
+-                        Text(otpViewModel.otpCode)
+-                        Image(systemName: "chevron.right")
+-                            .font(.caption)
++                        Text(String(describing: viewModel.status))
+                     }
+-                }.foregroundColor(Color.primary)
+-                .padding()
++                    NavigationLink(destination: OTPSelectionView(otpViewModel: otpViewModel), tag: "otp-view", selection: $selectedItem) {
++                        HStack {
++                            Text("One-Time Password")
++                            Spacer()
++                            Text(otpViewModel.otpCode)
++                        }
++                    }
++                }
++                Section("Remote Commands") {
++                    ForEach(viewModel.remoteCommands, id: \.id){ command in
++                        VStack(alignment: .leading) {
++                            HStack {
++                                Text(command.actionName)
++                                Spacer()
++                                Text(command.createdDateDescription)
++                            }
++                            Text(command.details)
++                            Text(command.statusMessage)
++                                .foregroundStyle(command.isError ? .red : .primary)
++                            
++                        }
++                    }
++                    Button("Remove History") {
++                        viewModel.deleteNotificationHistory()
++                    }
++                }
+             }
+-            .background(Color(UIColor.secondarySystemBackground))
+-            .cornerRadius(10)
+             
+             Button(action: {
+                 viewModel.didLogout?()
+@@ -62,7 +72,6 @@ struct ServiceStatusView: View, HorizontalSizeClassOverride {
+                 Text("Logout").padding(.top, 20)
+             }
+         }
+-        .padding([.leading, .trailing])
+         .navigationBarTitle("")
+         .navigationBarItems(trailing: dismissButton)
+     }
