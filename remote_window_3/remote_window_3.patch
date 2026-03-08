@@ -179,7 +179,7 @@ index c9aef285..ff60c424 100644
          }
          
 +        let maxAllowedConflictingAmountInGrams = 0.0 // Not allowing any carbs
-+        let minTreatmentIntervalInMinutes = 10.0
++        let minTreatmentIntervalInMinutes = 3.0
 +        let entries = try await carbStore.getCarbEntries(start: Date().addingTimeInterval(-.days(1)), end: Date().addingTimeInterval(.days(1)))
 +        let conflictStartDate = userCreatedDate.addingTimeInterval(-.minutes(minTreatmentIntervalInMinutes)) // Look back a little further for added safety (i.e. Network delays)
 +        let conflictingEntries = entries.filter({ entry in
