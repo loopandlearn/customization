@@ -1,32 +1,37 @@
 diff --git a/.gitmodules b/.gitmodules
-index f3472ea..91b8525 100644
+index f3472ea..7e74758 100644
 --- a/.gitmodules
 +++ b/.gitmodules
-@@ -61,3 +61,6 @@
- [submodule "EversenseKit"]
- 	path = EversenseKit
- 	url = https://github.com/bastiaanv/EversenseKit
+@@ -10,6 +10,9 @@
+ [submodule "dexcom-share-client-swift"]
+ 	path = dexcom-share-client-swift
+ 	url = https://github.com/LoopKit/dexcom-share-client-swift.git
 +[submodule "xdrip-client-swift"]
 +	path = xdrip-client-swift
 +	url = https://github.com/johandegraeve/xdrip-client-swift-1.git
+ [submodule "RileyLinkKit"]
+ 	path = RileyLinkKit
+ 	url = https://github.com/LoopKit/RileyLinkKit
 diff --git a/LoopWorkspace.xcworkspace/contents.xcworkspacedata b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
-index fed13e7..c4fdd8b 100644
+index fed13e7..0247b29 100644
 --- a/LoopWorkspace.xcworkspace/contents.xcworkspacedata
 +++ b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
-@@ -135,4 +135,7 @@
+@@ -87,6 +87,9 @@
     <FileRef
-       location = "group:LoopOnboarding/LoopOnboarding.xcodeproj">
+       location = "group:dexcom-share-client-swift/ShareClient.xcodeproj">
     </FileRef>
 +   <FileRef
 +      location = "group:xdrip-client-swift/xDripClient.xcodeproj">
 +   </FileRef>
- </Workspace>
+    <FileRef
+       location = "group:AmplitudeService/AmplitudeService.xcodeproj">
+    </FileRef>
 diff --git a/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme b/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
-index 19f95ce..d381222 100644
+index 19f95ce..6510de6 100644
 --- a/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
 +++ b/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
-@@ -174,6 +174,20 @@
-                ReferencedContainer = "container:OmnipodKit/OmnipodKit.xcodeproj">
+@@ -188,6 +188,20 @@
+                ReferencedContainer = "container:dexcom-share-client-swift/ShareClient.xcodeproj">
              </BuildableReference>
           </BuildActionEntry>
 +         <BuildActionEntry
