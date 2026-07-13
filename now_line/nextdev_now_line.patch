@@ -22,6 +22,29 @@ index caa8f96e..19bf66e3 100644
              xAxisLayer,
              yAxisLayer,
              cobChartCache?.highlightLayer,
+diff --git a/LoopKit/LoopKitUI/Charts/CarbEffectChart.swift b/LoopKit/LoopKitUI/Charts/CarbEffectChart.swift
+index b1c893f5..b56d7b32 100644
+--- a/LoopKit/LoopKitUI/Charts/CarbEffectChart.swift
++++ b/LoopKit/LoopKitUI/Charts/CarbEffectChart.swift
+@@ -105,6 +105,10 @@ extension CarbEffectChart {
+             axisValuesY: yAxisValues
+         )
+ 
++        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.carbTint, linesWidth: 1.0)
++        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
++
+         // 0-line
+         let dummyZeroChartPoint = ChartPoint(x: ChartAxisValueDouble(0), y: ChartAxisValueDouble(0))
+         let zeroGuidelineLayer = ChartPointsViewsLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, chartPoints: [dummyZeroChartPoint], viewGenerator: {(chartPointModel, layer, chart) -> UIView? in
+@@ -130,6 +134,7 @@ extension CarbEffectChart {
+ 
+         let layers: [ChartLayer?] = [
+             gridLayer,
++            currentTimeLayer,
+             xAxisLayer,
+             yAxisLayer,
+             zeroGuidelineLayer,
 diff --git a/LoopKit/LoopKitUI/Charts/DoseChart.swift b/LoopKit/LoopKitUI/Charts/DoseChart.swift
 index 28b66f77..8cd83419 100644
 --- a/LoopKit/LoopKitUI/Charts/DoseChart.swift
@@ -40,6 +63,29 @@ index 28b66f77..8cd83419 100644
              manualBolusLayer,
              autoBolusLayer
          ]
+diff --git a/LoopKit/LoopKitUI/Charts/GlucoseCarbChart.swift b/LoopKit/LoopKitUI/Charts/GlucoseCarbChart.swift
+index 5efabbed..2a89de4e 100644
+--- a/LoopKit/LoopKitUI/Charts/GlucoseCarbChart.swift
++++ b/LoopKit/LoopKitUI/Charts/GlucoseCarbChart.swift
+@@ -68,6 +68,10 @@ extension GlucoseCarbChart {
+         // Grid lines
+         let gridLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: guideLinesLayerSettings, axisValuesX: Array(xAxisValues.dropFirst().dropLast()), axisValuesY: yAxisValues)
+ 
++        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.glucoseTint, linesWidth: 1.0)
++        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
++
+         let circles = ChartPointsScatterCirclesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, chartPoints: glucosePoints, displayDelay: 0, itemSize: CGSize(width: 4, height: 4), itemFillColor: colors.glucoseTint, optimized: true)
+         
+         // Carb points are highlighted in green with a circle 22 points in size
+@@ -92,6 +96,7 @@ extension GlucoseCarbChart {
+ 
+         let layers: [ChartLayer?] = [
+             gridLayer,
++            currentTimeLayer,
+             xAxisLayer,
+             yAxisLayer,
+             glucoseChartCache?.highlightLayer,
 diff --git a/LoopKit/LoopKitUI/Charts/IOBChart.swift b/LoopKit/LoopKitUI/Charts/IOBChart.swift
 index 06d8723a..c6857edc 100644
 --- a/LoopKit/LoopKitUI/Charts/IOBChart.swift
@@ -56,6 +102,29 @@ index 06d8723a..c6857edc 100644
          let dummyZeroChartPoint = ChartPoint(x: ChartAxisValueDouble(0), y: ChartAxisValueDouble(0))
          let zeroGuidelineLayer = ChartPointsViewsLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, chartPoints: [dummyZeroChartPoint], viewGenerator: {(chartPointModel, layer, chart) -> UIView? in
 @@ -91,6 +95,7 @@ public extension IOBChart {
+ 
+         let layers: [ChartLayer?] = [
+             gridLayer,
++            currentTimeLayer,
+             xAxisLayer,
+             yAxisLayer,
+             zeroGuidelineLayer,
+diff --git a/LoopKit/LoopKitUI/Charts/LegacyDoseChart.swift b/LoopKit/LoopKitUI/Charts/LegacyDoseChart.swift
+index 82caa52e..8e8907c8 100644
+--- a/LoopKit/LoopKitUI/Charts/LegacyDoseChart.swift
++++ b/LoopKit/LoopKitUI/Charts/LegacyDoseChart.swift
+@@ -107,6 +107,10 @@ public extension LegacyDoseChart {
+         // Grid lines
+         let gridLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: guideLinesLayerSettings, axisValuesX: Array(xAxisValues.dropFirst().dropLast()), axisValuesY: yAxisValues)
+ 
++        let currentTimeValue = ChartAxisValueDate(date: Date(), formatter: { _ in "" })
++        let currentTimeSettings = ChartGuideLinesLayerSettings(linesColor: colors.insulinTint, linesWidth: 1.0)
++        let currentTimeLayer = ChartGuideLinesForValuesLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, settings: currentTimeSettings, axisValuesX: [currentTimeValue], axisValuesY: [])
++
+         // 0-line
+         let dummyZeroChartPoint = ChartPoint(x: ChartAxisValueDouble(0), y: ChartAxisValueDouble(0))
+         let zeroGuidelineLayer = ChartPointsViewsLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, chartPoints: [dummyZeroChartPoint], viewGenerator: {(chartPointModel, layer, chart) -> UIView? in
+@@ -132,6 +136,7 @@ public extension LegacyDoseChart {
  
          let layers: [ChartLayer?] = [
              gridLayer,
