@@ -1407,7 +1407,7 @@ diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.sw
 index 0bed9c6..7d6c12d 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-@@ -94,12 +94,20 @@ extension StoredSettings {
+@@ -94,10 +94,18 @@ extension StoredSettings {
              return nil
          }
  
@@ -1428,5 +1428,3 @@ index 0bed9c6..7d6c12d 100644
 +            defaultProfile: defaultProfile,
 +            store: store,
              settings: loopSettings,
-             syncIdentifier: syncIdentifier.uuidString)
-     }
