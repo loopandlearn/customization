@@ -1,0 +1,460 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
+index e94e7da8..9831d18a 100644
+--- a/Loop/Loop.xcodeproj/project.pbxproj
++++ b/Loop/Loop.xcodeproj/project.pbxproj
+@@ -599,6 +599,7 @@
+ 		C1FB428C217806A400FAB378 /* StateColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428B217806A300FAB378 /* StateColorPalette.swift */; };
+ 		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
+ 		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
++		120490CB2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120490CA2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift */; };
+ 		DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */; };
+ 		FEEDB0000000000000000000 /* GlucoseStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDF0000000000000000000 /* GlucoseStatistics.swift */; };
+ 		DDC389F82A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */; };
+@@ -1403,6 +1404,7 @@
+ 		C1FB428B217806A300FAB378 /* StateColorPalette.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateColorPalette.swift; sourceTree = "<group>"; };
+ 		C1FB428E217921D600FAB378 /* PumpManagerUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpManagerUI.swift; sourceTree = "<group>"; };
+ 		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
++		120490CA2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NegativeInsulinDamperSelectionView.swift; sourceTree = "<group>"; };
+ 		DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+ 		FEEDF0000000000000000000 /* GlucoseStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatistics.swift"; sourceTree = "<group>"; };
+ 		DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+@@ -2053,6 +2055,7 @@
+ 				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
+ 				DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */,
+ 				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
++				120490CA2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift */,
+ 				84DEB10C2C18FABA00170734 /* IOSFocusModesView.swift */,
+ 				84D1F1A62D09053A00CB271F /* StatusTableView.swift */,
+ 				B429CAB22E97C7F300FA988E /* LoopStatusModalView.swift */,
+@@ -3487,6 +3490,7 @@
+ 				1DDE273D24AEA4B000796622 /* SettingsViewModel.swift in Sources */,
+ 				FEEDB0000000000000000001 /* StatisticsViewModel.swift in Sources */,
+ 				DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */,
++				120490CB2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift in Sources */,
+ 				842E40A72F22F7E2000CCCE0 /* TintedContent.swift in Sources */,
+ 				842E40A92F22F7E2000CCCE0 /* EstimatedReadTime.swift in Sources */,
+ 				842E40AA2F22F7E2000CCCE0 /* PresetsTrainingView.swift in Sources */,
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index bfe782d1..a474ff68 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -354,6 +354,82 @@ final class LoopDataManager: ObservableObject {
+         }
+     }
+ 
++    // MARK: Negative Insulin Damper (algorithm experiment)
++
++    static func calculateNegativeInsulinDamperAlpha(_ anchorAlpha: Double, _ anchorPoint: Double, _ marginalSlope: Double, _ posDeltaSum: Double) -> Double {
++        let linearScaleSlope = (1.0 - anchorAlpha)/anchorPoint // how alpha scales down in the linear scale region
++
++        // the slope in the linear scale region of alpha * posDeltaSum is 1 - 2*linearScaleSlope*posDeltaSum.
++        // the transitionPoint is where we transition from linear scale region to marginalSlope. The slope is continuous at this point
++        let transitionPoint = (1 - marginalSlope) / (2 * linearScaleSlope)
++
++        if posDeltaSum < transitionPoint { // linear scaling region
++            return 1 - linearScaleSlope * posDeltaSum
++        } else { // marginal slope region
++            let transitionValue = (1 - linearScaleSlope * transitionPoint) * transitionPoint
++            return (transitionValue + marginalSlope * (posDeltaSum - transitionPoint)) / posDeltaSum
++        }
++    }
++
++    /// Computes the Negative Insulin Damper coefficient in [0,1] for the given algorithm input, or nil.
++    /// Mirrors the dev/main computation: the predicted future rise attributable to negative insulin
++    /// (delivery below scheduled basal, up to 15 minutes ago) sets the damper strength.
++    private func computeNegativeInsulinDamper(for input: StoredDataAlgorithmInput) -> Double? {
++        guard let latestGlucose = input.glucoseHistory.last else { return nil }
++        let anchorDate = latestGlucose.startDate
++        let lastDoseStartDate = anchorDate.addingTimeInterval(.minutes(-15))
++
++        // Predicted insulin glucose-effect of everything delivered up to 15 minutes ago
++        // (doses starting later are dropped, basal-type doses trimmed at t-15, boluses kept whole).
++        let annotatedDoses = input.doses
++            .trimmed(to: lastDoseStartDate)
++            .annotated(with: input.basal)
++
++        // Fail safe (disable the damper) rather than trip glucoseEffects' ISF-coverage
++        // preconditionFailure, which would crash automated dosing.
++        for dose in annotatedDoses {
++            guard let isf = input.sensitivity.closestPrior(to: dose.startDate), isf.endDate >= dose.startDate else {
++                return nil
++            }
++        }
++
++        let effects = annotatedDoses.glucoseEffects(insulinSensitivityHistory: input.sensitivity, from: anchorDate.addingTimeInterval(.minutes(-5)))
++
++        // Sum of positive 5-min deltas — the predicted future rise from negative insulin.
++        var posDeltaSum = 0.0
++        for (offset, effect) in effects.enumerated() where offset > 0 {
++            let delta = effect.quantity.doubleValue(for: .milligramsPerDeciliter) - effects[offset - 1].quantity.doubleValue(for: .milligramsPerDeciliter)
++            posDeltaSum += max(0, delta)
++        }
++
++        guard let isf = input.sensitivity.closestPrior(to: anchorDate)?.value,
++              let basalRate = input.basal.closestPrior(to: anchorDate)?.value else {
++            return nil
++        }
++
++        // anchorScale is ~1 hour for rapid-acting adult, ~44 min for ultra-rapid insulins.
++        let anchorScale: Double
++        if let expModel = input.recommendationInsulinModel as? ExponentialInsulinModel {
++            anchorScale = 0.8 * expModel.peakActivityTime.hours
++        } else if let preset = input.recommendationInsulinModel as? ExponentialInsulinModelPreset {
++            anchorScale = 0.8 * preset.peakActivity.hours
++        } else {
++            anchorScale = 1.0
++        }
++
++        let marginalSlope = 0.05
++        let anchorAlpha = 0.75
++        // anchorPoint is unaffected by overrides (the basal and ISF multipliers cancel out).
++        let anchorPoint = anchorScale * basalRate * isf.doubleValue(for: .milligramsPerDeciliter)
++
++        // A 0 U/hr basal segment would make anchorPoint 0 → NaN → constant 95% damping; disable instead.
++        guard anchorPoint > 0 else { return nil }
++
++        let alpha = LoopDataManager.calculateNegativeInsulinDamperAlpha(anchorAlpha, anchorPoint, marginalSlope, posDeltaSum)
++        // alpha should never be less than marginalSlope
++        return max(0, 1 - max(marginalSlope, alpha))
++    }
++
+     func fetchData(
+         for baseTime: Date? = nil,
+         presumePresetEndingNow: Bool = false,
+@@ -544,7 +620,7 @@ final class LoopDataManager: ObservableObject {
+             effectiveBolusApplicationFactor = nil
+         }
+ 
+-        return StoredDataAlgorithmInput(
++        var input = StoredDataAlgorithmInput(
+             glucoseHistory: glucose,
+             doses: dosesWithModel,
+             carbEntries: carbEntries,
+@@ -562,6 +638,12 @@ final class LoopDataManager: ObservableObject {
+             recommendationInsulinModel: recommendationInsulinModel,
+             recommendationType: .manualBolus,
+             automaticBolusApplicationFactor: effectiveBolusApplicationFactor)
++
++        if UserDefaults.standard.negativeInsulinDamperEnabled {
++            input.negativeInsulinDamper = computeNegativeInsulinDamper(for: input)
++        }
++
++        return input
+     }
+ 
+     func loopingReEnabled() async {
+@@ -1217,7 +1299,7 @@ extension StoredDataAlgorithmInput {
+         return rval
+     }
+ 
+-    func predictGlucose(effectsOptions: AlgorithmEffectsOptions = .all) throws -> [PredictedGlucoseValue] {
++    func predictGlucose(effectsOptions: AlgorithmEffectsOptions = .all, applyNegativeInsulinDamper: Bool = true) throws -> [PredictedGlucoseValue] {
+         let prediction = LoopAlgorithm.generatePrediction(
+             start: predictionStart,
+             glucoseHistory: glucoseHistory,
+@@ -1229,7 +1311,8 @@ extension StoredDataAlgorithmInput {
+             algorithmEffectsOptions: effectsOptions,
+             useIntegralRetrospectiveCorrection: self.useIntegralRetrospectiveCorrection,
+             useMidAbsorptionISF: true,
+-            carbAbsorptionModel: self.carbAbsorptionModel.model
++            carbAbsorptionModel: self.carbAbsorptionModel.model,
++            negativeInsulinDamper: applyNegativeInsulinDamper ? negativeInsulinDamper : nil
+         )
+         return prediction.glucose
+     }
+diff --git a/Loop/Loop/Models/PredictionInputEffect.swift b/Loop/Loop/Models/PredictionInputEffect.swift
+index 342fe23d..24fb5a70 100644
+--- a/Loop/Loop/Models/PredictionInputEffect.swift
++++ b/Loop/Loop/Models/PredictionInputEffect.swift
+@@ -18,8 +18,9 @@ struct PredictionInputEffect: OptionSet {
+     static let momentum         = PredictionInputEffect(rawValue: 1 << 2)
+     static let retrospection    = PredictionInputEffect(rawValue: 1 << 3)
+     static let suspend          = PredictionInputEffect(rawValue: 1 << 4)
++    static let damper           = PredictionInputEffect(rawValue: 1 << 5)
+ 
+-    static let all: PredictionInputEffect = [.carbs, .insulin, .momentum, .retrospection]
++    static let all: PredictionInputEffect = [.carbs, .insulin, .damper, .momentum, .retrospection]
+ 
+     var localizedTitle: String? {
+         switch self {
+@@ -27,6 +28,8 @@ struct PredictionInputEffect: OptionSet {
+             return NSLocalizedString("Carbohydrates", comment: "Title of the prediction input effect for carbohydrates")
+         case [.insulin]:
+             return NSLocalizedString("Insulin", comment: "Title of the prediction input effect for insulin")
++        case [.damper]:
++            return NSLocalizedString("Negative Insulin Damper", comment: "Title of the prediction input effect for negative insulin damper")
+         case [.momentum]:
+             return NSLocalizedString("Glucose Momentum", comment: "Title of the prediction input effect for glucose momentum")
+         case [.retrospection]:
+@@ -44,6 +47,8 @@ struct PredictionInputEffect: OptionSet {
+             return String(format: NSLocalizedString("Carbs Absorbed (g) ÷ Carb Ratio (g/U) × Insulin Sensitivity (%1$@/U)", comment: "Description of the prediction input effect for carbohydrates. (1: The glucose unit string)"), unit.localizedShortUnitString)
+         case [.insulin]:
+             return String(format: NSLocalizedString("Insulin Absorbed (U) × Insulin Sensitivity (%1$@/U)", comment: "Description of the prediction input effect for insulin"), unit.localizedShortUnitString)
++        case [.damper]:
++            return NSLocalizedString("Reduces increases in glucose. The damper is stronger when there is more negative insulin", comment: "Description of the prediction input effect for negative insulin damper")
+         case [.momentum]:
+             return NSLocalizedString("15 min glucose regression coefficient (b₁), continued with decay over 30 min", comment: "Description of the prediction input effect for glucose momentum")
+         case [.retrospection]:
+diff --git a/Loop/Loop/Models/StoredDataAlgorithmInput.swift b/Loop/Loop/Models/StoredDataAlgorithmInput.swift
+index ba3c169d..05034540 100644
+--- a/Loop/Loop/Models/StoredDataAlgorithmInput.swift
++++ b/Loop/Loop/Models/StoredDataAlgorithmInput.swift
+@@ -56,4 +56,6 @@ struct StoredDataAlgorithmInput: AlgorithmInput {
+     var maxActiveInsulinMultiplier: Double? = nil
+ 
+     var gradualTransitionsThreshold: Double? = nil
++
++    var negativeInsulinDamper: Double? = nil
+ }
+diff --git a/Loop/Loop/View Controllers/PredictionTableViewController.swift b/Loop/Loop/View Controllers/PredictionTableViewController.swift
+index df7f672d..d6bf9231 100644
+--- a/Loop/Loop/View Controllers/PredictionTableViewController.swift	
++++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift	
+@@ -77,6 +77,8 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+ 
+     private var totalRetrospectiveCorrection: LoopQuantity?
+ 
++    private var negativeInsulinDamper: Double?
++
+     private var refreshContext = RefreshContext.all
+ 
+     private var chartStartDate: Date {
+@@ -126,11 +128,12 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+ 
+         self.retrospectiveGlucoseDiscrepancies = algoOutput?.effects.retrospectiveGlucoseDiscrepancies
+         totalRetrospectiveCorrection = algoOutput?.effects.totalRetrospectiveCorrectionEffect
++        self.negativeInsulinDamper = algoInput?.negativeInsulinDamper
+ 
+         self.glucoseChart.setPredictedGlucoseValues(algoOutput?.predictedGlucose ?? [])
+ 
+         do {
+-            let glucose = try algoInput?.predictGlucose(effectsOptions: self.selectedInputs.algorithmEffectOptions) ?? []
++            let glucose = try self.alternatePrediction(for: algoInput)
+             self.glucoseChart.setAlternatePredictedGlucoseValues(glucose)
+         } catch {
+             self.refreshContext.update(with: .status)
+@@ -199,10 +202,42 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+ 
+     // Removed .suspend from this list; LoopAlgorithm needs updates to support this. Also review
+     // for better ways to support desired use cases. https://github.com/LoopKit/Loop/pull/2026
+-    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
++    private var availableInputs: [PredictionInputEffect] = PredictionTableViewController.makeAvailableInputs()
+ 
+     private var selectedInputs = PredictionInputEffect.all
+ 
++    private static func makeAvailableInputs() -> [PredictionInputEffect] {
++        var inputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
++        if UserDefaults.standard.negativeInsulinDamperEnabled {
++            inputs.insert(.damper, at: 2)
++        }
++        return inputs
++    }
++
++    /// Builds the "alternate" (user-selected-effects) prediction shown on this screen, including the
++    /// Negative Insulin Damper experiment's isolated-effect display when only that row is selected.
++    private func alternatePrediction(for algoInput: StoredDataAlgorithmInput?) throws -> [PredictedGlucoseValue] {
++        guard let algoInput else { return [] }
++        if selectedInputs == [.damper], let damper = algoInput.negativeInsulinDamper {
++            // Show the damper's isolated downward effect relative to the full (undamped) prediction.
++            let baseline = try algoInput.predictGlucose(effectsOptions: PredictionInputEffect.all.algorithmEffectOptions, applyNegativeInsulinDamper: false)
++            var damped = [PredictedGlucoseValue]()
++            var value = 0.0
++            for (offset, element) in baseline.enumerated() {
++                if offset == 0 {
++                    value = element.quantity.doubleValue(for: .milligramsPerDeciliter)
++                    damped.append(element)
++                    continue
++                }
++                let delta = element.quantity.doubleValue(for: .milligramsPerDeciliter) - baseline[offset - 1].quantity.doubleValue(for: .milligramsPerDeciliter)
++                if delta > 0 { value -= damper * delta }
++                damped.append(PredictedGlucoseValue(startDate: element.startDate, quantity: LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: value)))
++            }
++            return damped
++        }
++        return try algoInput.predictGlucose(effectsOptions: selectedInputs.algorithmEffectOptions, applyNegativeInsulinDamper: selectedInputs.contains(.damper))
++    }
++
+     override func numberOfSections(in tableView: UITableView) -> Int {
+         return Section.allCases.count
+     }
+@@ -269,6 +304,19 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+ 
+         var subtitleText = input.localizedDescription(forGlucoseUnit: glucoseChart.glucoseUnit) ?? ""
+ 
++        if input == .damper, let negativeInsulinDamper = negativeInsulinDamper {
++            let formatter = NumberFormatter()
++            formatter.minimumIntegerDigits = 1
++            formatter.maximumFractionDigits = 1
++            formatter.maximumSignificantDigits = 2
++
++            let damper = String(
++                format: NSLocalizedString("Damper Strength: %1$@%%", comment: "Format string describing damper strength. (1: damper strength percentage)"),
++                formatter.string(from: NSNumber(value: 100 * negativeInsulinDamper)) ?? "?"
++            )
++            subtitleText = String(format: "%@\n%@", subtitleText, damper)
++        }
++
+         if input == .retrospection,
+             let lastDiscrepancy = retrospectiveGlucoseDiscrepancies?.last,
+             let currentGlucose = loopDataManager.latestGlucose
+diff --git a/Loop/Loop/Views/NegativeInsulinDamperSelectionView.swift b/Loop/Loop/Views/NegativeInsulinDamperSelectionView.swift
+new file mode 100644
+index 00000000..f1b35973
+--- /dev/null
++++ b/Loop/Loop/Views/NegativeInsulinDamperSelectionView.swift
+@@ -0,0 +1,42 @@
++//
++//  NegativeInsulinDamperSelectionView.swift
++//  Loop
++//
++//  Created by Moti Nisenson-Ken on 16/10/2024.
++//  Copyright © 2024 LoopKit Authors. All rights reserved.
++//
++import Foundation
++import SwiftUI
++import LoopKit
++import LoopKitUI
++
++struct NegativeInsulinDamperSelectionView: View {
++   @Binding var isNegativeInsulinDamperEnabled: Bool
++
++   public var body: some View {
++       ScrollView {
++           VStack(spacing: 10) {
++               Text(NSLocalizedString("Negative Insulin Damper", comment: "Title for negative insulin damper experiment description"))
++                   .font(.headline)
++                   .padding(.bottom, 20)
++
++               Divider()
++
++               Text(NSLocalizedString("Negative Insulin Damper (NID) is used to mitigate the effects of temporarily increased insulin sensitivity. Such increases can result in spending significant times beneath target and eventually going low. Loop may erroneously predict glucose going too high, resulting in excess insulin being delivered. To counteract this, NID acts as a dynamic damper on increases to  predicted glucose. The strength of this damper is controlled by the total predicted rise in glucose due to negative insulin. The greater the amount of negative insulin, the stronger the damper and the bigger the reductions. The calculation is done with a 15 minute lag.", comment: "Description of Negative Insulin Damper toggle."))
++                   .foregroundColor(.secondary)
++               Divider()
++
++               Toggle(NSLocalizedString("Enable Negative Insulin Damper", comment: "Title for Negative Insulin Damper toggle"), isOn: $isNegativeInsulinDamperEnabled)
++                   .padding(.top, 20)
++           }
++           .padding()
++       }
++       .navigationBarTitleDisplayMode(.inline)
++   }
++
++   struct NegativeInsulinDamperSelectionView_Previews: PreviewProvider {
++       static var previews: some View {
++           NegativeInsulinDamperSelectionView(isNegativeInsulinDamperEnabled: .constant(true))
++       }
++   }
++}
+diff --git a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+index 795fbdd8..5753aa1a 100644
+--- a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
++++ b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
+@@ -41,6 +41,7 @@ public struct ExperimentRow: View {
+ public struct ExperimentsSettingsView: View {
+     @AppStorage(UserDefaults.Key.GlucoseBasedApplicationFactorEnabled.rawValue) private var isGlucoseBasedApplicationFactorEnabled = false
+     @AppStorage(UserDefaults.Key.IntegralRetrospectiveCorrectionEnabled.rawValue) private var isIntegralRetrospectiveCorrectionEnabled = false
++    @AppStorage(UserDefaults.Key.NegativeInsulinDamperEnabled.rawValue) private var isNegativeInsulinDamperEnabled = false
+     var automaticDosingStrategy: AutomaticDosingStrategy
+ 
+     public var body: some View {
+@@ -70,6 +71,11 @@ public struct ExperimentsSettingsView: View {
+                         name: NSLocalizedString("Integral Retrospective Correction", comment: "Title of integral retrospective correction experiment"),
+                         enabled: isIntegralRetrospectiveCorrectionEnabled)
+                 }
++                NavigationLink(destination: NegativeInsulinDamperSelectionView(isNegativeInsulinDamperEnabled: $isNegativeInsulinDamperEnabled)) {
++                    ExperimentRow(
++                        name: NSLocalizedString("Negative Insulin Damper", comment: "Title of negative insulin damper experiment"),
++                        enabled: isNegativeInsulinDamperEnabled)
++                }
+                 Spacer()
+             }
+             .padding()
+@@ -83,6 +89,7 @@ extension UserDefaults {
+     fileprivate enum Key: String {
+         case GlucoseBasedApplicationFactorEnabled = "com.loopkit.algorithmExperiments.glucoseBasedApplicationFactorEnabled"
+         case IntegralRetrospectiveCorrectionEnabled = "com.loopkit.algorithmExperiments.integralRetrospectiveCorrectionEnabled"
++        case NegativeInsulinDamperEnabled = "com.loopkit.algorithmExperiments.negativeInsulinDamperEnabled"
+     }
+ 
+     var glucoseBasedApplicationFactorEnabled: Bool {
+@@ -103,4 +110,13 @@ extension UserDefaults {
+         }
+     }
+ 
++    var negativeInsulinDamperEnabled: Bool {
++        get {
++            bool(forKey: Key.NegativeInsulinDamperEnabled.rawValue) as Bool
++        }
++        set {
++            set(newValue, forKey: Key.NegativeInsulinDamperEnabled.rawValue)
++        }
++    }
++
+ }
+Submodule LoopAlgorithm contains modified content
+diff --git a/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift b/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
+index e2139ab..d4e7695 100644
+--- a/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
++++ b/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
+@@ -34,4 +34,9 @@ public protocol AlgorithmInput {
+     var recommendationType: DoseRecommendationType { get }
+     var automaticBolusApplicationFactor: Double? { get } // Defaults to 0.4
+     var gradualTransitionsThreshold: Double? { get }
++    var negativeInsulinDamper: Double? { get } // Optional negative-insulin-damper coefficient in [0,1]; nil = disabled
++}
++
++public extension AlgorithmInput {
++    var negativeInsulinDamper: Double? { nil }
+ }
+diff --git a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
+index fce1746..ff51a7d 100644
+--- a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
++++ b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
+@@ -180,7 +180,8 @@ public struct LoopAlgorithm {
+         useMidAbsorptionISF: Bool = false,
+         carbAbsorptionModel: CarbAbsorptionComputable = PiecewiseLinearAbsorption(),
+         gradualTransitionsThreshold: Double? = 40.0,
+-        momentumVelocityMaximum: LoopQuantity? = nil
++        momentumVelocityMaximum: LoopQuantity? = nil,
++        negativeInsulinDamper: Double? = nil
+     ) -> LoopPrediction<CarbType> where CarbType: CarbEntry, GlucoseType: GlucoseSampleValue, InsulinDoseType: InsulinDose {
+ 
+         var prediction: [PredictedGlucoseValue] = []
+@@ -327,6 +328,26 @@ public struct LoopAlgorithm {
+                 effects: effects
+             )
+ 
++            // Negative Insulin Damper: multiply positive prediction deltas by (1 - damper),
++            // leaving negative deltas untouched. The coefficient is computed by the app
++            // (LoopDataManager) and is nil (no-op) unless the experiment is enabled.
++            if let damper = negativeInsulinDamper {
++                let alpha = 1 - damper
++                var dampedPrediction = [PredictedGlucoseValue]()
++                var value = 0.0
++                for (offset, element) in prediction.enumerated() {
++                    if offset == 0 {
++                        value = element.quantity.doubleValue(for: .milligramsPerDeciliter)
++                        dampedPrediction.append(element)
++                        continue
++                    }
++                    let delta = element.quantity.doubleValue(for: .milligramsPerDeciliter) - prediction[offset - 1].quantity.doubleValue(for: .milligramsPerDeciliter)
++                    value += delta > 0 ? alpha * delta : delta
++                    dampedPrediction.append(PredictedGlucoseValue(startDate: element.startDate, quantity: LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: value)))
++                }
++                prediction = dampedPrediction
++            }
++
+             // Dosing requires prediction entries at least as long as the insulin model duration.
+             // If our prediction is shorter than that, then extend it here.
+             let finalDate = start.addingTimeInterval(InsulinMath.defaultInsulinActivityDuration)
+@@ -746,7 +767,8 @@ public struct LoopAlgorithm {
+                 includingPositiveVelocityAndRC: input.includePositiveVelocityAndRC,
+                 useMidAbsorptionISF: input.useMidAbsorptionISF,
+                 carbAbsorptionModel: input.carbAbsorptionModel.model,
+-                gradualTransitionsThreshold: input.gradualTransitionsThreshold
++                gradualTransitionsThreshold: input.gradualTransitionsThreshold,
++                negativeInsulinDamper: input.negativeInsulinDamper
+             )
+ 
+             let sensitivityForDosing: [AbsoluteScheduleValue<LoopQuantity>]
