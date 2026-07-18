@@ -1,0 +1,527 @@
+Submodule Loop contains modified content
+diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
+index 829f9f22..9cbb9b66 100644
+--- a/Loop/Loop/Managers/LoopAppManager.swift
++++ b/Loop/Loop/Managers/LoopAppManager.swift
+@@ -1044,8 +1044,42 @@ extension LoopAppManager: ResetLoopManagerDelegate {
+ // MARK: - ServicesManagerDosingDelegate
+ 
+ extension LoopAppManager: ServicesManagerDosingDelegate {
+-    func deliverBolus(amountInUnits: Double, decisionId: UUID?) async throws {
+-        try await deviceDataManager.enactBolus(units: amountInUnits, decisionId: decisionId, activationType: .manualNoRecommendation)
++    func deliverBolus(amountInUnits: Double, decisionId: UUID?, userCreatedDate: Date) async throws -> Double {
++        // Guard B (double-bolus protection): subtract any bolus delivered within
++        // minTreatmentIntervalInMinutes of the command's userCreatedDate from the requested
++        // amount (look back further for safety in case of upload delays), refusing entirely
++        // if the remainder nets to zero. Returns the amount actually delivered.
++        let minTreatmentIntervalInMinutes = 10.0
++        let boluses = try await doseStore.getBoluses(start: Date().addingTimeInterval(-.days(1)))
++        let conflictStartDate = userCreatedDate.addingTimeInterval(-.minutes(minTreatmentIntervalInMinutes))
++        let conflictingBolusAmount = boluses.filter({ $0.startDate >= conflictStartDate }).map({ $0.programmedUnits }).reduce(0, +)
++        let adjustedDoseAmount = amountInUnits - conflictingBolusAmount
++        guard adjustedDoseAmount <= amountInUnits else { // sanity check on the bolus math
++            throw BolusActionError.invalidCalculation
++        }
++        guard adjustedDoseAmount > 0.0 else {
++            throw BolusActionError.bolusAmountAdjustedToZero(amountInUnits, conflictStartDate)
++        }
++        try await deviceDataManager.enactBolus(units: adjustedDoseAmount, decisionId: decisionId, activationType: .manualNoRecommendation)
++        return adjustedDoseAmount
++    }
++
++    enum BolusActionError: LocalizedError {
++        case bolusAmountAdjustedToZero(_ requestedAmountInUnits: Double, _ conflictStartDate: Date)
++        case invalidCalculation
++
++        var errorDescription: String? {
++            switch self {
++            case .bolusAmountAdjustedToZero(let amountInUnits, let conflictStartDate):
++                let numberFormatter = NumberFormatter()
++                numberFormatter.numberStyle = .decimal
++                numberFormatter.maximumFractionDigits = 2
++                let treatmentAmountFormatted = (numberFormatter.string(from: NSNumber(value: amountInUnits)) ?? "") + " U"
++                return String(format: NSLocalizedString("All boluses delivered after %1$@ were subtracted from the requested bolus amount for safety. Those amount(s) exceed the requested amount of %2$@ so the remote bolus was not delivered.", comment: "Bolus error description: no remote bolus delivered."), conflictStartDate.formatted(date: .omitted, time: .complete), treatmentAmountFormatted)
++            case .invalidCalculation:
++                return NSLocalizedString("An invalid bolus calculation occurred.", comment: "Bolus error description: invalid calculation.")
++            }
++        }
+     }
+ }
+ 
+diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
+index bfe782d1..cf2203e6 100644
+--- a/Loop/Loop/Managers/LoopDataManager.swift
++++ b/Loop/Loop/Managers/LoopDataManager.swift
+@@ -1319,8 +1319,8 @@ extension LoopDataManager: ServicesManagerDelegate {
+     
+     //Carb Entry
+     
+-    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws {
+-        
++    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws {
++
+         let absorptionTime = absorptionTime ?? LoopCoreConstants.defaultCarbAbsorptionTimes.medium
+         if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
+             throw CarbActionError.invalidAbsorptionTime(absorptionTime)
+@@ -1342,6 +1342,22 @@ extension LoopDataManager: ServicesManagerDelegate {
+             }
+         }
+         
++        // Guard B (conflicting-treatment protection): reject remote carbs if any carb entry was
++        // created within minTreatmentIntervalInMinutes of the command's userCreatedDate. Look back
++        // a little further for safety (e.g. upload delays); zero tolerance for carbs.
++        let maxAllowedConflictingAmountInGrams = 0.0
++        let minTreatmentIntervalInMinutes = 10.0
++        let entries = try await carbStore.getCarbEntries(start: Date().addingTimeInterval(-.days(1)), end: Date().addingTimeInterval(.days(1)))
++        let conflictStartDate = userCreatedDate.addingTimeInterval(-.minutes(minTreatmentIntervalInMinutes))
++        let conflictingEntries = entries.filter({ entry in
++            let createdDate = entry.userCreatedDate ?? entry.startDate
++            return createdDate >= conflictStartDate
++        })
++        let conflictingCarbAmount = conflictingEntries.map({ $0.quantity.doubleValue(for: .gram) }).reduce(0, +)
++        guard conflictingCarbAmount <= maxAllowedConflictingAmountInGrams else {
++            throw CarbActionError.conflictingTreatments(conflictingCarbAmount, minTreatmentIntervalInMinutes)
++        }
++
+         let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
+         let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
+ 
+@@ -1354,9 +1370,14 @@ extension LoopDataManager: ServicesManagerDelegate {
+         case invalidStartDate(Date)
+         case exceedsMaxCarbs
+         case invalidCarbs
+-        
++        case conflictingTreatments(_ conflictingAmountInGrams: Double, _ minutesRequiredBetweenTreatments: TimeInterval)
++
+         var errorDescription: String? {
+             switch  self {
++            case .conflictingTreatments(let conflictingAmountInGrams, let minutesRequiredBetweenTreatments):
++                let treatmentAmountFormatted = (Self.numberFormatter.string(from: NSNumber(value: conflictingAmountInGrams)) ?? "") + " g"
++                let minutesRequiredBetweenTreatmentsFormatted = Self.numberFormatter.string(from: NSNumber(value: minutesRequiredBetweenTreatments)) ?? ""
++                return String(format: NSLocalizedString("Conflicting carb treatments (%1$@) have occurred. At least %2$@ minutes must pass between carb entries.", comment: "Carb error description: conflicting treatments occurred."), treatmentAmountFormatted, minutesRequiredBetweenTreatmentsFormatted)
+             case .exceedsMaxCarbs:
+                 return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
+             case .invalidCarbs:
+diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
+index c7252128..407edcf9 100644
+--- a/Loop/Loop/Managers/ServicesManager.swift
++++ b/Loop/Loop/Managers/ServicesManager.swift
+@@ -244,13 +244,13 @@ class ServicesManager {
+ }
+ 
+ public protocol ServicesManagerDosingDelegate: AnyObject {
+-    func deliverBolus(amountInUnits: Double, decisionId: UUID?) async throws
++    func deliverBolus(amountInUnits: Double, decisionId: UUID?, userCreatedDate: Date) async throws -> Double
+ }
+ 
+ public protocol ServicesManagerDelegate: AnyObject {
+     func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws
+     func cancelCurrentOverride() async throws
+-    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
++    func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws
+ }
+ 
+ // MARK: - StatefulPluggableDelegate
+@@ -324,9 +324,10 @@ extension ServicesManager: ServiceDelegate {
+         await remoteDataServicesManager.performUpload(for: .overrides)
+     }
+     
+-    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws {
++    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws {
+         do {
+-            try await servicesManagerDelegate?.deliverCarbs(amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate)
++            guard let servicesManagerDelegate else { throw BolusActionError.internalError }
++            try await servicesManagerDelegate.deliverCarbs(amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate, userCreatedDate: userCreatedDate)
+             NotificationManager.sendRemoteCarbEntryNotification(amountInGrams: amountInGrams)
+             await remoteDataServicesManager.performUpload(for: .carb)
+             analyticsServicesManager.didAddCarbs(source: "Remote", amount: amountInGrams)
+@@ -336,25 +337,30 @@ extension ServicesManager: ServiceDelegate {
+         }
+     }
+     
+-    func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?) async throws {
++    func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?, userCreatedDate: Date) async throws -> Double {
+         do {
+-            
++
+             guard amountInUnits > 0 else {
+                 throw BolusActionError.invalidBolus
+             }
+-            
++
+             guard let maxBolusAmount = settingsManager.loopSettings.maximumBolus else {
+                 throw BolusActionError.missingMaxBolus
+             }
+-            
++
+             guard amountInUnits <= maxBolusAmount else {
+                 throw BolusActionError.exceedsMaxBolus
+             }
+-            
+-            try await servicesManagerDosingDelegate?.deliverBolus(amountInUnits: amountInUnits, decisionId: decisionId)
+-            NotificationManager.sendRemoteBolusNotification(amount: amountInUnits)
++
++            guard let servicesManagerDosingDelegate else {
++                throw BolusActionError.internalError
++            }
++            // May be reduced by the conflicting-treatment guard; report the amount actually delivered.
++            let deliveredUnits = try await servicesManagerDosingDelegate.deliverBolus(amountInUnits: amountInUnits, decisionId: decisionId, userCreatedDate: userCreatedDate)
++            NotificationManager.sendRemoteBolusNotification(amount: deliveredUnits)
+             await remoteDataServicesManager.performUpload(for: .dose)
+-            analyticsServicesManager.didBolus(source: "Remote", units: amountInUnits)
++            analyticsServicesManager.didBolus(source: "Remote", units: deliveredUnits)
++            return deliveredUnits
+         } catch {
+             NotificationManager.sendRemoteBolusFailureNotification(for: error, amountInUnits: amountInUnits)
+             throw error
+@@ -366,7 +372,8 @@ extension ServicesManager: ServiceDelegate {
+         case invalidBolus
+         case missingMaxBolus
+         case exceedsMaxBolus
+-        
++        case internalError
++
+         var errorDescription: String? {
+             switch self {
+             case .invalidBolus:
+@@ -375,6 +382,8 @@ extension ServicesManager: ServiceDelegate {
+                 return NSLocalizedString("Missing maximum allowed bolus in settings", comment: "Bolus error description: missing maximum bolus in settings.")
+             case .exceedsMaxBolus:
+                 return NSLocalizedString("Exceeds maximum allowed bolus in settings", comment: "Bolus error description: bolus exceeds maximum bolus in settings.")
++            case .internalError:
++                return NSLocalizedString("An internal error occurred.", comment: "Bolus error description: internal error.")
+             }
+         }
+     }
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
+index 8f824906..90d64a0f 100644
+--- a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
++++ b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
+@@ -11,6 +11,6 @@ import Foundation
+ public protocol RemoteActionDelegate: AnyObject {
+     func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws
+     func cancelRemoteOverride() async throws
+-    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
+-    func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?) async throws
++    func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws
++    func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?, userCreatedDate: Date) async throws -> Double
+ }
+Submodule NightscoutService contains modified content
+diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+index 3fccce4..3b07195 100644
+--- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
++++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+@@ -14,6 +14,7 @@ public enum NightscoutServiceError: Error {
+     case incompatibleTherapySettings
+     case missingCredentials
+     case missingCommandSource
++    case missingServiceDelegate
+ }
+ 
+ 
+@@ -66,10 +67,12 @@ public final class NightscoutService: Service {
+ 
+     private let log = OSLog(category: "NightscoutService")
+ 
++    private let notificationExpirationInMinutes = 10.0
++
+     public init() {
+         self.isOnboarded = false
+         self.lockedObjectIdCache = Locked(ObjectIdCache())
+-        self.otpManager = OTPManager(secretStore: KeychainManager())
++        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
+         self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
+         self.commandSourceV1.delegate = self
+     }
+@@ -85,7 +88,7 @@ public final class NightscoutService: Service {
+             self.lockedObjectIdCache = Locked(ObjectIdCache())
+         }
+         
+-        self.otpManager = OTPManager(secretStore: KeychainManager())
++        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
+         self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
+         self.commandSourceV1.delegate = self
+         
+@@ -424,6 +427,14 @@ extension NightscoutService: RemoteDataService {
+ 
+     
+     public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
++        var notification = notification
++        // Widen the acceptance window: override the expiration to sent-at + notificationExpirationInMinutes.
++        // Ideally this would be done in Nightscout instead.
++        if let sentDateString = notification["sent-at"] as? String,
++           let sentDate = DateFormatter.iso8601DateDecoder.date(from: sentDateString) {
++            let expirationDate = sentDate.addingTimeInterval(60 * notificationExpirationInMinutes)
++            notification["expiration"] = DateFormatter.iso8601DateDecoder.string(from: expirationDate) as AnyObject
++        }
+         let commandSource = try commandSource(notification: notification)
+         await commandSource.remoteNotificationWasReceived(notification)
+     }
+@@ -450,10 +461,13 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+         var message = ""
+         
+         do {
++            guard let serviceDelegate = self.serviceDelegate else {
++                throw NightscoutServiceError.missingServiceDelegate
++            }
+             switch action {
+             case .temporaryScheduleOverride(let overrideCommand):
+                 commandType = .override
+-                try await self.serviceDelegate?.enactRemoteOverride(
++                try await serviceDelegate.enactRemoteOverride(
+                     name: overrideCommand.name,
+                     durationTime: overrideCommand.durationTime,
+                     remoteAddress: overrideCommand.remoteAddress
+@@ -463,23 +477,28 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+                 
+             case .cancelTemporaryOverride:
+                 commandType = .cancelOverride
+-                try await self.serviceDelegate?.cancelRemoteOverride()
++                try await serviceDelegate.cancelRemoteOverride()
+                 success = true
+                 message = "Override cancelled successfully"
+                 
+             case .bolusEntry(let bolusCommand):
+                 commandType = .bolus
+-                try await self.serviceDelegate?.deliverRemoteBolus(amountInUnits: bolusCommand.amountInUnits, decisionId: nil)
++                let deliveredUnits = try await serviceDelegate.deliverRemoteBolus(amountInUnits: bolusCommand.amountInUnits, decisionId: nil, userCreatedDate: bolusCommand.userCreatedDate)
+                 success = true
+-                message = String(format: "Bolus of %.2f units delivered successfully", bolusCommand.amountInUnits)
++                if deliveredUnits < bolusCommand.amountInUnits {
++                    message = String(format: "Bolus reduced to %.2f units (from %.2f) due to other recent treatments", deliveredUnits, bolusCommand.amountInUnits)
++                } else {
++                    message = String(format: "Bolus of %.2f units delivered successfully", deliveredUnits)
++                }
+                 
+             case .carbsEntry(let carbCommand):
+                 commandType = .carbs
+-                try await self.serviceDelegate?.deliverRemoteCarbs(
++                try await serviceDelegate.deliverRemoteCarbs(
+                     amountInGrams: carbCommand.amountInGrams,
+                     absorptionTime: carbCommand.absorptionTime,
+                     foodType: carbCommand.foodType,
+-                    startDate: carbCommand.startDate
++                    startDate: carbCommand.startDate,
++                    userCreatedDate: carbCommand.userCreatedDate
+                 )
+                 success = true
+                 message = String(format: "Carbs entry of %.1f g delivered successfully", carbCommand.amountInGrams)
+diff --git a/NightscoutService/NightscoutServiceKit/OTPManager.swift b/NightscoutService/NightscoutServiceKit/OTPManager.swift
+index 3d51b72..7a572d3 100644
+--- a/NightscoutService/NightscoutServiceKit/OTPManager.swift
++++ b/NightscoutService/NightscoutServiceKit/OTPManager.swift
+@@ -77,8 +77,19 @@ public class OTPManager {
+     let maxOTPsToAccept: Int
+     
+     public static var defaultTokenPeriod: TimeInterval = 30
+-    public static var defaultMaxOTPsToAccept = 2
+-    
++    public static var defaultMaxOTPsToAccept = 30
++
++    public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, maxMinutesValid: Double) {
++        self.secretStore = secretStore
++        self.nowDateSource = nowDateSource
++        self.tokenPeriod = OTPManager.defaultTokenPeriod
++        let secondsValid = 60.0 * maxMinutesValid
++        self.maxOTPsToAccept = Int(secondsValid / OTPManager.defaultTokenPeriod)
++        if secretStore.tokenSecretKey() == nil || secretStore.tokenSecretKeyName() == nil {
++            resetSecretKey()
++        }
++    }
++
+     public init(secretStore: OTPSecretStore = KeychainManager(), nowDateSource: @escaping () -> Date = {Date()}, tokenPeriod: TimeInterval = OTPManager.defaultTokenPeriod, maxOTPsToAccept: Int = OTPManager.defaultMaxOTPsToAccept) {
+         self.secretStore = secretStore
+         self.nowDateSource = nowDateSource
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
+index 3a56d81..6db615c 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/BolusAction.swift
+@@ -9,10 +9,12 @@
+ import Foundation
+ 
+ public struct BolusAction: Codable {
+-    
++
+     public let amountInUnits: Double
+-    
+-    public init(amountInUnits: Double) {
++    public let userCreatedDate: Date
++
++    public init(amountInUnits: Double, userCreatedDate: Date) {
+         self.amountInUnits = amountInUnits
++        self.userCreatedDate = userCreatedDate
+     }
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
+index 3865989..b315b16 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbAction.swift
+@@ -14,11 +14,13 @@ public struct CarbAction: Codable{
+     public let absorptionTime: TimeInterval?
+     public let foodType: String?
+     public let startDate: Date?
+-    
+-    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil) {
++    public let userCreatedDate: Date
++
++    public init(amountInGrams: Double, absorptionTime: TimeInterval? = nil, foodType: String? = nil, startDate: Date? = nil, userCreatedDate: Date) {
+         self.amountInGrams = amountInGrams
+         self.absorptionTime = absorptionTime
+         self.foodType = foodType
+         self.startDate = startDate
++        self.userCreatedDate = userCreatedDate
+     }
+ }
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
+index 1c14cdf..869abc2 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/BolusRemoteNotification.swift
+@@ -14,11 +14,11 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
+     public let amount: Double
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let otp: String?
+     public let enteredBy: String?
+     public let encryptedReturnNotification: String?
+-    
++
+     enum CodingKeys: String, CodingKey {
+         case remoteAddress = "remote-address"
+         case amount = "bolus-entry"
+@@ -28,9 +28,13 @@ public struct BolusRemoteNotification: RemoteNotification, Codable {
+         case enteredBy = "entered-by"
+         case encryptedReturnNotification = "encrypted_return_notification"
+     }
+-    
++
+     func toRemoteAction() -> Action {
+-        return .bolusEntry(BolusAction(amountInUnits: amount))
++        return .bolusEntry(toBolusAction())
++    }
++
++    func toBolusAction() -> BolusAction {
++        return BolusAction(amountInUnits: amount, userCreatedDate: sentAt)
+     }
+     
+     func otpValidationRequired() -> Bool {
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
+index 6c238ed..c069c34 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbRemoteNotification.swift
+@@ -17,7 +17,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
+     public let startDate: Date?
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let otp: String?
+     public let enteredBy: String?
+     public let encryptedReturnNotification: String?
+@@ -43,7 +43,7 @@ public struct CarbRemoteNotification: RemoteNotification, Codable {
+     }
+     
+     func toRemoteAction() -> Action {
+-        let action = CarbAction(amountInGrams: amount, absorptionTime: absorptionTime(), foodType: foodType, startDate: startDate)
++        let action = CarbAction(amountInGrams: amount, absorptionTime: absorptionTime(), foodType: foodType, startDate: startDate, userCreatedDate: sentAt)
+         return .carbsEntry(action)
+     }
+     
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
+index fdd6d6b..babb71f 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideCancelRemoteNotification.swift
+@@ -13,7 +13,7 @@ public struct OverrideCancelRemoteNotification: RemoteNotification, Codable {
+     
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let cancelOverride: String
+     public let enteredBy: String?
+     public let otp: String?
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
+index 2060a74..426ff89 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/OverrideRemoteNotification.swift
+@@ -15,7 +15,7 @@ public struct OverrideRemoteNotification: RemoteNotification, Codable {
+     public let durationInMinutes: Double?
+     public let remoteAddress: String
+     public let expiration: Date?
+-    public let sentAt: Date?
++    public let sentAt: Date
+     public let enteredBy: String?
+     public let otp: String?
+     public let encryptedReturnNotification: String?
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
+index 0c5f8e3..24e63d7 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
+@@ -14,7 +14,7 @@ protocol RemoteNotification: Codable {
+     
+     var id: String {get}
+     var expiration: Date? {get}
+-    var sentAt: Date? {get}
++    var sentAt: Date {get}
+     var otp: String? {get}
+     var remoteAddress: String {get}
+     var enteredBy: String? {get}
+@@ -30,12 +30,8 @@ protocol RemoteNotification: Codable {
+ extension RemoteNotification {
+     
+     var id: String {
+-        //There is no unique identifier so we use the sent date when available
+-        if let sentAt = sentAt {
+-            return "\(sentAt.timeIntervalSince1970)"
+-        } else {
+-            return UUID().uuidString
+-        }
++        //There is no unique identifier so we use the sent date
++        return "\(sentAt.timeIntervalSince1970)"
+     }
+     
+     func getReturnNotificationInfo() -> ReturnNotificationInfo? {
+diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
+index 634eb4e..fce4623 100644
+--- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
++++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
+@@ -23,13 +23,13 @@ struct RemoteCommandValidator {
+     }
+     
+     private func validateExpirationDate(remoteNotification: RemoteNotification) throws {
+-        
++
+         guard let expirationDate = remoteNotification.expiration else {
+             return //Skip validation if no date included
+         }
+-        
++
+         if nowDateSource() > expirationDate {
+-            throw NotificationValidationError.expiredNotification
++            throw NotificationValidationError.expiredNotification(sentDate: remoteNotification.sentAt, receivedDate: nowDateSource())
+         }
+     }
+     
+@@ -44,14 +44,16 @@ struct RemoteCommandValidator {
+     
+     enum NotificationValidationError: LocalizedError {
+         case missingOTP
+-        case expiredNotification
+-        
++        case expiredNotification(sentDate: Date, receivedDate: Date)
++
+         var errorDescription: String? {
+             switch  self {
+             case .missingOTP:
+                 return LocalizedString("Missing OTP", comment: "Remote command error description: Missing OTP.")
+-            case .expiredNotification:
+-                return LocalizedString("Expired", comment: "Remote command error description: expired.")
++            case .expiredNotification(let sentDate, let receivedDate):
++                let dateFormatter = DateFormatter()
++                dateFormatter.dateFormat = "h:mm:ss a"
++                return String(format: LocalizedString("Expired. Sent: %@. Received: %@", comment: "Remote command error description: expired."), dateFormatter.string(from: sentDate), dateFormatter.string(from: receivedDate))
+             }
+         }
+     }
