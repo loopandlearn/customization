@@ -17,25 +17,23 @@
 # ============================================================================
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index 8254ab53..e331b17c 100644
+index e94e7da8..abee111c 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -593,6 +593,7 @@
- 		CB1AF8155B1761A30ACA5591 /* Loop/Resources/Sounds/synth.caf in Resources */ = {isa = PBXBuildFile; fileRef = 83081FFB0497A4596F597830 /* Loop/Resources/Sounds/synth.caf */; };
- 		D6E28676C2C7751C77C7F2FB /* Loop/Resources/Sounds/spring.caf in Resources */ = {isa = PBXBuildFile; fileRef = 9471E156FC10D6D0FF219C77 /* Loop/Resources/Sounds/spring.caf */; };
+@@ -599,5 +599,6 @@
+ 		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
 +		DDC065142B65871E0033FD88 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC065132B65871E0033FD88 /* Preferences.swift */; };
  		DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */; };
+ 		FEEDB0000000000000000000 /* GlucoseStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDF0000000000000000000 /* GlucoseStatistics.swift */; };
  		DDC389F82A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */; };
- 		DDC389FA2A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */; };
-@@ -1399,6 +1400,7 @@
- 		C9EA3F48338B49BD9C6BD0F9 /* Loop/Resources/Sounds/urgent_low.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Loop/Resources/Sounds/urgent_low.caf; sourceTree = SOURCE_ROOT; };
- 		C9SCENED0000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+@@ -1403,5 +1404,6 @@
+ 		C1FB428E217921D600FAB378 /* PumpManagerUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpManagerUI.swift; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
 +		DDC065132B65871E0033FD88 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
  		DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationFactorStrategy.swift; sourceTree = "<group>"; };
+ 		FEEDF0000000000000000000 /* GlucoseStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseStatistics.swift"; sourceTree = "<group>"; };
  		DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorStrategy.swift; sourceTree = "<group>"; };
- 		DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstantApplicationFactorStrategy.swift; sourceTree = "<group>"; };
 @@ -1716,6 +1718,7 @@
  				C1E3862428247B7100F561A4 /* StoredLoopNotRunningNotification.swift */,
  				4328E0311CFC068900E199AA /* WatchContext+LoopKit.swift */,
@@ -44,7 +42,7 @@ index 8254ab53..e331b17c 100644
  				C16F51182B891DB600EFD7A1 /* StoredDataAlgorithmInput.swift */,
  				C16F511A2B89363A00EFD7A1 /* SimpleInsulinDose.swift */,
  				C152B9F42C9C7D4A00ACBC06 /* AutomationHistoryEntry.swift */,
-@@ -3507,6 +3510,7 @@
+@@ -3480,6 +3483,7 @@
  				B4001CEE28CBBC82002FB414 /* AlertManagementView.swift in Sources */,
  				C9A47B0380AAB1FC572D3F00 /* GlucoseAlertSettingsView.swift in Sources */,
  				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
@@ -53,10 +51,10 @@ index 8254ab53..e331b17c 100644
  				C178249A1E1999FA00D9D25C /* CaseCountable.swift in Sources */,
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index df8869f2..fce9f440 100644
+index bfe782d1..ac571178 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -726,6 +726,16 @@ final class LoopDataManager: ObservableObject {
+@@ -723,6 +723,16 @@ final class LoopDataManager: ObservableObject {
                  let scheduledBasalRate = input.basal.closestPrior(to: loopBaseTime)!.value
                  let activeOverride = temporaryPresetsManager.presetHistory.activeOverride(at: loopBaseTime)
  
@@ -73,7 +71,7 @@ index df8869f2..fce9f440 100644
                  let basalAdjustment = basal.adjustForCurrentDelivery(
                      at: loopBaseTime,
                      neutralBasalRate: scheduledBasalRate,
-@@ -736,6 +746,9 @@ final class LoopDataManager: ObservableObject {
+@@ -733,6 +743,9 @@ final class LoopDataManager: ObservableObject {
                  
                  if let basalAdjustment {
                      recommendationToEnact.basalAdjustment = basalAdjustment
@@ -140,10 +138,10 @@ index 00000000..ab5d00ec
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 687624f6..ecc68c71 100644
+index 14efe111..93308891 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -61,6 +61,7 @@ struct SettingsView: View {
+@@ -60,6 +60,7 @@ struct SettingsView: View {
      @State private var actionSheet: Destination.ActionSheet?
      @State private var alert: Destination.Alert?
      @State private var sheet: Destination.Sheet?
@@ -151,7 +149,7 @@ index 687624f6..ecc68c71 100644
      
      var localizedAppNameAndVersion: String
  
-@@ -92,6 +93,9 @@ struct SettingsView: View {
+@@ -91,6 +92,9 @@ struct SettingsView: View {
                      if FeatureFlags.allowExperimentalFeatures {
                          favoriteFoodsSection
                      }
@@ -161,7 +159,7 @@ index 687624f6..ecc68c71 100644
                      if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
                          deleteDataSection
                      }
-@@ -521,7 +525,22 @@ extension SettingsView {
+@@ -516,7 +520,22 @@ extension SettingsView {
                          descriptiveText: "Simplify Carb Entry")
          }
      }
@@ -171,7 +169,7 @@ index 687624f6..ecc68c71 100644
 +        Section {
 +            LargeButton(action: { showingPreferences = true },
 +                        includeArrow: true,
-+                        imageView: Image(systemName: "gearshape.fill").font(.system(size: 30, weight: .bold)),
++                        imageView: AnyView(Image(systemName: "gearshape.fill").font(.system(size: 30, weight: .bold))),
 +                        label: NSLocalizedString("Preferences", comment: "Title text for button to Preferences"),
 +                        descriptiveText: NSLocalizedString("Customize your Loop experience by adjusting additional settings", comment: "Descriptive text for Preferences"))
 +        }
@@ -182,8 +180,8 @@ index 687624f6..ecc68c71 100644
 +        }
 +    }
 +
-     private var cgmChoices: [PluginPopover.Action] {
-         viewModel.cgmManagerSettingsViewModel.availableDevices
+     private var cgmChoices: [ActionSheet.Button] {
+         var result = viewModel.cgmManagerSettingsViewModel.availableDevices
              .sorted(by: {$0.localizedTitle < $1.localizedTitle})
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
