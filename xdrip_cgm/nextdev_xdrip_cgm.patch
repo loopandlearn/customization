@@ -1,18 +1,18 @@
 diff --git a/.gitmodules b/.gitmodules
-index 60a66fb..9a6049a 100644
+index 5f32634..1a500d1 100644
 --- a/.gitmodules
 +++ b/.gitmodules
-@@ -10,6 +10,10 @@
- [submodule "dexcom-share-client-swift"]
- 	path = dexcom-share-client-swift
- 	url = https://github.com/loopkitdev/dexcom-share-client-swift.git
+@@ -58,6 +58,10 @@
+ [submodule "LoopAlgorithm"]
+ 	path = LoopAlgorithm
+ 	url = https://github.com/LoopKit/LoopAlgorithm.git
 +[submodule "xdrip-client-swift"]
 +	path = xdrip-client-swift
 +	url = https://github.com/bjorkert/xdrip-client-swift-1.git
 +	branch = loopkit-next-dev-compat
- [submodule "RileyLinkKit"]
- 	path = RileyLinkKit
- 	url = https://github.com/loopkitdev/RileyLinkKit
+ [submodule "LibreCRKit"]
+ 	path = LibreCRKit
+ 	url = https://github.com/airedev326/LibreCRKit.git
 diff --git a/LoopWorkspace.xcworkspace/contents.xcworkspacedata b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
 index 41ac8e0..305e0e3 100644
 --- a/LoopWorkspace.xcworkspace/contents.xcworkspacedata
