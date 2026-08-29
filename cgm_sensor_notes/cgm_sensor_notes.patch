@@ -1,0 +1,358 @@
+# ============================================================================
+# cgm_sensor_notes
+#
+# Reports abnormal Dexcom sensor states to Nightscout as Note treatments:
+# sensor issue, sensor failure, session failure, expiry, excess noise,
+# calibration errors and unrecognized states, for G7 and G5/G6.
+#
+# One note per episode. A problem is reported when it starts and stays quiet
+# while it persists; a reading the sensor's own kit calls reliable closes the
+# open episodes, so a problem that clears and returns is reported again.
+# Warmup, a stopped or ended session and an uncalibrated sensor are neither
+# recovery nor fault, and leave open episodes untouched. Episodes are keyed by
+# kind, so a sensor alternating between two flavours of one failure reports
+# once, and are cleared when a sensor session starts, so a replacement sensor
+# that fails during warmup still reports.
+#
+# ISOLATION: the notes ride the CGM event pipeline Loop already has
+# (CGMManagerDelegate -> CgmEventStore -> RemoteDataServicesManager ->
+# NightscoutService), which owns persistence and upload retry. The Loop app
+# itself is untouched, and so is every .pbxproj: the patch adds no files and
+# edits four Swift files whose hook points are identical on main, dev and
+# next-dev, so one patch serves all three branches.
+#
+# The kits' state enums are module-internal, so each CGM manager maps its own
+# states onto a shared vocabulary added to LoopKit, and NightscoutServiceKit
+# renders that as the note. Note wording is deliberately not localized: a
+# historical record stays readable in aggregate only if its wording is fixed.
+#
+# Nothing here changes dosing, glucose handling or what the app displays.
+# ============================================================================
+Submodule CGMBLEKit contains modified content
+diff --git a/CGMBLEKit/CGMBLEKit/TransmitterManager.swift b/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
+index e5bd039..9d69e0d 100644
+--- a/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
++++ b/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
+@@ -370,6 +370,17 @@ public class TransmitterManager: TransmitterDelegate {
+ 
+         logDeviceCommunication("New reading: \(glucose.readDate)", type: .receive)
+ 
++        if let event = CgmSensorIssueReporter.event(for: glucose.state.sensorObservation,
++                                                    namespace: "DexTransmitter",
++                                                    sensorSessionStart: glucose.sessionStartDate,
++                                                    deviceIdentifier: transmitter.ID,
++                                                    date: glucose.readDate)
++        {
++            shareManager.delegate.notify { delegate in
++                delegate?.cgmManager(self.shareManager, hasNew: [event])
++            }
++        }
++
+         guard glucose.state.hasReliableGlucose else {
+             log.default("%{public}@: Unreliable glucose: %{public}@", #function, String(describing: glucose.state))
+             updateDelegate(with: .error(CalibrationError.unreliableState(glucose.state)))
+@@ -560,6 +571,54 @@ extension CalibrationError: LocalizedError {
+ }
+ 
+ extension CalibrationState {
++    /// What a reading in this state says about the sensor. Recovery is proven
++    /// by a reading the sensor itself calls reliable, never by the mere absence
++    /// of a fault.
++    var sensorObservation: CgmSensorObservation {
++        if let issue = reportableSensorIssue {
++            return .problem(issue)
++        }
++        return hasReliableGlucose ? .healthy : .indeterminate
++    }
++
++    /// The reportable issue for this state, or `nil` for normal operation,
++    /// which here includes the routine calibration prompts these
++    /// user-calibrated sensors raise. Calibration *errors* are reported.
++    ///
++    /// `questionMarks` is the state behind the receiver's "???".
++    var reportableSensorIssue: CgmSensorIssue? {
++        switch self {
++        case .unknown(let rawValue):
++            return .unrecognized(rawValue: Int(rawValue))
++        case .known(let state):
++            let raw = String(describing: state)
++            switch state {
++            case .needCalibration7,
++                 .needCalibration14,
++                 .needFirstInitialCalibration,
++                 .needSecondInitialCalibration,
++                 .ok,
++                 .stopped,
++                 .warmup:
++                return nil
++            case .questionMarks:
++                return .sensorIssue(raw)
++            case .sensorFailure11,
++                 .sensorFailure12:
++                return .sensorFailed(raw)
++            case .sessionFailure15,
++                 .sessionFailure16,
++                 .sessionFailure17:
++                return .sessionFailed(raw)
++            case .calibrationError8,
++                 .calibrationError9,
++                 .calibrationError10,
++                 .calibrationError13:
++                return .calibrationError(raw)
++            }
++        }
++    }
++
+     public var localizedDescription: String {
+         switch self {
+         case .known(let state):
+Submodule G7SensorKit contains modified content
+diff --git a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+index d940208..a38c348 100644
+--- a/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
++++ b/G7SensorKit/G7SensorKit/G7CGMManager/G7CGMManager.swift
+@@ -390,6 +390,17 @@ extension G7CGMManager: G7SensorDelegate {
+             state.latestReadingTimestamp = latestReadingTimestamp
+         }
+ 
++        if let event = CgmSensorIssueReporter.event(for: message.algorithmState.sensorObservation,
++                                                    namespace: "G7CGMManager",
++                                                    sensorSessionStart: activationDate,
++                                                    deviceIdentifier: state.sensorID ?? "Dexcom G7",
++                                                    date: latestReadingTimestamp)
++        {
++            delegate.notify { delegate in
++                delegate?.cgmManager(self, hasNew: [event])
++            }
++        }
++
+         guard let glucose = message.glucose else {
+             updateDelegate(with: .noData)
+             return
+@@ -519,3 +530,63 @@ extension G7GlucoseMessage: GlucoseDisplayable {
+         }
+     }
+ }
++
++// MARK: - Sensor issue reporting
++
++extension AlgorithmState {
++    /// What a reading in this state says about the sensor. Recovery is proven
++    /// by a reading the sensor itself calls reliable, never by the mere absence
++    /// of a fault.
++    var sensorObservation: CgmSensorObservation {
++        if let issue = reportableSensorIssue {
++            return .problem(issue)
++        }
++        return hasReliableGlucose ? .healthy : .indeterminate
++    }
++
++    /// The reportable issue for this state, or `nil` for normal operation: the
++    /// healthy state, lifecycle steps (`stopped` is usually the user ending a
++    /// session), and routine calibration requests.
++    var reportableSensorIssue: CgmSensorIssue? {
++        switch self {
++        case .unknown(let rawValue):
++            return .unrecognized(rawValue: Int(rawValue))
++        case .known(let state):
++            let raw = String(describing: state)
++            switch state {
++            case .firstOfTwoBGsNeeded,
++                 .needsCalibration,
++                 .ok,
++                 .outlierCalibrationRequest,
++                 .secondOfTwoBGsNeeded,
++                 .sessionEnded,
++                 .stopped,
++                 .warmup:
++                return nil
++            case .temporarySensorIssue:
++                return .sensorIssue(raw)
++            case .sensorFailed,
++                 .sensorFailedDuetoCountsAberration,
++                 .sensorFailedDueToHighCountsAberration,
++                 .sensorFailedDueToLowCountsAberration,
++                 .sensorFailedDueToProgressiveSensorDecline,
++                 .sensorFailedDuetoResidualAberration,
++                 .sensorFailedDueToRestart:
++                return .sensorFailed(raw)
++            case .sessionFailedDueToTransmitterError,
++                 .sessionFailedDueToUnrecoverableError:
++                return .sessionFailed(raw)
++            case .expired,
++                 .sessionExpired:
++                return .sensorExpired(raw)
++            case .excessNoise:
++                return .excessNoise(raw)
++            case .calibrationError1,
++                 .calibrationError2,
++                 .calibrationLinearityFitFailure,
++                 .outOfCalibrationDueToOutlier:
++                return .calibrationError(raw)
++            }
++        }
++    }
++}
+Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift b/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
+index 953f415c..66632319 100644
+--- a/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
++++ b/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
+@@ -13,6 +13,7 @@ public enum CgmEventType: String {
+     case sensorEnd
+     case transmitterStart
+     case transmitterEnd
++    case sensorIssue
+ }
+ 
+ public struct PersistedCgmEvent {
+@@ -55,3 +56,132 @@ extension CgmEvent {
+         return PersistedCgmEvent(managedObject: self)
+     }
+ }
++
++// MARK: - Sensor issue reporting
++
++/// An abnormal CGM sensor state, carrying the raw device state it came from.
++///
++/// A CGM manager's own state type is internal to its module, so each manager
++/// maps its states onto this shared vocabulary.
++public enum CgmSensorIssue: Equatable {
++    case sensorIssue(String)
++    case sensorFailed(String)
++    case sessionFailed(String)
++    case sensorExpired(String)
++    case excessNoise(String)
++    case calibrationError(String)
++    case unrecognized(rawValue: Int)
++
++    /// Identifies the kind of problem for de-duplication. Coarser than the raw
++    /// device state, so drifting between flavours of one failure stays quiet.
++    public var kind: String {
++        switch self {
++        case .sensorIssue: return "sensorIssue"
++        case .sensorFailed: return "sensorFailed"
++        case .sessionFailed: return "sessionFailed"
++        case .sensorExpired: return "sensorExpired"
++        case .excessNoise: return "excessNoise"
++        case .calibrationError: return "calibrationError"
++        case .unrecognized(let rawValue): return "unrecognized.\(rawValue)"
++        }
++    }
++
++    /// Note body carried to remote data services. Not localized: a historical
++    /// record stays readable in aggregate only if its wording is fixed.
++    public var note: String {
++        switch self {
++        case .sensorIssue(let raw): return "CGM: Sensor issue (\(raw))"
++        case .sensorFailed(let raw): return "CGM: Sensor failed (\(raw))"
++        case .sessionFailed(let raw): return "CGM: Sensor session failed (\(raw))"
++        case .sensorExpired(let raw): return "CGM: Sensor expired (\(raw))"
++        case .excessNoise(let raw): return "CGM: Excess noise (\(raw))"
++        case .calibrationError(let raw): return "CGM: Sensor calibration error (\(raw))"
++        case .unrecognized(let rawValue): return "CGM: Unrecognized sensor state (raw value \(rawValue))"
++        }
++    }
++}
++
++/// What a single sensor reading says about the sensor.
++public enum CgmSensorObservation: Equatable {
++    /// The sensor produced glucose its own manager considers reliable.
++    case healthy
++    /// A fault worth recording.
++    case problem(CgmSensorIssue)
++    /// Neither: warming up, stopped, session ended, or awaiting a first
++    /// calibration. Absence of a fault is not recovery, so this leaves open
++    /// episodes untouched.
++    case indeterminate
++}
++
++/// Decides which observed sensor states become `CgmEventType.sensorIssue`
++/// events.
++///
++/// One event per episode: a problem is reported when it starts and stays quiet
++/// while it persists. A healthy reading closes the open episodes, so a problem
++/// that clears and returns is reported again. Episodes are keyed by kind, so a
++/// sensor alternating between two faults reports each once, and are cleared
++/// when a sensor session starts, so a replacement sensor that fails during
++/// warmup still reports.
++///
++/// The episodes outlive the manager instance that observed them, so a relaunch
++/// during a persisting fault stays quiet.
++public enum CgmSensorIssueReporter {
++    private struct Episodes: Codable {
++        var sensorSessionStart: Date?
++        var openEpisodes: Set<String> = []
++    }
++
++    private static let lock = NSLock()
++
++    /// The event to hand to the CGM manager delegate, if this observation opens
++    /// a new episode.
++    ///
++    /// - Parameters:
++    ///   - observation: What `date`'s reading says about the sensor.
++    ///   - namespace: Distinguishes one CGM manager's episodes from another's.
++    ///   - sensorSessionStart: Start of the session the reading belongs to.
++    ///     A change of session clears the previous session's episodes.
++    ///   - deviceIdentifier: Sensor or transmitter identifier.
++    ///   - date: Timestamp of the reading.
++    public static func event(for observation: CgmSensorObservation,
++                             namespace: String,
++                             sensorSessionStart: Date?,
++                             deviceIdentifier: String,
++                             date: Date) -> PersistedCgmEvent?
++    {
++        lock.lock()
++        defer { lock.unlock() }
++
++        let key = "com.loopkit.LoopKit.CgmSensorIssueReporter.\(namespace)"
++        var episodes = (UserDefaults.standard.data(forKey: key).flatMap {
++            try? JSONDecoder().decode(Episodes.self, from: $0)
++        }) ?? Episodes()
++
++        if let sensorSessionStart = sensorSessionStart, sensorSessionStart != episodes.sensorSessionStart {
++            episodes.sensorSessionStart = sensorSessionStart
++            episodes.openEpisodes = []
++        }
++
++        var event: PersistedCgmEvent?
++
++        switch observation {
++        case .healthy:
++            episodes.openEpisodes = []
++        case .indeterminate:
++            break
++        case .problem(let issue):
++            if episodes.openEpisodes.insert(issue.kind).inserted {
++                event = PersistedCgmEvent(date: date,
++                                          type: .sensorIssue,
++                                          deviceIdentifier: deviceIdentifier,
++                                          failureMessage: issue.note)
++            }
++        }
++
++        if let data = try? JSONEncoder().encode(episodes) {
++            UserDefaults.standard.set(data, forKey: key)
++        }
++
++        return event
++    }
++}
+Submodule NightscoutService contains modified content
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/PersistedCgmEvent.swift b/NightscoutService/NightscoutServiceKit/Extensions/PersistedCgmEvent.swift
+index 6c5915f..c8d332d 100644
+--- a/NightscoutService/NightscoutServiceKit/Extensions/PersistedCgmEvent.swift
++++ b/NightscoutService/NightscoutServiceKit/Extensions/PersistedCgmEvent.swift
+@@ -16,6 +16,11 @@ extension PersistedCgmEvent {
+         case .sensorStart:
+             let note = "SensorID: \(deviceIdentifier)"
+             return NightscoutTreatment(timestamp: date, enteredBy: source, notes: note, eventType: .sensorStart)
++        case .sensorIssue:
++            guard let failureMessage = failureMessage else {
++                return nil
++            }
++            return NightscoutTreatment(timestamp: date, enteredBy: source, notes: failureMessage, eventType: .note)
+             // NS does not have a transmitter start type event yet
+ //        case .transmitterStart:
+ //            let note = "TransmitterID: \(deviceIdentifier)"
