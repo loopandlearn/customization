@@ -26,16 +26,21 @@
 # renders that as the note. Note wording is deliberately not localized: a
 # historical record stays readable in aggregate only if its wording is fixed.
 #
+# A note is handed to the event store once: if it fails to store, or Nightscout
+# stays unreachable until the local cache purges it, that episode is not
+# reported again until the sensor recovers. Same durability as Loop's own
+# sensor start events.
+#
 # Nothing here changes dosing, glucose handling or what the app displays.
 # ============================================================================
 Submodule CGMBLEKit contains modified content
 diff --git a/CGMBLEKit/CGMBLEKit/TransmitterManager.swift b/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
-index e5bd039..9d69e0d 100644
+index e5bd039..ffe612b 100644
 --- a/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
 +++ b/CGMBLEKit/CGMBLEKit/TransmitterManager.swift
-@@ -370,6 +370,17 @@ public class TransmitterManager: TransmitterDelegate {
- 
-         logDeviceCommunication("New reading: \(glucose.readDate)", type: .receive)
+@@ -350,6 +350,15 @@ public class TransmitterManager: TransmitterDelegate {
+             }
+         }
  
 +        if let event = CgmSensorIssueReporter.event(for: glucose.state.sensorObservation,
 +                                                    namespace: "DexTransmitter",
@@ -43,15 +48,13 @@ index e5bd039..9d69e0d 100644
 +                                                    deviceIdentifier: transmitter.ID,
 +                                                    date: glucose.readDate)
 +        {
-+            shareManager.delegate.notify { delegate in
-+                delegate?.cgmManager(self.shareManager, hasNew: [event])
-+            }
++            events.append(event)
 +        }
 +
-         guard glucose.state.hasReliableGlucose else {
-             log.default("%{public}@: Unreliable glucose: %{public}@", #function, String(describing: glucose.state))
-             updateDelegate(with: .error(CalibrationError.unreliableState(glucose.state)))
-@@ -560,6 +571,54 @@ extension CalibrationError: LocalizedError {
+         // Filter out future-dated events
+         // Stopgap measure for the issue described in https://github.com/LoopKit/Loop/issues/2087
+         events = events.filter { event in
+@@ -560,6 +569,54 @@ extension CalibrationError: LocalizedError {
  }
  
  extension CalibrationState {
@@ -195,7 +198,7 @@ index d940208..a38c348 100644
 +}
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift b/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
-index 953f415c..66632319 100644
+index 953f415c..0cee56a7 100644
 --- a/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
 +++ b/LoopKit/LoopKit/GlucoseKit/PersistedCgmEvent.swift
 @@ -13,6 +13,7 @@ public enum CgmEventType: String {
@@ -206,7 +209,7 @@ index 953f415c..66632319 100644
  }
  
  public struct PersistedCgmEvent {
-@@ -55,3 +56,132 @@ extension CgmEvent {
+@@ -55,3 +56,153 @@ extension CgmEvent {
          return PersistedCgmEvent(managedObject: self)
      }
  }
@@ -280,7 +283,7 @@ index 953f415c..66632319 100644
 +/// The episodes outlive the manager instance that observed them, so a relaunch
 +/// during a persisting fault stays quiet.
 +public enum CgmSensorIssueReporter {
-+    private struct Episodes: Codable {
++    private struct Episodes: Codable, Equatable {
 +        var sensorSessionStart: Date?
 +        var openEpisodes: Set<String> = []
 +    }
@@ -294,7 +297,10 @@ index 953f415c..66632319 100644
 +    ///   - observation: What `date`'s reading says about the sensor.
 +    ///   - namespace: Distinguishes one CGM manager's episodes from another's.
 +    ///   - sensorSessionStart: Start of the session the reading belongs to.
-+    ///     A change of session clears the previous session's episodes.
++    ///     A new session clears the previous session's episodes. Both Dexcom
++    ///     kits re-derive this from the phone's clock on every reading, so it
++    ///     carries transport jitter and is compared with a tolerance far below
++    ///     the gap between two real sessions.
 +    ///   - deviceIdentifier: Sensor or transmitter identifier.
 +    ///   - date: Timestamp of the reading.
 +    public static func event(for observation: CgmSensorObservation,
@@ -311,7 +317,11 @@ index 953f415c..66632319 100644
 +            try? JSONDecoder().decode(Episodes.self, from: $0)
 +        }) ?? Episodes()
 +
-+        if let sensorSessionStart = sensorSessionStart, sensorSessionStart != episodes.sensorSessionStart {
++        let previous = episodes
++
++        if let sensorSessionStart = sensorSessionStart, isNewSession(sensorSessionStart, from: episodes.sensorSessionStart) {
++            // The first date seen for a session is kept, so later readings
++            // compare against a fixed point and the jitter cannot accumulate.
 +            episodes.sensorSessionStart = sensorSessionStart
 +            episodes.openEpisodes = []
 +        }
@@ -332,11 +342,25 @@ index 953f415c..66632319 100644
 +            }
 +        }
 +
-+        if let data = try? JSONEncoder().encode(episodes) {
++        if episodes != previous, let data = try? JSONEncoder().encode(episodes) {
 +            UserDefaults.standard.set(data, forKey: key)
 +        }
 +
 +        return event
++    }
++
++    /// Whether `sensorSessionStart` belongs to a session other than the one
++    /// already being tracked.
++    ///
++    /// The tolerance absorbs the transport jitter both kits carry: each derived
++    /// start is the true start plus the delay before the phone processed the
++    /// message, so repeated readings of one session land within seconds of each
++    /// other, while two real sessions are separated by at least a warmup.
++    private static func isNewSession(_ sensorSessionStart: Date, from tracked: Date?) -> Bool {
++        guard let tracked = tracked else {
++            return true
++        }
++        return abs(sensorSessionStart.timeIntervalSince(tracked)) > .minutes(15)
 +    }
 +}
 Submodule NightscoutService contains modified content
