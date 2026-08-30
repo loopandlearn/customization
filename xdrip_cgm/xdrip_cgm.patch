@@ -2,13 +2,14 @@ diff --git a/.gitmodules b/.gitmodules
 index f3472ea..7e74758 100644
 --- a/.gitmodules
 +++ b/.gitmodules
-@@ -10,6 +10,9 @@
+@@ -10,6 +10,10 @@
  [submodule "dexcom-share-client-swift"]
  	path = dexcom-share-client-swift
  	url = https://github.com/LoopKit/dexcom-share-client-swift.git
 +[submodule "xdrip-client-swift"]
 +	path = xdrip-client-swift
 +	url = https://github.com/johandegraeve/xdrip-client-swift-1.git
++	branch = e618d674b1250b9572f148ff3ab360a1eee7f3e2
  [submodule "RileyLinkKit"]
  	path = RileyLinkKit
  	url = https://github.com/LoopKit/RileyLinkKit
