@@ -1,4 +1,4 @@
-Submodule Loop c2fddb7..2bf859f:
+Submodule Loop c2fddb76..2bf859f3:
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
 index c9aef285..8f497568 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
@@ -261,7 +261,7 @@ index 4a5c016e..dd35a787 100644
      func getCarbStatus(start: Date, end: Date?, effectVelocities: [GlucoseEffectVelocity]?, completion: @escaping (CarbStoreResult<[CarbStatus<StoredCarbEntry>]>) -> Void) {
          completion(.failure(.notConfigured))
      }
-Submodule LoopKit 325bd82..850ea31:
+Submodule LoopKit 325bd820..850ea31a:
 diff --git a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
 index 7fdc53ad..4b2cecf3 100644
 --- a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
@@ -273,12 +273,12 @@ index 7fdc53ad..4b2cecf3 100644
 +    func deleteRemoteCarbs(syncIdentifier: String) async throws
 +    func replaceRemoteCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws
  }
-Submodule NightscoutService fe075ef..2443a18:
+Submodule NightscoutService fe075ef0..32e513c8:
 diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-index 69f7a26..234b484 100644
+index 69f7a26..9f75373 100644
 --- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 +++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-@@ -28,12 +28,16 @@
+@@ -28,12 +28,17 @@
  		A941B08729BCB87500F91340 /* RemoteCommandSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08629BCB87500F91340 /* RemoteCommandSource.swift */; };
  		A941B08929BCB99C00F91340 /* RemoteCommandValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */; };
  		A941B09029BD4A9E00F91340 /* CarbRemoteNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */; };
@@ -292,10 +292,11 @@ index 69f7a26..234b484 100644
  		A941B09A29BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B09629BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift */; };
 +		AFFFFDFBBBA4F7DF3997E63E /* CarbEditRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0998B6C05EEDD7283F87513 /* CarbEditRemoteNotificationTestCase.swift */; };
 +		73056A2FC515352D51EFFECF /* CarbDeleteRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 976E1716A3DFA298F24F1566 /* CarbDeleteRemoteNotificationTestCase.swift */; };
++		5C1D2E3F4A5B6C7D8E9F0A1B /* RemoteNotificationCapabilitiesTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D2E3F4A5B6C7D8E9F0A1B2C /* RemoteNotificationCapabilitiesTestCase.swift */; };
  		A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */; };
  		A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */; };
  		A94DA7642353CF930082E26D /* StoredGlucoseSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */; };
-@@ -47,6 +51,8 @@
+@@ -47,6 +52,8 @@
  		A9AA6E5B29EB072E008FFA78 /* OverrideAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */; };
  		A9AA6E6329EB07D7008FFA78 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5D29EB07D6008FFA78 /* Action.swift */; };
  		A9AA6E6429EB07D7008FFA78 /* CarbAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */; };
@@ -304,7 +305,7 @@ index 69f7a26..234b484 100644
  		A9AA6E6529EB07D7008FFA78 /* OverrideCancelAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */; };
  		A9AA6E6629EB07D7008FFA78 /* BolusAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */; };
  		A9B007B322BD6FF7000131DE /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B007B222BD6FF7000131DE /* LocalizedString.swift */; };
-@@ -162,12 +168,16 @@
+@@ -162,12 +169,17 @@
  		A941B08629BCB87500F91340 /* RemoteCommandSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandSource.swift; sourceTree = "<group>"; };
  		A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandValidator.swift; sourceTree = "<group>"; };
  		A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbRemoteNotification.swift; sourceTree = "<group>"; };
@@ -318,10 +319,11 @@ index 69f7a26..234b484 100644
  		A941B09629BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
 +		E0998B6C05EEDD7283F87513 /* CarbEditRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbEditRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
 +		976E1716A3DFA298F24F1566 /* CarbDeleteRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbDeleteRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
++		6D2E3F4A5B6C7D8E9F0A1B2C /* RemoteNotificationCapabilitiesTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteNotificationCapabilitiesTestCase.swift; sourceTree = "<group>"; };
  		A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideCancelRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
  		A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
  		A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredGlucoseSample.swift; sourceTree = "<group>"; };
-@@ -183,6 +193,8 @@
+@@ -183,6 +195,8 @@
  		A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideAction.swift; sourceTree = "<group>"; };
  		A9AA6E5D29EB07D6008FFA78 /* Action.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
  		A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbAction.swift; sourceTree = "<group>"; };
@@ -330,16 +332,17 @@ index 69f7a26..234b484 100644
  		A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideCancelAction.swift; sourceTree = "<group>"; };
  		A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BolusAction.swift; sourceTree = "<group>"; };
  		A9B007B222BD6FF7000131DE /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
-@@ -321,6 +333,8 @@
+@@ -321,6 +335,9 @@
  				A91BAC2B22BC691A00ABF1BB /* Info.plist */,
  				A941B09529BD4AC900F91340 /* BolusRemoteNotificationTestCase.swift */,
  				A941B09629BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift */,
 +				E0998B6C05EEDD7283F87513 /* CarbEditRemoteNotificationTestCase.swift */,
 +				976E1716A3DFA298F24F1566 /* CarbDeleteRemoteNotificationTestCase.swift */,
++				6D2E3F4A5B6C7D8E9F0A1B2C /* RemoteNotificationCapabilitiesTestCase.swift */,
  				A95F887426C694E900D8A009 /* OTPManagerTestCase.swift */,
  				A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */,
  				A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */,
-@@ -361,6 +375,8 @@
+@@ -361,6 +378,8 @@
  			children = (
  				A941B08C29BD4A9D00F91340 /* BolusRemoteNotification.swift */,
  				A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */,
@@ -348,7 +351,7 @@ index 69f7a26..234b484 100644
  				A941B08D29BD4A9E00F91340 /* OverrideCancelRemoteNotification.swift */,
  				A941B08F29BD4A9E00F91340 /* OverrideRemoteNotification.swift */,
  				A941B08E29BD4A9E00F91340 /* RemoteNotification.swift */,
-@@ -415,6 +431,8 @@
+@@ -415,6 +434,8 @@
  				A9AA6E5D29EB07D6008FFA78 /* Action.swift */,
  				A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */,
  				A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */,
@@ -357,7 +360,7 @@ index 69f7a26..234b484 100644
  				A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */,
  				A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */,
  			);
-@@ -716,12 +734,16 @@
+@@ -716,12 +737,16 @@
  				A993990322BC7095005E39D3 /* NightscoutService.swift in Sources */,
  				A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */,
  				A9AA6E6429EB07D7008FFA78 /* CarbAction.swift in Sources */,
@@ -374,15 +377,30 @@ index 69f7a26..234b484 100644
  				A94DA7642353CF930082E26D /* StoredGlucoseSample.swift in Sources */,
  				A941B09429BD4A9F00F91340 /* OverrideRemoteNotification.swift in Sources */,
  				C1E703642506BE9400DAB534 /* ObjectIdCache.swift in Sources */,
-@@ -754,6 +776,8 @@
+@@ -754,6 +779,9 @@
  			buildActionMask = 2147483647;
  			files = (
  				A941B09A29BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift in Sources */,
 +				AFFFFDFBBBA4F7DF3997E63E /* CarbEditRemoteNotificationTestCase.swift in Sources */,
 +				73056A2FC515352D51EFFECF /* CarbDeleteRemoteNotificationTestCase.swift in Sources */,
++				5C1D2E3F4A5B6C7D8E9F0A1B /* RemoteNotificationCapabilitiesTestCase.swift in Sources */,
  				A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */,
  				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
  				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
+index 4e1d49e..637988b 100644
+--- a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
++++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
+@@ -159,7 +159,8 @@ extension StoredDosingDecision {
+                                    automaticDoseRecommendation: loopStatusAutomaticDoseRecommendation,
+                                    recommendedBolus: loopStatusRecommendedBolus,
+                                    enacted: automaticDoseDecision?.loopStatusEnacted,
+-                                   failureReason: automaticDoseDecision?.loopStatusFailureReason),
++                                   failureReason: automaticDoseDecision?.loopStatusFailureReason,
++                                   testingDetails: ["remoteCommands": RemoteNotificationCapabilities.supported]),
+             overrideStatus: overrideStatus)
+     }
+     
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 index 4626630..169fb86 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
@@ -700,10 +718,10 @@ index 0000000..fde3e4c
 +    }
 +}
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-index 0c5f8e3..c861dcd 100644
+index 0c5f8e3..6f0524d 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-@@ -22,12 +22,17 @@ protocol RemoteNotification: Codable {
+@@ -22,12 +22,22 @@ protocol RemoteNotification: Codable {
      
      func toRemoteAction() -> Action
      func otpValidationRequired() -> Bool
@@ -713,6 +731,11 @@ index 0c5f8e3..c861dcd 100644
      static func includedInNotification(_ notification: [String: Any]) -> Bool
  }
  
++/// Followers read this to know which remote commands this build accepts.
++enum RemoteNotificationCapabilities {
++    static let supported: [String] = ["carbs-delete", "carbs-edit"]
++}
++
  extension RemoteNotification {
 +
 +    func expirationRequired() -> Bool {
@@ -721,7 +744,7 @@ index 0c5f8e3..c861dcd 100644
      
      var id: String {
          //There is no unique identifier so we use the sent date when available
-@@ -102,6 +107,10 @@ extension Dictionary<String, AnyObject> {
+@@ -102,6 +112,10 @@ extension Dictionary<String, AnyObject> {
      func toRemoteNotification() throws -> RemoteNotification {
          if BolusRemoteNotification.includedInNotification(self) {
              return try BolusRemoteNotification(dictionary: self)
@@ -954,5 +977,32 @@ index 0000000..989f7c8
 +        let formatter = ISO8601DateFormatter()
 +        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 +        return formatter
++    }
++}
+diff --git a/NightscoutService/NightscoutServiceKitTests/RemoteNotificationCapabilitiesTestCase.swift b/NightscoutService/NightscoutServiceKitTests/RemoteNotificationCapabilitiesTestCase.swift
+new file mode 100644
+index 0000000..e284d3f
+--- /dev/null
++++ b/NightscoutService/NightscoutServiceKitTests/RemoteNotificationCapabilitiesTestCase.swift
+@@ -0,0 +1,21 @@
++//
++//  RemoteNotificationCapabilitiesTestCase.swift
++//  NightscoutServiceKitTests
++//
++
++import XCTest
++@testable import NightscoutServiceKit
++
++final class RemoteNotificationCapabilitiesTestCase: XCTestCase {
++
++    func testSupportedCommands_MatchNotificationKeys() {
++        XCTAssertEqual(RemoteNotificationCapabilities.supported, ["carbs-delete", "carbs-edit"])
++        XCTAssertTrue(CarbDeleteRemoteNotification.includedInNotification(["carbs-delete": "id"]))
++        XCTAssertTrue(CarbEditRemoteNotification.includedInNotification(["carbs-edit": "id"]))
++        for key in RemoteNotificationCapabilities.supported {
++            let notification: [String: Any] = [key: "id"]
++            XCTAssertTrue(CarbDeleteRemoteNotification.includedInNotification(notification)
++                          || CarbEditRemoteNotification.includedInNotification(notification), key)
++        }
 +    }
 +}

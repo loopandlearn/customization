@@ -12,6 +12,10 @@ Edits keep the entry's `syncIdentifier`. Replacement values are validated with t
 
 Loop acknowledges each command through the existing return push (`encrypted_return_notification`): `command_status` `success` / `failed`, `command_type` `carbs_delete` / `carbs_edit`, and `sync_identifier` identifying the entry. Failures also post the usual Nightscout Note with the error text. Loop shows a local notification for both outcomes using the remote carbs notification categories.
 
+## Capability signal
+
+Every devicestatus upload carries `loop.testingDetails.remoteCommands`, a list of the remote command keys this build accepts (`["carbs-delete", "carbs-edit"]`). It is refreshed every loop cycle, so a follower sees it within minutes of the patched build going live. LoopFollow hides the delete and edit actions when the field is absent, which keeps an unpatched Loop from receiving commands it would reject.
+
 Touches Loop, LoopKit and NightscoutService. Generated against LoopWorkspace `dev` (3.14.8). Apply from the LoopWorkspace folder:
 
 ```

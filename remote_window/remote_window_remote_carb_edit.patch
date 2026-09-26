@@ -1,4 +1,4 @@
-Submodule Loop c60545b5...bd7cabc0:
+Submodule Loop 6571f8f8...7f5a369c:
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
 index 3d07128e..981f1e30 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
@@ -460,7 +460,7 @@ index a86f20e0..a4432efc 100644
      
      func getGlucoseSamples(start: Date?, end: Date?, completion: @escaping (_ samples: Swift.Result<[StoredGlucoseSample], Error>) -> Void)
  
-Submodule LoopKit 28e1c1f6...508fbf59:
+Submodule LoopKit 7223f861...e7ce9e26:
 diff --git a/LoopKit/LoopKit/InsulinKit/DoseStore.swift b/LoopKit/LoopKit/InsulinKit/DoseStore.swift
 index 712f9048..be7c17dd 100644
 --- a/LoopKit/LoopKit/InsulinKit/DoseStore.swift
@@ -507,7 +507,7 @@ index 4b2cecf3..8fb254b6 100644
 +    func deleteRemoteCarbs(syncIdentifier: String) async throws -> StoredCarbEntry
 +    func replaceRemoteCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws -> StoredCarbEntry
  }
-Submodule NightscoutService e7eaf92b...15f70bab:
+Submodule NightscoutService 169054f3...a7b9002f:
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
 index 4a85888..fa35651 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutUploader.swift
@@ -981,7 +981,7 @@ index 2060a74..426ff89 100644
      public let otp: String?
      public let encryptedReturnNotification: String?
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-index c861dcd..3ba6e20 100644
+index 6f0524d..be43210 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
 @@ -14,7 +14,7 @@ protocol RemoteNotification: Codable {
@@ -993,7 +993,7 @@ index c861dcd..3ba6e20 100644
      var otp: String? {get}
      var remoteAddress: String {get}
      var enteredBy: String? {get}
-@@ -35,12 +35,8 @@ extension RemoteNotification {
+@@ -40,12 +40,8 @@ extension RemoteNotification {
      }
      
      var id: String {
