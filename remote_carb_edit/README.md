@@ -17,3 +17,12 @@ Touches Loop, LoopKit and NightscoutService. Generated against LoopWorkspace `de
 ```
 git apply --whitespace=nowarn dev_remote_carb_edit.patch
 ```
+
+## Combining with remote_window
+
+- `dev_remote_carb_edit_remote_window.patch`: this customization applied on top of `remote_window/remote_window.patch`.
+- `remote_window/remote_window_remote_carb_edit.patch`: remote_window applied on top of `dev_remote_carb_edit.patch`.
+
+Both orders produce the same tree. The selector script tries each folder's patches in sorted order and uses the first one that applies, so choosing both customizations picks the right file whichever is applied first. Applying by hand, use the plain patch for the first customization and the combined one for the second.
+
+With remote_window, `sent-at` is required on every remote command (the notification is rejected without it), and delete and edit commands appear in the remote command history with the entry's `syncIdentifier`.
