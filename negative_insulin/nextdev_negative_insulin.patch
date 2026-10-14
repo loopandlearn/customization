@@ -458,3 +458,6 @@ index fce1746..ff51a7d 100644
              )
  
              let sensitivityForDosing: [AbsoluteScheduleValue<LoopQuantity>]
+diff --git a/negative_insulin.loopcustomization b/negative_insulin.loopcustomization
+new file mode 100644
+index 0000000..e69de29

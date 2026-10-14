@@ -155,3 +155,6 @@ index 673e26f6..b4afbf46 100644
              targetsLayer,
              xAxisLayer,
              yAxisLayer,
+diff --git a/now_line.loopcustomization b/now_line.loopcustomization
+new file mode 100644
+index 0000000..e69de29

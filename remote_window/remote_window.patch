@@ -1708,3 +1708,6 @@ index 4ecbdde..f213ccb 100644
      private var dismissButton: some View {
          Button(action: dismiss) {
              Text("Done").bold()
+diff --git a/remote_window.loopcustomization b/remote_window.loopcustomization
+new file mode 100644
+index 0000000..e69de29

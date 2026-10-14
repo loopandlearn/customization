@@ -86,3 +86,6 @@ index fc770192..0b85b4c2 100644
              if  let absorptionTime = status.entry.absorptionTime,
                  let duration = absorptionFormatter.string(from: absorptionTime)
              {
+diff --git a/meal_days.loopcustomization b/meal_days.loopcustomization
+new file mode 100644
+index 0000000..e69de29

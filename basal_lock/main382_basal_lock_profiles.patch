@@ -1190,3 +1190,6 @@ index 00000000..41476c35
 +            .padding(.trailing, -16)
 +    }
 +}
+diff --git a/basal_lock.loopcustomization b/basal_lock.loopcustomization
+new file mode 100644
+index 0000000..e69de29

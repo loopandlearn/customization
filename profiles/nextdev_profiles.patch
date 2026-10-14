@@ -1390,3 +1390,6 @@ index 2524534..556cb34 100644
              settings: loopSettings,
              syncIdentifier: syncIdentifier.uuidString)
      }
+diff --git a/profiles.loopcustomization b/profiles.loopcustomization
+new file mode 100644
+index 0000000..e69de29

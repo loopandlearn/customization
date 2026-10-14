@@ -52,3 +52,6 @@ index 19f95ce..6510de6 100644
           <BuildActionEntry
              buildForTesting = "YES"
              buildForRunning = "YES"
+diff --git a/xdrip_cgm.loopcustomization b/xdrip_cgm.loopcustomization
+new file mode 100644
+index 0000000..e69de29
