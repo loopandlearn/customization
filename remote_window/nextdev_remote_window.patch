@@ -525,3 +525,6 @@ index 634eb4e..fce4623 100644
              }
          }
      }
+diff --git a/remote_window.loopcustomization b/remote_window.loopcustomization
+new file mode 100644
+index 0000000..e69de29

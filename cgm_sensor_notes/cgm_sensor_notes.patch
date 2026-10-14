@@ -232,3 +232,6 @@ index 6c5915f..c8d332d 100644
              // NS does not have a transmitter start type event yet
  //        case .transmitterStart:
  //            let note = "TransmitterID: \(deviceIdentifier)"
+diff --git a/cgm_sensor_notes.loopcustomization b/cgm_sensor_notes.loopcustomization
+new file mode 100644
+index 0000000..e69de29

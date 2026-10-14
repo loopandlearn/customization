@@ -1428,3 +1428,6 @@ index 0bed9c6..7d6c12d 100644
 +            defaultProfile: defaultProfile,
 +            store: store,
              settings: loopSettings,
+diff --git a/profiles.loopcustomization b/profiles.loopcustomization
+new file mode 100644
+index 0000000..e69de29

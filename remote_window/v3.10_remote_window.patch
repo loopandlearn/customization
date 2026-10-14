@@ -1539,3 +1539,6 @@ index 4ecbdde..a450bd1 100644
          .navigationBarTitle("")
          .navigationBarItems(trailing: dismissButton)
      }
+diff --git a/remote_window.loopcustomization b/remote_window.loopcustomization
+new file mode 100644
+index 0000000..e69de29

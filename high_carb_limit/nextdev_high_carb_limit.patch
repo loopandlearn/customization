@@ -15,3 +15,6 @@ index 5a78c4e8..585cdead 100644
      
      static let validManualGlucoseEntryRange = LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 10)...LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 600)
      
+diff --git a/high_carb_limit.loopcustomization b/high_carb_limit.loopcustomization
+new file mode 100644
+index 0000000..e69de29

@@ -713,3 +713,6 @@ index 93777b09..bdb72ae8 100644
          let startDate = dateFormatter.date(from: "2015-07-13T12:00:00")!
  
          let sampleStore = HealthKitSampleStore(
+diff --git a/negative_insulin.loopcustomization b/negative_insulin.loopcustomization
+new file mode 100644
+index 0000000..e69de29
