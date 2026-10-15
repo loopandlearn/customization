@@ -28,7 +28,7 @@ index 70d77e82..dcbe4906 100644
  				C16F511A2B89363A00EFD7A1 /* SimpleInsulinDose.swift */,
  				C152B9F42C9C7D4A00ACBC06 /* AutomationHistoryEntry.swift */,
 @@ -3516,6 +3519,7 @@
- 				B4001CEE28CBBC82002FB414 /* AlertManagementView.swift in Sources */,
+ 				A1E47000000000000000A001 /* AlertHistoryView.swift in Sources */,
  				C9A47B0380AAB1FC572D3F00 /* GlucoseAlertSettingsView.swift in Sources */,
  				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
 +				DDC065142B65871E0033FD88 /* Preferences.swift in Sources */,
