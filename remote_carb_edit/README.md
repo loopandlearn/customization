@@ -22,6 +22,8 @@ Touches Loop, LoopKit and NightscoutService. Generated against LoopWorkspace `de
 git apply --whitespace=nowarn dev_remote_carb_edit.patch
 ```
 
+`nextdev_remote_carb_edit.patch` is the same customization for LoopWorkspace `next-dev`. The selector picks whichever patch applies.
+
 ## Combining with remote_window
 
 - `dev_remote_carb_edit_remote_window.patch`: this customization applied on top of `remote_window/remote_window.patch`.
