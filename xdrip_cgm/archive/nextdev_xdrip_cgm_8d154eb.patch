@@ -1,0 +1,54 @@
+diff --git a/.gitmodules b/.gitmodules
+index 5f32634..1a500d1 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -58,6 +58,10 @@
+ [submodule "LoopAlgorithm"]
+ 	path = LoopAlgorithm
+ 	url = https://github.com/LoopKit/LoopAlgorithm.git
++[submodule "xdrip-client-swift"]
++	path = xdrip-client-swift
++	url = https://github.com/bjorkert/xdrip-client-swift-1.git
++	branch = loopkit-next-dev-compat
+ [submodule "LibreCRKit"]
+ 	path = LibreCRKit
+ 	url = https://github.com/airedev326/LibreCRKit.git
+diff --git a/LoopWorkspace.xcworkspace/contents.xcworkspacedata b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
+index 41ac8e0..305e0e3 100644
+--- a/LoopWorkspace.xcworkspace/contents.xcworkspacedata
++++ b/LoopWorkspace.xcworkspace/contents.xcworkspacedata
+@@ -93,6 +93,9 @@
+    <FileRef
+       location = "group:dexcom-share-client-swift/ShareClient.xcodeproj">
+    </FileRef>
++   <FileRef
++      location = "group:xdrip-client-swift/xDripClient.xcodeproj">
++   </FileRef>
+    <FileRef
+       location = "group:AmplitudeService/AmplitudeService.xcodeproj">
+    </FileRef>
+diff --git a/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme b/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
+index 256d8b5..14eaa32 100644
+--- a/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
++++ b/LoopWorkspace.xcworkspace/xcshareddata/xcschemes/LoopWorkspace.xcscheme
+@@ -216,6 +216,20 @@
+                ReferencedContainer = "container:dexcom-share-client-swift/ShareClient.xcodeproj">
+             </BuildableReference>
+          </BuildActionEntry>
++         <BuildActionEntry
++            buildForTesting = "YES"
++            buildForRunning = "YES"
++            buildForProfiling = "YES"
++            buildForArchiving = "YES"
++            buildForAnalyzing = "YES">
++            <BuildableReference
++               BuildableIdentifier = "primary"
++               BlueprintIdentifier = "C187C196279086A8006E3557"
++               BuildableName = "xDripClientPlugin.loopplugin"
++               BlueprintName = "xDripClientPlugin"
++               ReferencedContainer = "container:xdrip-client-swift/xDripClient.xcodeproj">
++            </BuildableReference>
++         </BuildActionEntry>
+          <BuildActionEntry
+             buildForTesting = "YES"
+             buildForRunning = "YES"

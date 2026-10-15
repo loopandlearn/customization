@@ -12,3 +12,6 @@ index 6d8edfea..0cf0b2a0 100644
  
      /// How much historical glucose to include in a dosing decision
      /// Somewhat arbitrary, but typical maximum visible in bolus glucose preview
+diff --git a/2hlollipop.loopcustomization b/2hlollipop.loopcustomization
+new file mode 100644
+index 0000000..e69de29

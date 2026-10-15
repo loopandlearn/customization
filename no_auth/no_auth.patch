@@ -12,3 +12,6 @@ index 8dff88d..6732735 100644
              context.evaluatePolicy(.deviceOwnerAuthentication,
                                     localizedReason: authenticationChallengeDescription,
                                     reply: { (success, error) in
+diff --git a/no_auth.loopcustomization b/no_auth.loopcustomization
+new file mode 100644
+index 0000000..e69de29

@@ -1,26 +1,9 @@
-# ============================================================================
-# basal_lock  (Loop next-dev version)
-#
-# Keeps the temp basal from being throttled below the SCHEDULED basal rate while
-# blood glucose is above a configurable threshold (default: off, 250 mg/dL).
-#
-# NEXT-DEV PORT: DoseMath moved into the standalone LoopAlgorithm package (which
-# can't see LoopKit's PreferencesProvider), so the clamp lives in
-# LoopDataManager.loop() instead. The Preferences UI is reached from Settings via
-# an independent sheet (not the shared `Sheet` enum that the `profiles`
-# customization extends), so profiles + basal_lock apply together in either order
-# and no combined variant is needed.
-#
-# Known residual (display only): while locked, the stored dosing decision — and so
-# the Nightscout "recommended temp basal" — still shows the algorithm's raw low
-# value, not the enforced rate. Nothing enacts from it.
-# ============================================================================
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index 8254ab53..e331b17c 100644
+index 70d77e82..dcbe4906 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -593,6 +593,7 @@
+@@ -596,6 +596,7 @@
  		CB1AF8155B1761A30ACA5591 /* Loop/Resources/Sounds/synth.caf in Resources */ = {isa = PBXBuildFile; fileRef = 83081FFB0497A4596F597830 /* Loop/Resources/Sounds/synth.caf */; };
  		D6E28676C2C7751C77C7F2FB /* Loop/Resources/Sounds/spring.caf in Resources */ = {isa = PBXBuildFile; fileRef = 9471E156FC10D6D0FF219C77 /* Loop/Resources/Sounds/spring.caf */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
@@ -28,15 +11,15 @@ index 8254ab53..e331b17c 100644
  		DDC389F62A2B61750066E2E8 /* ApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */; };
  		DDC389F82A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */; };
  		DDC389FA2A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */; };
-@@ -1399,6 +1400,7 @@
- 		C9EA3F48338B49BD9C6BD0F9 /* Loop/Resources/Sounds/urgent_low.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Loop/Resources/Sounds/urgent_low.caf; sourceTree = SOURCE_ROOT; };
+@@ -1404,6 +1405,7 @@
  		C9SCENED0000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+ 		CE102E23D8C1C1291EF66387 /* PluginPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PluginPickerView.swift; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
 +		DDC065132B65871E0033FD88 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
  		DDC389F52A2B61750066E2E8 /* ApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationFactorStrategy.swift; sourceTree = "<group>"; };
  		DDC389F72A2B620B0066E2E8 /* GlucoseBasedApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorStrategy.swift; sourceTree = "<group>"; };
  		DDC389F92A2B62470066E2E8 /* ConstantApplicationFactorStrategy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConstantApplicationFactorStrategy.swift; sourceTree = "<group>"; };
-@@ -1716,6 +1718,7 @@
+@@ -1721,6 +1723,7 @@
  				C1E3862428247B7100F561A4 /* StoredLoopNotRunningNotification.swift */,
  				4328E0311CFC068900E199AA /* WatchContext+LoopKit.swift */,
  				A987CD4824A58A0100439ADC /* ZipArchive.swift */,
@@ -44,8 +27,8 @@ index 8254ab53..e331b17c 100644
  				C16F51182B891DB600EFD7A1 /* StoredDataAlgorithmInput.swift */,
  				C16F511A2B89363A00EFD7A1 /* SimpleInsulinDose.swift */,
  				C152B9F42C9C7D4A00ACBC06 /* AutomationHistoryEntry.swift */,
-@@ -3507,6 +3510,7 @@
- 				B4001CEE28CBBC82002FB414 /* AlertManagementView.swift in Sources */,
+@@ -3516,6 +3519,7 @@
+ 				A1E47000000000000000A001 /* AlertHistoryView.swift in Sources */,
  				C9A47B0380AAB1FC572D3F00 /* GlucoseAlertSettingsView.swift in Sources */,
  				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
 +				DDC065142B65871E0033FD88 /* Preferences.swift in Sources */,
@@ -53,10 +36,10 @@ index 8254ab53..e331b17c 100644
  				C178249A1E1999FA00D9D25C /* CaseCountable.swift in Sources */,
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index df8869f2..fce9f440 100644
+index 43c4dca7..4a3551cc 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -726,6 +726,16 @@ final class LoopDataManager: ObservableObject {
+@@ -733,6 +733,16 @@ final class LoopDataManager: ObservableObject {
                  let scheduledBasalRate = input.basal.closestPrior(to: loopBaseTime)!.value
                  let activeOverride = temporaryPresetsManager.presetHistory.activeOverride(at: loopBaseTime)
  
@@ -73,7 +56,7 @@ index df8869f2..fce9f440 100644
                  let basalAdjustment = basal.adjustForCurrentDelivery(
                      at: loopBaseTime,
                      neutralBasalRate: scheduledBasalRate,
-@@ -736,6 +746,9 @@ final class LoopDataManager: ObservableObject {
+@@ -743,6 +753,9 @@ final class LoopDataManager: ObservableObject {
                  
                  if let basalAdjustment {
                      recommendationToEnact.basalAdjustment = basalAdjustment
@@ -140,18 +123,18 @@ index 00000000..ab5d00ec
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 687624f6..ecc68c71 100644
+index b81cd6f8..3df167f7 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -61,6 +61,7 @@ struct SettingsView: View {
-     @State private var actionSheet: Destination.ActionSheet?
+@@ -62,6 +62,7 @@ struct SettingsView: View {
      @State private var alert: Destination.Alert?
      @State private var sheet: Destination.Sheet?
+     @State private var pluginSelection: (() -> Void)?
 +    @State private var showingPreferences = false
      
      var localizedAppNameAndVersion: String
  
-@@ -92,6 +93,9 @@ struct SettingsView: View {
+@@ -93,6 +94,9 @@ struct SettingsView: View {
                      if FeatureFlags.allowExperimentalFeatures {
                          favoriteFoodsSection
                      }
@@ -161,11 +144,10 @@ index 687624f6..ecc68c71 100644
                      if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
                          deleteDataSection
                      }
-@@ -521,7 +525,22 @@ extension SettingsView {
+@@ -495,6 +499,21 @@ extension SettingsView {
                          descriptiveText: "Simplify Carb Entry")
          }
      }
--    
 +
 +    private var preferencesSection: some View {
 +        Section {
@@ -181,16 +163,15 @@ index 687624f6..ecc68c71 100644
 +                .environment(\.dismissAction, { showingPreferences = false })
 +        }
 +    }
-+
-     private var cgmChoices: [PluginPopover.Action] {
-         viewModel.cgmManagerSettingsViewModel.availableDevices
-             .sorted(by: {$0.localizedTitle < $1.localizedTitle})
+     
+     @ViewBuilder
+     private func pluginPickerView(for picker: Destination.PluginPicker) -> some View {
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-index 0fb75e91..9502d986 100644
+index 3d1c3a50..aa608f04 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
 +++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-@@ -845,6 +845,13 @@
+@@ -848,6 +848,13 @@
  		C1FAEC1D264AD6B400A3250B /* DeviceStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */; };
  		C1FAEC1F264AE12700A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47ECF8725DC20810024A54D /* UIImage.swift */; };
  		C1FAEC21264AEEA300A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC20264AEEA300A3250B /* UIImage.swift */; };
@@ -204,7 +185,7 @@ index 0fb75e91..9502d986 100644
  		E0E99C342C0E7AD300F9300C /* ConfirmationToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0E99C332C0E7AD300F9300C /* ConfirmationToggle.swift */; };
  		E0E99C392C0E80C200F9300C /* LoopCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0E99C382C0E80C200F9300C /* LoopCircleView.swift */; };
  		E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2624ACD59F0066A88D /* InformationView.swift */; };
-@@ -1756,6 +1763,13 @@
+@@ -1769,6 +1776,13 @@
  		C1FAC06228C7B0A100754AE2 /* reservoir_iob_test.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = reservoir_iob_test.json; sourceTree = "<group>"; };
  		C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceStatusBadge.swift; sourceTree = "<group>"; };
  		C1FAEC20264AEEA300A3250B /* UIImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImage.swift; sourceTree = "<group>"; };
@@ -218,7 +199,7 @@ index 0fb75e91..9502d986 100644
  		E0E99C332C0E7AD300F9300C /* ConfirmationToggle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfirmationToggle.swift; sourceTree = "<group>"; };
  		E0E99C382C0E80C200F9300C /* LoopCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopCircleView.swift; sourceTree = "<group>"; };
  		E9077D2624ACD59F0066A88D /* InformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationView.swift; sourceTree = "<group>"; };
-@@ -2040,6 +2054,7 @@
+@@ -2054,6 +2068,7 @@
  			isa = PBXGroup;
  			children = (
  				B4C004B2241085DB00B40429 /* ActionButton.swift */,
@@ -226,7 +207,7 @@ index 0fb75e91..9502d986 100644
  				89AF78C524482268002B4FCC /* ActionButtonStyle.swift */,
  				C1E4B307242E995200E70CCB /* ActivityIndicator.swift */,
  				89BE75CA2464BC2000B145D9 /* AlertContent.swift */,
-@@ -2215,6 +2230,7 @@
+@@ -2229,6 +2244,7 @@
  				C187338229B9486200519CDF /* TimeInterval.swift */,
  				C187339629B9488300519CDF /* TimeZone.swift */,
  				C187339729B9488300519CDF /* UUID.swift */,
@@ -234,7 +215,7 @@ index 0fb75e91..9502d986 100644
  				842E40282F22D8C6000CCCE0 /* Character+IsEmoji.swift */,
  			);
  			path = Extensions;
-@@ -2421,6 +2437,8 @@
+@@ -2435,6 +2451,8 @@
  				C1814B8B226371DF008D2D8E /* WeakSynchronizedDelegate.swift */,
  				43CACE0D2247F89100F90AF5 /* WeakSynchronizedSet.swift */,
  				B4A2ABEE2AAB5160007E3EC1 /* Pluggable.swift */,
@@ -243,7 +224,7 @@ index 0fb75e91..9502d986 100644
  				840A2F102C0F9882003D5E90 /* LoopCompletionFreshness.swift */,
  			);
  			path = LoopKit;
-@@ -2923,6 +2941,7 @@
+@@ -2939,6 +2957,7 @@
  			isa = PBXGroup;
  			children = (
  				C10759A12E4E3F2900EFF99A /* Environment+FeatureFlags.swift */,
@@ -251,7 +232,7 @@ index 0fb75e91..9502d986 100644
  				B455F3A325FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift */,
  				B4B7C1BB2604E3FC007379F6 /* CorrectionRangeScheduleEditorViewModel.swift */,
  				B4D4C20C25F95A8700DA809D /* DisplayGlucosePreference.swift */,
-@@ -3042,6 +3061,16 @@
+@@ -3058,6 +3077,16 @@
  			path = Resources;
  			sourceTree = "<group>";
  		};
@@ -268,7 +249,7 @@ index 0fb75e91..9502d986 100644
  		E9077D2824ACD5AA0066A88D /* Information Screens */ = {
  			isa = PBXGroup;
  			children = (
-@@ -3764,6 +3793,7 @@
+@@ -3781,6 +3810,7 @@
  				842E404B2F22EAD8000CCCE0 /* EditPresetView.swift in Sources */,
  				A9D3FF0B2A6C198C000C891D /* CGPoint.swift in Sources */,
  				B429D66E24BF7255003E1B4A /* UIImage.swift in Sources */,
@@ -276,7 +257,7 @@ index 0fb75e91..9502d986 100644
  				B46B62A923FF05F8001E69BA /* LabeledNumberInput.swift in Sources */,
  				842E40502F22ED57000CCCE0 /* ExistingPresetInsulinNeedsEdit.swift in Sources */,
  				892155152245C57E009112BC /* SegmentedGaugeBarLayer.swift in Sources */,
-@@ -3803,6 +3833,7 @@
+@@ -3820,6 +3850,7 @@
  				A9D3FF042A6C1944000C891D /* PredictedGlucoseChart.swift in Sources */,
  				C1DE4C2125A253BD007065F8 /* Color.swift in Sources */,
  				898E6E702241EDB70019E459 /* PercentageTextFieldTableViewController.swift in Sources */,
@@ -284,7 +265,7 @@ index 0fb75e91..9502d986 100644
  				89CAB36D24C9EC98009EE3CE /* Keyboard.swift in Sources */,
  				89186C0724BF7FC70003D0F3 /* Guardrail+UI.swift in Sources */,
  				84EE97B32D7A59AE00D5E941 /* ManualBolusDoseChartLayer.swift in Sources */,
-@@ -3861,6 +3892,7 @@
+@@ -3878,6 +3909,7 @@
  				B46B62B323FF0E62001E69BA /* SelectableLabel.swift in Sources */,
  				89FC6893245A2D680075CF59 /* ScheduleItemView.swift in Sources */,
  				43BA716F201E49220058961E /* FoodEmojiDataSource.swift in Sources */,
@@ -292,7 +273,7 @@ index 0fb75e91..9502d986 100644
  				E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */,
  				E94141D024C8F31C0096C326 /* DeliveryLimitsEditor.swift in Sources */,
  				1452F4BA2A85266500F8B9E4 /* CarbQuantityRow.swift in Sources */,
-@@ -3930,6 +3962,7 @@
+@@ -3947,6 +3979,7 @@
  				43BA717D201EE7090058961E /* GlucoseRangeTableViewCell.swift in Sources */,
  				B455F3A425FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift in Sources */,
  				A9D3FF002A6C1944000C891D /* ChartConstants.swift in Sources */,
@@ -300,7 +281,7 @@ index 0fb75e91..9502d986 100644
  				89BE75CB2464BC2000B145D9 /* AlertContent.swift in Sources */,
  				43BA7184201EE7090058961E /* TextFieldTableViewController.swift in Sources */,
  				1452F4B22A8521CD00F8B9E4 /* TextFieldRow.swift in Sources */,
-@@ -4021,6 +4054,7 @@
+@@ -4038,6 +4071,7 @@
  				89AE222F228BC68000BDFD85 /* DoseProgressTimerEstimator.swift in Sources */,
  				43D8FDF61C7290350073BE78 /* DailyQuantitySchedule.swift in Sources */,
  				43D8FDF51C7290350073BE78 /* CarbRatioSchedule.swift in Sources */,
@@ -308,7 +289,7 @@ index 0fb75e91..9502d986 100644
  				89AE222C228BC66E00BDFD85 /* Locked.swift in Sources */,
  				432CF87120D76D5A0066B889 /* GlucoseDisplayable.swift in Sources */,
  				A919889F2355016B00B75EEE /* DosingDecisionStore.swift in Sources */,
-@@ -4086,7 +4120,9 @@
+@@ -4103,7 +4137,9 @@
  				840A2DD32E399BD400D4E245 /* Modelv5ToModelv6.xcmappingmodel in Sources */,
  				433BC7A720523DB7000B1200 /* NewGlucoseSample.swift in Sources */,
  				4322B78E202FA2B30002837D /* InsulinMath.swift in Sources */,
@@ -940,3 +921,6 @@ index 00000000..350395d5
 +            .padding(.trailing, -16)
 +    }
 +}
+diff --git a/basal_lock.loopcustomization b/basal_lock.loopcustomization
+new file mode 100644
+index 0000000..e69de29
