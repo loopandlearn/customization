@@ -1,5 +1,5 @@
 diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
-index e1de76dd..e016bd9a 100644
+index 3091e304..28e8dfbe 100644
 --- a/Loop/Loop/Managers/LoopAppManager.swift
 +++ b/Loop/Loop/Managers/LoopAppManager.swift
 @@ -1064,8 +1064,42 @@ extension LoopAppManager: ResetLoopManagerDelegate {
@@ -48,10 +48,10 @@ index e1de76dd..e016bd9a 100644
  }
  
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 5e555f53..f9a3187c 100644
+index 83cc1b0e..73fb95bb 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1362,11 +1362,27 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1372,11 +1372,27 @@ extension LoopDataManager: ServicesManagerDelegate {
      
      //Carb Entry
      
@@ -78,9 +78,9 @@ index 5e555f53..f9a3187c 100644
 +        }
 +
          let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
-         let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate, foodType: foodType, absorptionTime: absorptionTime)
+         let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate, foodType: foodType, absorptionTime: absorptionTime)
  
-@@ -1432,9 +1448,14 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1442,9 +1458,14 @@ extension LoopDataManager: ServicesManagerDelegate {
          case invalidCarbs
          case entryNotFound
          case entryNotEditable

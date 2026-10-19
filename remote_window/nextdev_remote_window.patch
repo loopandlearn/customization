@@ -1,6 +1,6 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
-index e1de76dd..e016bd9a 100644
+index 3091e304..28e8dfbe 100644
 --- a/Loop/Loop/Managers/LoopAppManager.swift
 +++ b/Loop/Loop/Managers/LoopAppManager.swift
 @@ -1064,8 +1064,42 @@ extension LoopAppManager: ResetLoopManagerDelegate {
@@ -49,10 +49,10 @@ index e1de76dd..e016bd9a 100644
  }
  
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index df086d0b..56ae92db 100644
+index 2ef40ed8..8800cb2f 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1362,8 +1362,8 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1372,8 +1372,8 @@ extension LoopDataManager: ServicesManagerDelegate {
      
      //Carb Entry
      
@@ -63,7 +63,7 @@ index df086d0b..56ae92db 100644
          let absorptionTime = absorptionTime ?? LoopCoreConstants.defaultCarbAbsorptionTimes.medium
          if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
              throw CarbActionError.invalidAbsorptionTime(absorptionTime)
-@@ -1385,6 +1385,22 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1395,6 +1395,22 @@ extension LoopDataManager: ServicesManagerDelegate {
              }
          }
          
@@ -84,9 +84,9 @@ index df086d0b..56ae92db 100644
 +        }
 +
          let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
-         let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
+         let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
  
-@@ -1397,9 +1413,14 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1407,9 +1423,14 @@ extension LoopDataManager: ServicesManagerDelegate {
          case invalidStartDate(Date)
          case exceedsMaxCarbs
          case invalidCarbs

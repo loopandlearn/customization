@@ -1,8 +1,8 @@
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 56ae92db..f9a3187c 100644
+index 8800cb2f..73fb95bb 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1363,28 +1363,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1373,28 +1373,10 @@ extension LoopDataManager: ServicesManagerDelegate {
      //Carb Entry
      
      func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?, userCreatedDate: Date) async throws {
@@ -34,12 +34,12 @@ index 56ae92db..f9a3187c 100644
          // Guard B (conflicting-treatment protection): reject remote carbs if any carb entry was
          // created within minTreatmentIntervalInMinutes of the command's userCreatedDate. Look back
          // a little further for safety (e.g. upload delays); zero tolerance for carbs.
-@@ -1402,10 +1384,61 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1412,10 +1394,61 @@ extension LoopDataManager: ServicesManagerDelegate {
          }
  
          let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
--        let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
-+        let candidateCarbEntry = NewCarbEntry(quantity: quantity, startDate: startDate, foodType: foodType, absorptionTime: absorptionTime)
+-        let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
++        let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate, foodType: foodType, absorptionTime: absorptionTime)
  
          let _ = try await carbStore.addCarbEntry(candidateCarbEntry)
      }
@@ -58,9 +58,9 @@ index 56ae92db..f9a3187c 100644
 +        try validateRemoteCarbParameters(amountInGrams: amountInGrams, absorptionTime: absorptionTime, startDate: startDate)
 +
 +        let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
-+        let replacement = NewCarbEntry(quantity: quantity, startDate: startDate, foodType: foodType ?? existing.foodType, absorptionTime: absorptionTime)
++        let update = CarbEntryUpdate(quantity: quantity, startDate: startDate, foodType: foodType ?? existing.foodType, absorptionTime: absorptionTime)
 +
-+        return try await addCarbEntry(replacement, replacing: existing)
++        return try await replaceCarbEntry(existing, with: update)
 +    }
 +
 +    private func validateRemoteCarbParameters(amountInGrams: Double, absorptionTime: TimeInterval, startDate: Date) throws {
@@ -97,7 +97,7 @@ index 56ae92db..f9a3187c 100644
      
      enum CarbActionError: LocalizedError {
          
-@@ -1413,6 +1446,8 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1423,6 +1456,8 @@ extension LoopDataManager: ServicesManagerDelegate {
          case invalidStartDate(Date)
          case exceedsMaxCarbs
          case invalidCarbs
@@ -106,7 +106,7 @@ index 56ae92db..f9a3187c 100644
          case conflictingTreatments(_ conflictingAmountInGrams: Double, _ minutesRequiredBetweenTreatments: TimeInterval)
  
          var errorDescription: String? {
-@@ -1425,6 +1460,10 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -1435,6 +1470,10 @@ extension LoopDataManager: ServicesManagerDelegate {
                  return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
              case .invalidCarbs:
                  return NSLocalizedString("Invalid carb amount", comment: "Carb error description: invalid carb amount.")
