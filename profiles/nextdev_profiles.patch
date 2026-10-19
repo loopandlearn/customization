@@ -1364,7 +1364,7 @@ index 1ddc82b..54421a1 100644
  
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-index 2524534..556cb34 100644
+index 5191db7..2edffcf 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 @@ -93,12 +93,20 @@ extension StoredSettings {
@@ -1388,8 +1388,8 @@ index 2524534..556cb34 100644
 +            defaultProfile: defaultProfile,
 +            store: store,
              settings: loopSettings,
-             syncIdentifier: syncIdentifier.uuidString)
-     }
+             syncIdentifier: syncIdentifier.uuidString,
+             isAPNSProduction: Bundle.main.isAPNSProductionEnvironment)
 diff --git a/profiles.loopcustomization b/profiles.loopcustomization
 new file mode 100644
 index 0000000..e69de29
