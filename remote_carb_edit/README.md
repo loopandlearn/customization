@@ -26,8 +26,9 @@ git apply --whitespace=nowarn dev_remote_carb_edit.patch
 
 ## Combining with remote_window
 
-- `dev_remote_carb_edit_remote_window.patch`: this customization applied on top of `remote_window/remote_window.patch`.
-- `remote_window/remote_window_remote_carb_edit.patch`: remote_window applied on top of `dev_remote_carb_edit.patch`.
+- `dev_remote_carb_edit_remote_window.patch`: this customization applied on top of `remote_window/remote_window.patch` (main) or `remote_window/dev_remote_window.patch` (dev).
+- `remote_window/remote_window_remote_carb_edit.patch`: remote_window applied on top of `dev_remote_carb_edit.patch` on main.
+- `remote_window/dev_remote_window_remote_carb_edit.patch`: the same on dev.
 
 For `next-dev`:
 
