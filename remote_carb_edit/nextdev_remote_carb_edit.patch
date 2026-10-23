@@ -218,7 +218,7 @@ index 8f824906..6d3f9db2 100644
  }
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-index c97bbcb..88f80a4 100644
+index 00096e2..ea85f5a 100644
 --- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 +++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 @@ -27,12 +27,17 @@
@@ -303,7 +303,7 @@ index c97bbcb..88f80a4 100644
  				A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */,
  				A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */,
  			);
-@@ -714,12 +735,16 @@
+@@ -713,12 +734,16 @@
  				A993990322BC7095005E39D3 /* NightscoutService.swift in Sources */,
  				A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */,
  				A9AA6E6429EB07D7008FFA78 /* CarbAction.swift in Sources */,
@@ -320,7 +320,7 @@ index c97bbcb..88f80a4 100644
  				A94DA7642353CF930082E26D /* StoredGlucoseSample.swift in Sources */,
  				A941B09429BD4A9F00F91340 /* OverrideRemoteNotification.swift in Sources */,
  				C1E703642506BE9400DAB534 /* ObjectIdCache.swift in Sources */,
-@@ -751,6 +776,9 @@
+@@ -750,6 +775,9 @@
  			buildActionMask = 2147483647;
  			files = (
  				A941B09A29BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift in Sources */,
@@ -331,13 +331,13 @@ index c97bbcb..88f80a4 100644
  				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
  				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-index a5aeec3..8971ea9 100644
+index 2f12b47..e7bb1ad 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-@@ -159,6 +159,7 @@ extension StoredDosingDecision {
-                                    recommendedBolus: loopStatusRecommendedBolus,
+@@ -180,6 +180,7 @@ extension StoredDosingDecision {
                                     enacted: automaticDoseDecision?.loopStatusEnacted,
                                     failureReason: automaticDoseDecision?.loopStatusFailureReason,
+                                    failureCode: automaticDoseDecision?.errors.first?.id,
 +                                   testingDetails: ["remoteCommands": RemoteNotificationCapabilities.supported],
                                     algorithmExperiments: (automaticDoseDecision?.algorithmExperiments ?? algorithmExperiments)?.map { $0.jsonObject }),
              overrideStatus: overrideStatus)
