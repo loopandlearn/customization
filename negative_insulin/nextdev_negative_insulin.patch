@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index c1faba8a..8b33214f 100644
+index a2599fd2..c1413f2e 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -587,6 +587,7 @@
+@@ -594,6 +594,7 @@
  		C1F8B243223E73FD00DD66CF /* BolusProgressTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F8B1D122375E4200DD66CF /* BolusProgressTableViewCell.swift */; };
  		C1FAD5192E7E0C3400F7FAD9 /* ChartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAD5182E7E0C3100F7FAD9 /* ChartPageView.swift */; };
  		C1FB428C217806A400FAB378 /* StateColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428B217806A300FAB378 /* StateColorPalette.swift */; };
@@ -11,7 +11,7 @@ index c1faba8a..8b33214f 100644
  		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
  		C9A47B0180AAB1FC572D3EFE /* CriticalAlertAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A47B0175B13A9543390BC5 /* CriticalAlertAudioPlayer.swift */; };
  		C9A47B0280AAB1FC572D3EFF /* GlucoseAlertManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A47B0275B13A9543390BC6 /* GlucoseAlertManager.swift */; };
-@@ -1395,6 +1396,7 @@
+@@ -1408,6 +1409,7 @@
  		C1F8B1DB223862D500DD66CF /* BolusProgressTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = BolusProgressTableViewCell.xib; sourceTree = "<group>"; };
  		C1FAD5182E7E0C3100F7FAD9 /* ChartPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPageView.swift; sourceTree = "<group>"; };
  		C1FB428B217806A300FAB378 /* StateColorPalette.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateColorPalette.swift; sourceTree = "<group>"; };
@@ -19,27 +19,27 @@ index c1faba8a..8b33214f 100644
  		C1FB428E217921D600FAB378 /* PumpManagerUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpManagerUI.swift; sourceTree = "<group>"; };
  		C9A47B0175B13A9543390BC5 /* CriticalAlertAudioPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CriticalAlertAudioPlayer.swift; sourceTree = "<group>"; };
  		C9A47B0275B13A9543390BC6 /* GlucoseAlertManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseAlertManager.swift; sourceTree = "<group>"; };
-@@ -2061,6 +2063,7 @@
+@@ -2075,6 +2077,7 @@
  				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
  				DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */,
  				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
 +				120490CA2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift */,
+ 				A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */,
  				84DEB10C2C18FABA00170734 /* IOSFocusModesView.swift */,
  				84D1F1A62D09053A00CB271F /* StatusTableView.swift */,
- 				B429CAB22E97C7F300FA988E /* LoopStatusModalView.swift */,
-@@ -3521,6 +3524,7 @@
+@@ -3540,6 +3543,7 @@
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
  				B4F3D25124AF890C0095CE44 /* BluetoothStateManager.swift in Sources */,
  				1DDE273D24AEA4B000796622 /* SettingsViewModel.swift in Sources */,
 +				120490CB2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift in Sources */,
  				FEEDB0000000000000000001 /* StatisticsViewModel.swift in Sources */,
  				DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */,
- 				842E40A72F22F7E2000CCCE0 /* TintedContent.swift in Sources */,
+ 				A1B2C3D42E8F000100000002 /* GuardAndRunwaySelectionView.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index df086d0b..d616731a 100644
+index 30ab8fb2..5b9d0a6c 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -357,6 +357,82 @@ final class LoopDataManager: ObservableObject {
+@@ -359,6 +359,82 @@ final class LoopDataManager: ObservableObject {
          }
      }
  
@@ -122,19 +122,19 @@ index df086d0b..d616731a 100644
      func fetchData(
          for baseTime: Date? = nil,
          presumePresetEndingNow: Bool = false,
-@@ -554,7 +630,7 @@ final class LoopDataManager: ObservableObject {
-             effectiveBolusApplicationFactor = nil
-         }
+@@ -541,7 +617,7 @@ final class LoopDataManager: ObservableObject {
+         let experiments = enabledAlgorithmExperiments
+         let volatilityBaseline = experiments.contains(.guardAndRunway) ? await currentVolatilityBaseline(at: baseTime) : nil
  
 -        return StoredDataAlgorithmInput(
 +        var input = StoredDataAlgorithmInput(
              glucoseHistory: glucose,
              doses: dosesWithModel,
              carbEntries: carbEntries,
-@@ -572,6 +648,12 @@ final class LoopDataManager: ObservableObject {
-             recommendationInsulinModel: recommendationInsulinModel,
-             recommendationType: .manualBolus,
-             automaticBolusApplicationFactor: effectiveBolusApplicationFactor)
+@@ -561,6 +637,12 @@ final class LoopDataManager: ObservableObject {
+             automaticBolusApplicationFactor: nil,
+             experiments: experiments,
+             volatilityBaseline: volatilityBaseline)
 +
 +        if UserDefaults.standard.negativeInsulinDamperEnabled {
 +            input.negativeInsulinDamper = computeNegativeInsulinDamper(for: input)
@@ -143,8 +143,8 @@ index df086d0b..d616731a 100644
 +        return input
      }
  
-     func loopingReEnabled() async {
-@@ -1260,7 +1342,7 @@ extension StoredDataAlgorithmInput {
+     private var enabledAlgorithmExperiments: Set<ExperimentOption> {
+@@ -1312,7 +1394,7 @@ extension StoredDataAlgorithmInput {
          return rval
      }
  
@@ -153,12 +153,12 @@ index df086d0b..d616731a 100644
          let prediction = LoopAlgorithm.generatePrediction(
              start: predictionStart,
              glucoseHistory: glucoseHistory,
-@@ -1272,7 +1354,8 @@ extension StoredDataAlgorithmInput {
-             algorithmEffectsOptions: effectsOptions,
+@@ -1325,7 +1407,8 @@ extension StoredDataAlgorithmInput {
              useIntegralRetrospectiveCorrection: self.useIntegralRetrospectiveCorrection,
              useMidAbsorptionISF: true,
--            carbAbsorptionModel: self.carbAbsorptionModel.model
-+            carbAbsorptionModel: self.carbAbsorptionModel.model,
+             carbAbsorptionModel: self.carbAbsorptionModel.model,
+-            experiments: experiments
++            experiments: experiments,
 +            negativeInsulinDamper: applyNegativeInsulinDamper ? negativeInsulinDamper : nil
          )
          return prediction.glucose
@@ -197,13 +197,13 @@ index 342fe23d..24fb5a70 100644
              return NSLocalizedString("15 min glucose regression coefficient (b₁), continued with decay over 30 min", comment: "Description of the prediction input effect for glucose momentum")
          case [.retrospection]:
 diff --git a/Loop/Loop/Models/StoredDataAlgorithmInput.swift b/Loop/Loop/Models/StoredDataAlgorithmInput.swift
-index ba3c169d..05034540 100644
+index 8d8441c4..693e2086 100644
 --- a/Loop/Loop/Models/StoredDataAlgorithmInput.swift
 +++ b/Loop/Loop/Models/StoredDataAlgorithmInput.swift
-@@ -56,4 +56,6 @@ struct StoredDataAlgorithmInput: AlgorithmInput {
-     var maxActiveInsulinMultiplier: Double? = nil
+@@ -60,4 +60,6 @@ struct StoredDataAlgorithmInput: AlgorithmInput {
+     var experiments: Set<ExperimentOption> = []
  
-     var gradualTransitionsThreshold: Double? = nil
+     var volatilityBaseline: Double? = nil
 +
 +    var negativeInsulinDamper: Double? = nil
  }
@@ -347,7 +347,7 @@ index 00000000..f1b35973
 +   }
 +}
 diff --git a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
-index 795fbdd8..5753aa1a 100644
+index 5ff430b8..7ced73ac 100644
 --- a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
 +++ b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
 @@ -41,6 +41,7 @@ public struct ExperimentRow: View {
@@ -355,10 +355,10 @@ index 795fbdd8..5753aa1a 100644
      @AppStorage(UserDefaults.Key.GlucoseBasedApplicationFactorEnabled.rawValue) private var isGlucoseBasedApplicationFactorEnabled = false
      @AppStorage(UserDefaults.Key.IntegralRetrospectiveCorrectionEnabled.rawValue) private var isIntegralRetrospectiveCorrectionEnabled = false
 +    @AppStorage(UserDefaults.Key.NegativeInsulinDamperEnabled.rawValue) private var isNegativeInsulinDamperEnabled = false
+     @AppStorage(UserDefaults.Key.GuardAndRunwayEnabled.rawValue) private var isGuardAndRunwayEnabled = false
      var automaticDosingStrategy: AutomaticDosingStrategy
  
-     public var body: some View {
-@@ -70,6 +71,11 @@ public struct ExperimentsSettingsView: View {
+@@ -76,6 +77,11 @@ public struct ExperimentsSettingsView: View {
                          name: NSLocalizedString("Integral Retrospective Correction", comment: "Title of integral retrospective correction experiment"),
                          enabled: isIntegralRetrospectiveCorrectionEnabled)
                  }
@@ -370,15 +370,15 @@ index 795fbdd8..5753aa1a 100644
                  Spacer()
              }
              .padding()
-@@ -83,6 +89,7 @@ extension UserDefaults {
+@@ -89,6 +95,7 @@ extension UserDefaults {
      fileprivate enum Key: String {
          case GlucoseBasedApplicationFactorEnabled = "com.loopkit.algorithmExperiments.glucoseBasedApplicationFactorEnabled"
          case IntegralRetrospectiveCorrectionEnabled = "com.loopkit.algorithmExperiments.integralRetrospectiveCorrectionEnabled"
 +        case NegativeInsulinDamperEnabled = "com.loopkit.algorithmExperiments.negativeInsulinDamperEnabled"
+         case GuardAndRunwayEnabled = "com.loopkit.algorithmExperiments.guardAndRunwayEnabled"
      }
  
-     var glucoseBasedApplicationFactorEnabled: Bool {
-@@ -103,4 +110,13 @@ extension UserDefaults {
+@@ -119,4 +126,13 @@ extension UserDefaults {
          }
      }
  
@@ -394,35 +394,37 @@ index 795fbdd8..5753aa1a 100644
  }
 Submodule LoopAlgorithm contains modified content
 diff --git a/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift b/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
-index 9c2ef60..f6aa464 100644
+index 42c2ded..98b1f55 100644
 --- a/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
 +++ b/LoopAlgorithm/Sources/LoopAlgorithm/AlgorithmInput.swift
-@@ -35,8 +35,10 @@ public protocol AlgorithmInput {
-     var automaticBolusApplicationFactor: Double? { get } // Defaults to 0.4
-     var gradualTransitionsThreshold: Double? { get }
-     var emulation: AlgorithmEmulationOptions? { get } // Defaults to nil (no emulation)
+@@ -43,10 +43,12 @@ public protocol AlgorithmInput {
+     /// When nil it is computed from `glucoseHistory` if that holds at least a day of readings; otherwise
+     /// the band runs at full depth.
+     var volatilityBaseline: Double? { get }
 +    var negativeInsulinDamper: Double? { get } // Optional negative-insulin-damper coefficient in [0,1]; nil = disabled
  }
  
  public extension AlgorithmInput {
      var emulation: AlgorithmEmulationOptions? { nil }
+     var experiments: Set<ExperimentOption> { [] }
+     var volatilityBaseline: Double? { nil }
 +    var negativeInsulinDamper: Double? { nil }
  }
 diff --git a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
-index 50974c8..4759a6a 100644
+index d905bd7..567285d 100644
 --- a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
 +++ b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
-@@ -184,7 +184,8 @@ public struct LoopAlgorithm {
-         carbAbsorptionModel: CarbAbsorptionComputable = PiecewiseLinearAbsorption(),
+@@ -185,7 +185,8 @@ public struct LoopAlgorithm {
          gradualTransitionsThreshold: Double? = 40.0,
          momentumVelocityMaximum: LoopQuantity? = nil,
--        emulation: AlgorithmEmulationOptions = AlgorithmEmulationOptions()
-+        emulation: AlgorithmEmulationOptions = AlgorithmEmulationOptions(),
+         emulation: AlgorithmEmulationOptions = AlgorithmEmulationOptions(),
+-        experiments: Set<ExperimentOption> = []
++        experiments: Set<ExperimentOption> = [],
 +        negativeInsulinDamper: Double? = nil
      ) -> LoopPrediction<CarbType> where CarbType: CarbEntry, GlucoseType: GlucoseSampleValue, InsulinDoseType: InsulinDose {
  
          var prediction: [PredictedGlucoseValue] = []
-@@ -346,6 +347,26 @@ public struct LoopAlgorithm {
+@@ -359,6 +360,26 @@ public struct LoopAlgorithm {
                  effects: effects
              )
  
@@ -449,16 +451,16 @@ index 50974c8..4759a6a 100644
              // Dosing requires prediction entries at least as long as the insulin model duration.
              // If our prediction is shorter than that, then extend it here.
              let finalDate = start.addingTimeInterval(InsulinMath.defaultInsulinActivityDuration)
-@@ -787,7 +808,8 @@ public struct LoopAlgorithm {
-                 useMidAbsorptionISF: input.useMidAbsorptionISF,
+@@ -814,7 +835,8 @@ public struct LoopAlgorithm {
                  carbAbsorptionModel: input.carbAbsorptionModel.model,
                  gradualTransitionsThreshold: input.gradualTransitionsThreshold,
--                emulation: input.emulation ?? AlgorithmEmulationOptions()
-+                emulation: input.emulation ?? AlgorithmEmulationOptions(),
+                 emulation: input.emulation ?? AlgorithmEmulationOptions(),
+-                experiments: input.experiments
++                experiments: input.experiments,
 +                negativeInsulinDamper: input.negativeInsulinDamper
              )
  
-             let sensitivityForDosing: [AbsoluteScheduleValue<LoopQuantity>]
+             // Experiment adjustments before dosing (no-ops when `experiments` is empty). The runway reserve
 diff --git a/negative_insulin.loopcustomization b/negative_insulin.loopcustomization
 new file mode 100644
 index 0000000..e69de29
