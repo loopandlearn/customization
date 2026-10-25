@@ -103,7 +103,7 @@ index 28f07307..1966dcde 100644
                  return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
              case .invalidCarbs:
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index 15602f08..8e7c86ef 100644
+index a7da8548..462e815b 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
 @@ -245,13 +245,13 @@ class ServicesManager {

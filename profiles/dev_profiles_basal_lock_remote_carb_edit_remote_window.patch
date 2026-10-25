@@ -81,7 +81,7 @@ index 3eb3154b..6cefc092 100644
          return String(format: NSLocalizedString("Remote Carbs Entry: %d grams", comment: "The carb amount message for a remote carbs entry notification. (1: Carb amount in grams)"), Int(amountInGrams))
      }
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index 1e272bb2..161a42e3 100644
+index 1e272bb2..d804456f 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
 @@ -28,6 +28,7 @@ class ServicesManager {
@@ -92,7 +92,7 @@ index 1e272bb2..161a42e3 100644
      
      private var services = [Service]()
  
-@@ -482,3 +483,59 @@ extension Service {
+@@ -482,3 +483,58 @@ extension Service {
          ]
      }
  }
@@ -127,7 +127,6 @@ index 1e272bb2..161a42e3 100644
 +                    }
 +                }
 +            }
-+            viewModel.triggerProfileSync()
 +            NotificationManager.sendRemoteProfileNotification(name: name)
 +        } catch {
 +            NotificationManager.sendRemoteProfileFailureNotification(name: name, error: error)
@@ -316,10 +315,10 @@ index 8fb254b6..858a5621 100644
      func cancelRemoteOverride() async throws -> TemporaryScheduleOverride
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 00000000..f48848cd
+index 00000000..87672389
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,426 @@
+@@ -0,0 +1,466 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -557,17 +556,24 @@ index 00000000..f48848cd
 +        else
 +        {
 +            do {
-+                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
++                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { result in
 +                    switch result {
 +                    case .success(let syncedSchedule):
 +                        DispatchQueue.main.async {
-+                            let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
-+                            self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
-+                            self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
-+                            self?.saveBasalRates(basalRates: syncedSchedule)
-+                            self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
++                            let previousSettings = self.therapySettings
++                            let unit = self.therapySettings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
++                            self.therapySettings.glucoseTargetRangeSchedule = profile.correctionRange.schedule(for: unit)!
++                            self.therapySettings.carbRatioSchedule = profile.carbRatioSchedule
++                            self.therapySettings.basalRateSchedule = syncedSchedule
++                            self.therapySettings.insulinSensitivitySchedule = profile.insulinSensitivitySchedule.schedule(for: unit)!
++                            // One settings change, so the stored and uploaded settings never mix two profiles.
++                            self.setCurrentProfile(name: profile.name, syncChange: false)
++                            self.delegate?.saveCompletion(therapySettings: self.therapySettings)
++                            if self.therapySettings == previousSettings {
++                                // Nothing changed, so only the profile name needs to reach the uploaded settings.
++                                self.triggerProfileSync()
++                            }
 +                            print("New profile loaded")
-+                            self?.setCurrentProfile(name: profile.name, syncChange: false)
 +                            completion(.success)
 +                        }
 +                    case .failure(let error):
@@ -744,6 +750,39 @@ index 00000000..f48848cd
 +    /// Passes the schedules this profile activates to `check`.
 +    public func verify(with check: (GlucoseRangeSchedule, CarbRatioSchedule, BasalRateSchedule, InsulinSensitivitySchedule) throws -> Void) throws {
 +        try check(correctionRange, carbRatioSchedule, basalRateSchedule, insulinSensitivitySchedule)
++    }
++}
++
++extension ProfileViewModel {
++    /// The current settings with the schedules of `profile`, for editing the profile with the therapy settings editors.
++    func therapySettings(applying profile: Profile) -> TherapySettings {
++        var settings = therapySettings
++        let unit = settings.glucoseTargetRangeSchedule?.unit ?? HKUnit.milligramsPerDeciliter
++        settings.glucoseTargetRangeSchedule = profile.correctionRange.schedule(for: unit)
++        settings.carbRatioSchedule = profile.carbRatioSchedule
++        settings.basalRateSchedule = profile.basalRateSchedule
++        settings.insulinSensitivitySchedule = profile.insulinSensitivitySchedule.schedule(for: unit)
++        return settings
++    }
++
++    /// Saves edited schedules to the profile named `name`, keeping its file and place in the list.
++    func updateProfile(named name: String, from settings: TherapySettings) throws {
++        loadProfiles()
++        guard let profileReference = profiles.first(where: { $0.name == name }) else {
++            throw ProfileValidationError.fileLoadError
++        }
++        let profile = try getProfile(from: profileReference)
++        let updatedProfile = Profile(
++            name: profile.name,
++            correctionRange: settings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter) ?? profile.correctionRange,
++            carbRatioSchedule: settings.carbRatioSchedule ?? profile.carbRatioSchedule,
++            basalRateSchedule: settings.basalRateSchedule ?? profile.basalRateSchedule,
++            insulinSensitivitySchedule: settings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter) ?? profile.insulinSensitivitySchedule,
++            sortOrder: profile.sortOrder
++        )
++        try encodeProfile(updatedProfile).write(to: profilesDirectory.appendingPathComponent(profileReference.fileName), options: .atomic)
++        loadProfiles()
++        triggerProfileSync()
 +    }
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
@@ -937,10 +976,10 @@ index 00000000..446910e4
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 00000000..6de3598f
+index 00000000..a956b6d5
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
-@@ -0,0 +1,326 @@
+@@ -0,0 +1,423 @@
 +//
 +//  ProfilePreviewView.swift
 +//  LoopKitUI
@@ -958,6 +997,7 @@ index 00000000..6de3598f
 +    case load
 +    case delete
 +    case error
++    case loadEdited
 +}
 +
 +struct ProfilePreviewView: View {
@@ -965,7 +1005,10 @@ index 00000000..6de3598f
 +    @ObservedObject var viewModel: ProfileViewModel
 +    @Environment(\.dismissAction) var dismissAction
 +    @Environment(\.presentationMode) var presentationMode
-+    var profile: Profile
++    @Environment(\.appName) private var appName
++    @State private var profile: Profile
++    @State private var editingDelegate: ProfileEditingDelegate
++    @State private var therapySettingsViewModel: TherapySettingsViewModel
 +
 +    @State private var showingAlert = false
 +    @State private var activeAlert: ActiveAlert = .load
@@ -976,11 +1019,21 @@ index 00000000..6de3598f
 +
 +    let nilDestination: (_ dismiss: @escaping () -> Void) -> AnyView = { _ in AnyView(EmptyView()) }
 +
++    init(viewModel: ProfileViewModel, profile: Profile) {
++        self.viewModel = viewModel
++        let editingDelegate = ProfileEditingDelegate(viewModel: viewModel, profile: profile)
++        _profile = State(initialValue: profile)
++        _editingDelegate = State(initialValue: editingDelegate)
++        _therapySettingsViewModel = State(initialValue: TherapySettingsViewModel(
++            therapySettings: viewModel.therapySettings(applying: profile),
++            delegate: editingDelegate))
++    }
++
 +    var body: some View {
 +        ZStack {
 +            ScrollView {
 +                VStack(alignment: .leading) {
-+                    Text("Before proceeding, review the profile details below. Scroll to find options to Load, Rename, or Delete.")
++                    Text("Tap a setting to edit it in this profile. Editing changes only the saved profile; \(appName) keeps using its current settings until the profile is loaded. Scroll to find options to Load, Rename, or Delete.")
 +                        .font(.body)
 +                        .foregroundColor(.primary)
 +                        .padding([.leading, .trailing])
@@ -1047,30 +1100,7 @@ index 00000000..6de3598f
 +                    return Alert(
 +                        title: Text("Load Profile"),
 +                        message: Text("Do you want to load the profile \(profile.name)?"),
-+                        primaryButton: .default(Text("Yes"), action: {
-+                            let validationResult = viewModel.validateProfile(profile)
-+                            switch validationResult {
-+                            case .success:
-+                                viewModel.loadProfile(profile: profile) { result in
-+                                    switch result {
-+                                    case .success:
-+                                        dismissAction()
-+                                    case .failure(let error):
-+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-+                                            self.errorText = error.localizedDescription
-+                                            self.activeAlert = .error
-+                                            self.showingAlert = true
-+                                        }
-+                                    }
-+                                }
-+                            case .failure(let error):
-+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-+                                    self.errorText = error.localizedDescription
-+                                    self.activeAlert = .error
-+                                    self.showingAlert = true
-+                                }
-+                            }
-+                        }),
++                        primaryButton: .default(Text("Yes"), action: load),
 +                        secondaryButton: .cancel()
 +                    )
 +                case .delete:
@@ -1088,6 +1118,13 @@ index 00000000..6de3598f
 +                        title: Text("Error loading profile"),
 +                        message: Text(errorText ?? "Unknown error"),
 +                        dismissButton: .default(Text("OK"))
++                    )
++                case .loadEdited:
++                    return Alert(
++                        title: Text("Load Edited Profile?"),
++                        message: Text("\(profile.name) is the active profile. Load it now to use the edited settings. \(appName) writes the basal rates to the pump."),
++                        primaryButton: .default(Text("Load"), action: load),
++                        secondaryButton: .cancel(Text("Later"))
 +                    )
 +                }
 +            }
@@ -1110,9 +1147,59 @@ index 00000000..6de3598f
 +                .offset(y: -22)
 +            }
 +        }
++        .onAppear {
++            // Runs again when an editor closes.
++            guard let saved = try? viewModel.savedProfile(named: profile.name) else { return }
++            profile = saved
++            // The editors show the saved values, also after a save that failed.
++            therapySettingsViewModel.therapySettings = viewModel.therapySettings(applying: saved)
++            if let error = editingDelegate.saveError {
++                editingDelegate.saveError = nil
++                presentAlertLater(.error, errorText: error.localizedDescription)
++            } else if editingDelegate.savedEdits {
++                editingDelegate.savedEdits = false
++                if viewModel.currentProfileName == profile.name {
++                    presentAlertLater(.loadEdited)
++                }
++            }
++        }
 +        .onChange(of: shouldDismissSelf) { shouldDismiss in
 +            if shouldDismiss {
 +                self.presentationMode.wrappedValue.dismiss()
++            }
++        }
++    }
++
++    private func presentAlertLater(_ alert: ActiveAlert, errorText: String? = nil) {
++        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++            guard !showingAlert else { return }
++            self.errorText = errorText
++            activeAlert = alert
++            showingAlert = true
++        }
++    }
++
++    private func load() {
++        let validationResult = viewModel.validateProfile(profile)
++        switch validationResult {
++        case .success:
++            viewModel.loadProfile(profile: profile) { result in
++                switch result {
++                case .success:
++                    dismissAction()
++                case .failure(let error):
++                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                        self.errorText = error.localizedDescription
++                        self.activeAlert = .error
++                        self.showingAlert = true
++                    }
++                }
++            }
++        case .failure(let error):
++            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                self.errorText = error.localizedDescription
++                self.activeAlert = .error
++                self.showingAlert = true
 +            }
 +        }
 +    }
@@ -1214,27 +1301,6 @@ index 00000000..6de3598f
 +}
 +
 +
-+struct SectionWithContent<Content>: View where Content: View {
-+    let title: String
-+    let content: Content
-+
-+    init(title: String,
-+         content: () -> Content)
-+    {
-+        self.title = title
-+        self.content = content()
-+    }
-+
-+    public var body: some View {
-+        Section {
-+            Text(title)
-+                .bold()
-+                .frame(maxWidth: .infinity, alignment: .leading)
-+            content
-+        }
-+    }
-+}
-+
 +// MARK: Utilities
 +extension ProfilePreviewView {
 +
@@ -1248,8 +1314,34 @@ index 00000000..6de3598f
 +
 +    private func card<Content>(for therapySetting: TherapySetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
 +        Card {
-+            SectionWithContent(title: therapySetting.title,
-+                               content: content)
++            SectionWithTapToEdit(
++                // The basal editor needs the pump's supported rates.
++                isEnabled: therapySetting != .basalRate || viewModel.pumpSupportedIncrements() != nil,
++                title: therapySetting.title,
++                descriptiveText: therapySetting.descriptiveText(appName: appName),
++                destination: { dismiss in
++                    editor(for: therapySetting, dismiss: dismiss)
++                        .environment(\.dismissAction, dismiss)
++                },
++                content: content
++            )
++        }
++    }
++
++    /// The therapy settings editors, saving to this profile.
++    @ViewBuilder
++    private func editor(for therapySetting: TherapySetting, dismiss: @escaping () -> Void) -> some View {
++        switch therapySetting {
++        case .glucoseTargetRange:
++            CorrectionRangeScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .carbRatio:
++            CarbRatioScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .basalRate:
++            BasalRateScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .insulinSensitivity:
++            InsulinSensitivityScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        default:
++            EmptyView()
 +        }
 +    }
 +}
@@ -1267,9 +1359,53 @@ index 00000000..6de3598f
 +            .padding(.trailing, -8)
 +    }
 +}
++
++/// Saves edits made with the therapy settings editors to a saved profile. Loop's current settings and the pump are not changed.
++final class ProfileEditingDelegate: TherapySettingsViewModelDelegate {
++    private let viewModel: ProfileViewModel
++    private let profileName: String
++    private let basalTimeZone: TimeZone
++    /// Set when edits were saved, so the view can offer to load the edited active profile.
++    var savedEdits = false
++    /// Set when saving edits to the profile file failed.
++    var saveError: Error?
++
++    init(viewModel: ProfileViewModel, profile: Profile) {
++        self.viewModel = viewModel
++        self.profileName = profile.name
++        self.basalTimeZone = profile.basalRateSchedule.timeZone
++    }
++
++    func syncBasalRateSchedule(items: [RepeatingScheduleValue<Double>], completion: @escaping (Result<BasalRateSchedule, Error>) -> Void) {
++        guard let schedule = BasalRateSchedule(dailyItems: items, timeZone: basalTimeZone) else {
++            completion(.failure(ProfileValidationError.basalRateError))
++            return
++        }
++        completion(.success(schedule))
++    }
++
++    func syncDeliveryLimits(deliveryLimits: DeliveryLimits, completion: @escaping (Result<DeliveryLimits, Error>) -> Void) {
++        completion(.success(deliveryLimits))
++    }
++
++    func saveCompletion(therapySettings: TherapySettings) {
++        do {
++            try viewModel.updateProfile(named: profileName, from: therapySettings)
++            savedEdits = true
++        } catch {
++            saveError = error
++        }
++    }
++
++    func pumpSupportedIncrements() -> PumpSupportedIncrements? {
++        return viewModel.pumpSupportedIncrements()
++    }
++
++    func updateCurrentProfileName() {}
++}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 00000000..1c6244a4
+index 00000000..f816492b
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
 @@ -0,0 +1,173 @@
@@ -1387,15 +1523,15 @@ index 00000000..1c6244a4
 +                case .update:
 +                    return Alert(
 +                        title: Text("Profile Outdated"),
-+                        message: Text("The current therapy settings have changed. Do you want to update the profile named: \(viewModel.currentProfileName ?? "")?"),
-+                        primaryButton: .default(Text("Update")) {
++                        message: Text("The current therapy settings differ from the saved profile \(viewModel.currentProfileName ?? ""). Save the current settings to it, or keep the saved profile and load it later to use its settings."),
++                        primaryButton: .default(Text("Save Current Settings")) {
 +                            viewModel.saveProfile(withName: viewModel.currentProfileName ?? "")
 +                        },
-+                        secondaryButton: .cancel()
++                        secondaryButton: .cancel(Text("Keep Saved Profile"))
 +                    )
 +                case .info:
 +                    return Alert(title: Text("Information"),
-+                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap on any profile to review its settings in detail. In detail view, you can Load, Rename or Delete that particular profile.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
++                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap a profile to review its settings. There you can edit them without loading the profile, and Load, Rename or Delete it.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
 +                                 dismissButton: .default(Text("Got it!")))
 +                }
 +            }

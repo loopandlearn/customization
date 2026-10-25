@@ -2,6 +2,12 @@
 
 Save the current therapy settings (correction range, carb ratios, basal rates and insulin sensitivities) as named profiles under Settings → Profiles, and load one later.
 
+Loading a profile writes its basal schedule to the pump and then saves all four settings in one change, so stored and uploaded settings never mix two profiles.
+
+## Editing saved profiles
+
+Tap a profile to see its settings, then tap a setting to edit it with the same editors as Therapy Settings: the same guardrail warnings, confirmations and authentication. Edits change only the saved profile. Loop keeps dosing with its current settings and nothing is sent to the pump until the profile is loaded. When the edited profile is the active one, Loop offers to load it right away.
+
 ## Remote profile switch
 
 A caregiver app (LoopFollow) can switch Loop to one of the saved profiles, through the same OTP-protected APNS remote command path as remote carbs and boluses.

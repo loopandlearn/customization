@@ -233,7 +233,7 @@ index 02359815..03ffe6c7 100644
              carbStore.addCarbEntry(carbEntry) { result in
                  switch result {
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index 5bf1ec36..161a42e3 100644
+index 7a8dc92f..d804456f 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
 @@ -233,13 +233,13 @@ class ServicesManager {

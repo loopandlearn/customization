@@ -164,7 +164,7 @@ index 17cff75d..6cefc092 100644
          let notification = UNMutableNotificationContent()
          /// Notifications should expire after the missed meal is no longer relevant
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index c9d3e04f..5bf1ec36 100644
+index c61eda65..7a8dc92f 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
 @@ -240,6 +240,8 @@ public protocol ServicesManagerDelegate: AnyObject {
