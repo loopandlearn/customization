@@ -39,11 +39,11 @@ Both orders produce the same tree. The selector script tries each folder's patch
 
 With remote_window, `sent-at` is required on every remote command (the notification is rejected without it). On `dev`, delete and edit commands also appear in the remote command history with the entry's `syncIdentifier`; the `next-dev` remote_window has no command history.
 
-## Combining with remote_profile
+## Combining with profiles
 
-`remote_profile` also adds a remote command, so the two have variants for each other, also together with remote_window:
+`profiles` also adds a remote command (profile switch), so the two have variants for each other, also together with remote_window:
 
-- `<branch>_remote_carb_edit_remote_profile.patch` and `<branch>_remote_carb_edit_remote_profile_remote_window.patch`: this customization on top of remote_profile (and remote_window).
-- `remote_profile/<branch>_remote_profile_remote_carb_edit.patch` and `..._remote_carb_edit_remote_window.patch`: the reverse.
+- `<branch>_remote_carb_edit_profiles.patch` and `<branch>_remote_carb_edit_profiles_remote_window.patch`: this customization on top of profiles (and remote_window).
+- `profiles/<branch>_profiles_remote_carb_edit.patch` and `..._remote_carb_edit_remote_window.patch`: the reverse.
 
-With both applied, `remoteCommands` lists `carbs-delete`, `carbs-edit` and `profile-switch`. See `remote_profile/README.md`.
+With both applied, `remoteCommands` lists `carbs-delete`, `carbs-edit` and `profile-switch`. See `profiles/README.md`.

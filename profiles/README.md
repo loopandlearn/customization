@@ -1,6 +1,10 @@
-# Remote profile switch
+# Profiles
 
-Lets a caregiver app (LoopFollow) switch Loop to one of the profiles saved with the `profiles` customization, through the same OTP-protected APNS remote command path as remote carbs and boluses. Requires `profiles`; without it this customization shows as not compatible.
+Save the current therapy settings (correction range, carb ratios, basal rates and insulin sensitivities) as named profiles under Settings → Profiles, and load one later.
+
+## Remote profile switch
+
+A caregiver app (LoopFollow) can switch Loop to one of the saved profiles, through the same OTP-protected APNS remote command path as remote carbs and boluses.
 
 Switching a profile changes the correction range, carb ratios, basal rates and insulin sensitivities Loop doses with. It runs the same steps as loading the profile on the phone: Loop checks the profile against the guardrails and the pump's supported basal rates, writes the basal schedule to the pump, and only then saves the new settings. If any step fails, nothing changes and the caregiver is told why. This is not medical advice; agree on the saved profiles and when to use them with your care team.
 
@@ -24,20 +28,20 @@ Loop answers through the existing return push (`encrypted_return_notification`) 
 
 ## Patches
 
-Touches Loop, LoopKit and NightscoutService. `dev_remote_profile.patch` is for LoopWorkspace `dev` and `main` (3.14.11), `nextdev_remote_profile.patch` for `next-dev`. Apply after `profiles`, from the LoopWorkspace folder:
+Touches Loop, LoopKit, LoopOnboarding and NightscoutService. `dev_profiles.patch` is for LoopWorkspace `dev` and `main` (3.14.11), `nextdev_profiles.patch` for `next-dev`. `main380_*` and `main382_*` are for older main releases and do not include remote switching. Apply from the LoopWorkspace folder:
 
 ```
-git apply --whitespace=nowarn dev_remote_profile.patch
+git apply --whitespace=nowarn dev_profiles.patch
 ```
 
-It coexists with `basal_lock` and `negative_insulin` in any order. `profiles` cannot be removed while this customization is applied; remove this one first.
+On `dev`, `dev_profiles_basal_lock*.patch` apply on top of basal_lock; on `next-dev` the two coexist without a variant. Profiles coexists with negative_insulin. The profiles patches without remote switching are in `archive/*_noremote.patch`, so the selector reports an update for workspaces that have them applied.
 
 ## Combining with remote_carb_edit and remote_window
 
-Both also change the remote command code, so each has variants for the other customizations already being in the tree:
+Both also change the remote command code, so each has variants for the others already being in the tree:
 
-- `<branch>_remote_profile_remote_carb_edit.patch`, `<branch>_remote_profile_remote_window.patch`, `<branch>_remote_profile_remote_carb_edit_remote_window.patch`: this customization on top of the named ones.
-- `remote_carb_edit/<branch>_remote_carb_edit_remote_profile.patch` and `..._remote_profile_remote_window.patch`: remote_carb_edit on top of this one (and remote_window).
-- `remote_window/<branch>_remote_window_remote_profile.patch` and `..._remote_carb_edit_remote_profile.patch`: remote_window on top of this one (and remote_carb_edit).
+- `<branch>_profiles[_basal_lock]_remote_carb_edit.patch`, `..._remote_window.patch` and `..._remote_carb_edit_remote_window.patch`: profiles on top of the named customizations.
+- `remote_carb_edit/<branch>_remote_carb_edit_profiles.patch` and `..._profiles_remote_window.patch`: remote_carb_edit on top of profiles (and remote_window).
+- `remote_window/<branch>_remote_window_profiles.patch` and `..._profiles_remote_carb_edit.patch`: remote_window on top of profiles (and remote_carb_edit).
 
 Every order produces the same tree, and each customization can be removed on its own. With remote_carb_edit, `remoteCommands` lists all three commands. With remote_window, `sent-at` is required, and on `dev` profile switches also appear in the remote command history.
