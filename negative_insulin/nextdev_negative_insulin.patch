@@ -36,7 +36,7 @@ index a2599fd2..c1413f2e 100644
  				DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */,
  				A1B2C3D42E8F000100000002 /* GuardAndRunwaySelectionView.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 30ab8fb2..5b9d0a6c 100644
+index 45c48734..5f4f3d55 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
 @@ -359,6 +359,82 @@ final class LoopDataManager: ObservableObject {
@@ -144,7 +144,7 @@ index 30ab8fb2..5b9d0a6c 100644
      }
  
      private var enabledAlgorithmExperiments: Set<ExperimentOption> {
-@@ -1312,7 +1394,7 @@ extension StoredDataAlgorithmInput {
+@@ -1325,7 +1407,7 @@ extension StoredDataAlgorithmInput {
          return rval
      }
  
@@ -153,7 +153,7 @@ index 30ab8fb2..5b9d0a6c 100644
          let prediction = LoopAlgorithm.generatePrediction(
              start: predictionStart,
              glucoseHistory: glucoseHistory,
-@@ -1325,7 +1407,8 @@ extension StoredDataAlgorithmInput {
+@@ -1338,7 +1420,8 @@ extension StoredDataAlgorithmInput {
              useIntegralRetrospectiveCorrection: self.useIntegralRetrospectiveCorrection,
              useMidAbsorptionISF: true,
              carbAbsorptionModel: self.carbAbsorptionModel.model,
@@ -164,21 +164,21 @@ index 30ab8fb2..5b9d0a6c 100644
          return prediction.glucose
      }
 diff --git a/Loop/Loop/Models/PredictionInputEffect.swift b/Loop/Loop/Models/PredictionInputEffect.swift
-index 342fe23d..24fb5a70 100644
+index cf918321..e077ef29 100644
 --- a/Loop/Loop/Models/PredictionInputEffect.swift
 +++ b/Loop/Loop/Models/PredictionInputEffect.swift
-@@ -18,8 +18,9 @@ struct PredictionInputEffect: OptionSet {
-     static let momentum         = PredictionInputEffect(rawValue: 1 << 2)
+@@ -19,8 +19,9 @@ struct PredictionInputEffect: OptionSet {
      static let retrospection    = PredictionInputEffect(rawValue: 1 << 3)
      static let suspend          = PredictionInputEffect(rawValue: 1 << 4)
-+    static let damper           = PredictionInputEffect(rawValue: 1 << 5)
+     static let guardAndRunway   = PredictionInputEffect(rawValue: 1 << 5)
++    static let damper           = PredictionInputEffect(rawValue: 1 << 6)
  
--    static let all: PredictionInputEffect = [.carbs, .insulin, .momentum, .retrospection]
-+    static let all: PredictionInputEffect = [.carbs, .insulin, .damper, .momentum, .retrospection]
+-    static let all: PredictionInputEffect = [.carbs, .insulin, .momentum, .retrospection, .guardAndRunway]
++    static let all: PredictionInputEffect = [.carbs, .insulin, .damper, .momentum, .retrospection, .guardAndRunway]
  
      var localizedTitle: String? {
          switch self {
-@@ -27,6 +28,8 @@ struct PredictionInputEffect: OptionSet {
+@@ -28,6 +29,8 @@ struct PredictionInputEffect: OptionSet {
              return NSLocalizedString("Carbohydrates", comment: "Title of the prediction input effect for carbohydrates")
          case [.insulin]:
              return NSLocalizedString("Insulin", comment: "Title of the prediction input effect for insulin")
@@ -187,7 +187,7 @@ index 342fe23d..24fb5a70 100644
          case [.momentum]:
              return NSLocalizedString("Glucose Momentum", comment: "Title of the prediction input effect for glucose momentum")
          case [.retrospection]:
-@@ -44,6 +47,8 @@ struct PredictionInputEffect: OptionSet {
+@@ -47,6 +50,8 @@ struct PredictionInputEffect: OptionSet {
              return String(format: NSLocalizedString("Carbs Absorbed (g) ÷ Carb Ratio (g/U) × Insulin Sensitivity (%1$@/U)", comment: "Description of the prediction input effect for carbohydrates. (1: The glucose unit string)"), unit.localizedShortUnitString)
          case [.insulin]:
              return String(format: NSLocalizedString("Insulin Absorbed (U) × Insulin Sensitivity (%1$@/U)", comment: "Description of the prediction input effect for insulin"), unit.localizedShortUnitString)
@@ -208,49 +208,44 @@ index 8d8441c4..693e2086 100644
 +    var negativeInsulinDamper: Double? = nil
  }
 diff --git a/Loop/Loop/View Controllers/PredictionTableViewController.swift b/Loop/Loop/View Controllers/PredictionTableViewController.swift
-index b1349c70..c54d23ce 100644
+index c3ddaa7a..98b9daa7 100644
 --- a/Loop/Loop/View Controllers/PredictionTableViewController.swift	
 +++ b/Loop/Loop/View Controllers/PredictionTableViewController.swift	
-@@ -77,6 +77,8 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+@@ -79,6 +79,8 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
  
-     private var totalRetrospectiveCorrection: LoopQuantity?
+     private var guardAndRunway: GuardAndRunwayOutput?
  
 +    private var negativeInsulinDamper: Double?
 +
      private var refreshContext = RefreshContext.all
  
      private var chartStartDate: Date {
-@@ -126,11 +128,12 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
- 
+@@ -129,11 +131,12 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
          self.retrospectiveGlucoseDiscrepancies = algoOutput?.effects.retrospectiveGlucoseDiscrepancies
          totalRetrospectiveCorrection = algoOutput?.effects.totalRetrospectiveCorrectionEffect
+         self.guardAndRunway = algoOutput?.guardAndRunway
 +        self.negativeInsulinDamper = algoInput?.negativeInsulinDamper
  
          self.glucoseChart.setPredictedGlucoseValues(algoOutput?.predictedGlucose ?? [])
  
          do {
--            let glucose = try algoInput?.predictGlucose(effectsOptions: self.selectedInputs.algorithmEffectOptions) ?? []
-+            let glucose = try self.alternatePrediction(for: algoInput)
-             self.glucoseChart.setAlternatePredictedGlucoseValues(glucose)
-         } catch {
-             self.refreshContext.update(with: .status)
-@@ -199,10 +202,42 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+-            var glucose = try algoInput?.predictGlucose(effectsOptions: self.selectedInputs.algorithmEffectOptions) ?? []
++            var glucose = try self.alternatePrediction(for: algoInput)
+             if self.selectedInputs.contains(.guardAndRunway), let guardAndRunway = self.guardAndRunway {
+                 glucose = guardAndRunway.guarded(glucose)
+             }
+@@ -205,11 +208,37 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
  
      // Removed .suspend from this list; LoopAlgorithm needs updates to support this. Also review
      // for better ways to support desired use cases. https://github.com/LoopKit/Loop/pull/2026
--    private var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
-+    private var availableInputs: [PredictionInputEffect] = PredictionTableViewController.makeAvailableInputs()
+-    private lazy var availableInputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
++    private lazy var availableInputs: [PredictionInputEffect] = [.carbs, .insulin]
++        + (UserDefaults.standard.negativeInsulinDamperEnabled ? [.damper] : [])
++        + [.momentum, .retrospection]
+         + (UserDefaults.standard.guardAndRunwayEnabled ? [.guardAndRunway] : [])
  
      private var selectedInputs = PredictionInputEffect.all
  
-+    private static func makeAvailableInputs() -> [PredictionInputEffect] {
-+        var inputs: [PredictionInputEffect] = [.carbs, .insulin, .momentum, .retrospection]
-+        if UserDefaults.standard.negativeInsulinDamperEnabled {
-+            inputs.insert(.damper, at: 2)
-+        }
-+        return inputs
-+    }
-+
 +    /// Builds the "alternate" (user-selected-effects) prediction shown on this screen, including the
 +    /// Negative Insulin Damper experiment's isolated-effect display when only that row is selected.
 +    private func alternatePrediction(for algoInput: StoredDataAlgorithmInput?) throws -> [PredictedGlucoseValue] {
@@ -278,7 +273,7 @@ index b1349c70..c54d23ce 100644
      override func numberOfSections(in tableView: UITableView) -> Int {
          return Section.allCases.count
      }
-@@ -268,6 +303,19 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
+@@ -275,6 +304,19 @@ class PredictionTableViewController: LoopChartsTableViewController, Identifiable
  
          var subtitleText = input.localizedDescription(forGlucoseUnit: glucoseChart.glucoseUnit) ?? ""
  
@@ -411,7 +406,7 @@ index 42c2ded..98b1f55 100644
 +    var negativeInsulinDamper: Double? { nil }
  }
 diff --git a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
-index d905bd7..567285d 100644
+index 378f0e5..4d76877 100644
 --- a/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
 +++ b/LoopAlgorithm/Sources/LoopAlgorithm/LoopAlgorithm.swift
 @@ -185,7 +185,8 @@ public struct LoopAlgorithm {
@@ -451,7 +446,7 @@ index d905bd7..567285d 100644
              // Dosing requires prediction entries at least as long as the insulin model duration.
              // If our prediction is shorter than that, then extend it here.
              let finalDate = start.addingTimeInterval(InsulinMath.defaultInsulinActivityDuration)
-@@ -814,7 +835,8 @@ public struct LoopAlgorithm {
+@@ -815,7 +836,8 @@ public struct LoopAlgorithm {
                  carbAbsorptionModel: input.carbAbsorptionModel.model,
                  gradualTransitionsThreshold: input.gradualTransitionsThreshold,
                  emulation: input.emulation ?? AlgorithmEmulationOptions(),
