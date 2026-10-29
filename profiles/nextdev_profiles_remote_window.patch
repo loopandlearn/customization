@@ -18,7 +18,7 @@ index 3c9d61cb..5591c9a5 100644
          settingsManager.mutateLoopSettings { settings in
              settings.glucoseTargetRangeSchedule = therapySettings.glucoseTargetRangeSchedule
 diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
-index dec6dff3..0b8248c2 100644
+index 18204a86..58b4516b 100644
 --- a/Loop/Loop/Managers/LoopAppManager.swift
 +++ b/Loop/Loop/Managers/LoopAppManager.swift
 @@ -401,6 +401,7 @@ class LoopAppManager: NSObject {
@@ -27,7 +27,7 @@ index dec6dff3..0b8248c2 100644
          remoteDataServicesManager.delegate = deviceDataManager
 +        servicesManager.therapySettingsViewModelDelegate = deviceDataManager
  
-         let criticalEventLogs: [CriticalEventLog] = [settingsManager.settingsStore!, glucoseStore, carbStore, dosingDecisionStore, doseStore, deviceDataManager.deviceLog, alertManager.alertStore]
+         let criticalEventLogs: [CriticalEventLog] = [settingsManager.settingsStore!, glucoseStore, carbStore, dosingDecisionStore, doseStore, temporaryPresetsManager.presetHistory, deviceDataManager.deviceLog, alertManager.alertStore]
          criticalEventLogExportManager = CriticalEventLogExportManager(logs: criticalEventLogs,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
 index 18f5e18d..1966dcde 100644
