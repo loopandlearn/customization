@@ -272,7 +272,7 @@ index 6d3f9db2..5f1f37f3 100644
      func cancelRemoteOverride() async throws
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 00000000..b876029d
+index 00000000..6c27aa9f
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 @@ -0,0 +1,467 @@
@@ -687,11 +687,11 @@ index 00000000..b876029d
 +            print("Glucose target range schedule differs")
 +            isOutOfSync = true
 +        }
-+        if therapySettings.carbRatioSchedule != profile.carbRatioSchedule {
++        if therapySettings.carbRatioSchedule?.items != profile.carbRatioSchedule.items {
 +            print("Carb ratio schedule differs")
 +            isOutOfSync = true
 +        }
-+        if therapySettings.basalRateSchedule != profile.basalRateSchedule {
++        if therapySettings.basalRateSchedule?.items != profile.basalRateSchedule.items {
 +            print("Basal rate schedule differs")
 +            isOutOfSync = true
 +        }
