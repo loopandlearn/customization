@@ -40,14 +40,10 @@ Touches Loop, LoopKit, LoopOnboarding and NightscoutService. `dev_profiles.patch
 git apply --whitespace=nowarn dev_profiles.patch
 ```
 
-On `dev`, `dev_profiles_basal_lock*.patch` apply on top of basal_lock; on `next-dev` the two coexist without a variant. Profiles coexists with negative_insulin. The profiles patches without remote switching are in `archive/*_noremote.patch`, so the selector reports an update for workspaces that have them applied.
+The patch needs no variant for any other customization. Its changes sit where no other customization edits, so it applies before or after any of them, in any order, and can be removed on its own. The profiles patches without remote switching are in `archive/*_noremote.patch`, so the selector reports an update for workspaces that have them applied.
 
-## Combining with remote_carb_edit and remote_window
+## Other remote commands
 
-Both also change the remote command code, so each has variants for the others already being in the tree:
+The profile switch is handled apart from the shared remote command code (`RemoteCommandSourceV1`), with the same steps in the same order: duplicates are skipped, then expiration and the OTP are checked, then the profile is activated, the reply is pushed and any error is posted as a Nightscout note. It uses the same OTP secret and list of used OTPs as the other commands. `profile-switch` is added to `remoteCommands` when the device status is uploaded, next to the commands other customizations list there, such as `carbs-delete` and `carbs-edit` from remote_carb_edit.
 
-- `<branch>_profiles[_basal_lock]_remote_carb_edit.patch`, `..._remote_window.patch` and `..._remote_carb_edit_remote_window.patch`: profiles on top of the named customizations.
-- `remote_carb_edit/<branch>_remote_carb_edit_profiles.patch` and `..._profiles_remote_window.patch`: remote_carb_edit on top of profiles (and remote_window).
-- `remote_window/<branch>_remote_window_profiles.patch` and `..._profiles_remote_carb_edit.patch`: remote_window on top of profiles (and remote_carb_edit).
-
-Every order produces the same tree, and each customization can be removed on its own. With remote_carb_edit, `remoteCommands` lists all three commands. With remote_window, `sent-at` is required, and on `dev` profile switches also appear in the remote command history.
+With remote_window, profile switches keep the `expiration` sent by the caregiver app; remote_window's longer acceptance window applies to the shared remote commands only. On `dev`, profile switches are not listed in remote_window's command history.

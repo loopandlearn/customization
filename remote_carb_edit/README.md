@@ -38,12 +38,3 @@ For `next-dev`:
 Both orders produce the same tree. The selector script tries each folder's patches in sorted order and uses the first one that applies, so choosing both customizations picks the right file whichever is applied first. Applying by hand, use the plain patch for the first customization and the combined one for the second.
 
 With remote_window, `sent-at` is required on every remote command (the notification is rejected without it). On `dev`, delete and edit commands also appear in the remote command history with the entry's `syncIdentifier`; the `next-dev` remote_window has no command history.
-
-## Combining with profiles
-
-`profiles` also adds a remote command (profile switch), so the two have variants for each other, also together with remote_window:
-
-- `<branch>_remote_carb_edit_profiles.patch` and `<branch>_remote_carb_edit_profiles_remote_window.patch`: this customization on top of profiles (and remote_window).
-- `profiles/<branch>_profiles_remote_carb_edit.patch` and `..._remote_carb_edit_remote_window.patch`: the reverse.
-
-With both applied, `remoteCommands` lists `carbs-delete`, `carbs-edit` and `profile-switch`. See `profiles/README.md`.

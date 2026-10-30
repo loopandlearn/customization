@@ -37,51 +37,22 @@ index c9aef285..d0d2b312 100644
      func mutateSettings(_ changes: (_ settings: inout LoopSettings) -> Void) {
          var oldValue: LoopSettings!
          let newValue = lockedSettings.mutate { settings in
-diff --git a/Loop/Loop/Managers/NotificationManager.swift b/Loop/Loop/Managers/NotificationManager.swift
-index 996d1470..17cff75d 100644
---- a/Loop/Loop/Managers/NotificationManager.swift
-+++ b/Loop/Loop/Managers/NotificationManager.swift
-@@ -263,6 +263,38 @@ extension NotificationManager {
-         }
+diff --git a/Loop/Loop/Managers/RemoteDataServicesManager.swift b/Loop/Loop/Managers/RemoteDataServicesManager.swift
+index bf21376b..0ce31ac6 100644
+--- a/Loop/Loop/Managers/RemoteDataServicesManager.swift
++++ b/Loop/Loop/Managers/RemoteDataServicesManager.swift
+@@ -594,6 +594,9 @@ extension RemoteDataServicesManager {
+     
+     public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
+         let service = try serviceForPushNotification(notification)
++        if let receiver = service as? RemoteProfileSwitchReceiver, receiver.isProfileSwitch(notification) {
++            return await receiver.profileSwitchWasReceived(notification)
++        }
+         return try await service.remoteNotificationWasReceived(notification)
      }
      
-+    static func sendRemoteProfileNotification(name: String) {
-+        let notification = UNMutableNotificationContent()
-+        notification.body = [remoteProfileNotificationBody(name: name), "Success!"].joined(separator: "\n")
-+        notification.sound = .default
-+
-+        let request = UNNotificationRequest(
-+            identifier: "com.loopkit.Loop.RemoteProfile",
-+            content: notification,
-+            trigger: nil
-+        )
-+
-+        UNUserNotificationCenter.current().add(request)
-+    }
-+
-+    static func sendRemoteProfileFailureNotification(name: String, error: Error) {
-+        let notification = UNMutableNotificationContent()
-+        notification.body = [remoteProfileNotificationBody(name: name), error.localizedDescription].joined(separator: "\n")
-+        notification.sound = .default
-+
-+        let request = UNNotificationRequest(
-+            identifier: "com.loopkit.Loop.RemoteProfileFailure",
-+            content: notification,
-+            trigger: nil
-+        )
-+
-+        UNUserNotificationCenter.current().add(request)
-+    }
-+
-+    private static func remoteProfileNotificationBody(name: String) -> String {
-+        return String(format: NSLocalizedString("Remote Profile Switch: %1$@", comment: "The message for a remote profile switch notification. (1: profile name)"), name)
-+    }
-+
-     private static func remoteCarbEntryNotificationBody(amountInGrams: Double) -> String {
-         return String(format: NSLocalizedString("Remote Carbs Entry: %d grams", comment: "The carb amount message for a remote carbs entry notification. (1: Carb amount in grams)"), Int(amountInGrams))
-     }
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index 3fb788f9..c61eda65 100644
+index 3fb788f9..18c25671 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
 @@ -28,6 +28,7 @@ class ServicesManager {
@@ -92,7 +63,7 @@ index 3fb788f9..c61eda65 100644
      
      private var services = [Service]()
  
-@@ -412,3 +413,58 @@ extension Service {
+@@ -412,3 +413,73 @@ extension Service {
          ]
      }
  }
@@ -127,11 +98,26 @@ index 3fb788f9..c61eda65 100644
 +                    }
 +                }
 +            }
-+            NotificationManager.sendRemoteProfileNotification(name: name)
++            sendRemoteProfileNotification(name: name, error: nil)
 +        } catch {
-+            NotificationManager.sendRemoteProfileFailureNotification(name: name, error: error)
++            sendRemoteProfileNotification(name: name, error: error)
 +            throw error
 +        }
++    }
++
++    private func sendRemoteProfileNotification(name: String, error: Error?) {
++        let notification = UNMutableNotificationContent()
++        let title = String(format: NSLocalizedString("Remote Profile Switch: %1$@", comment: "The message for a remote profile switch notification. (1: profile name)"), name)
++        notification.body = [title, error?.localizedDescription ?? "Success!"].joined(separator: "\n")
++        notification.sound = .default
++
++        let request = UNNotificationRequest(
++            identifier: error == nil ? "com.loopkit.Loop.RemoteProfile" : "com.loopkit.Loop.RemoteProfileFailure",
++            content: notification,
++            trigger: nil
++        )
++
++        UNUserNotificationCenter.current().add(request)
 +    }
 +
 +    enum RemoteProfileActionError: LocalizedError {
@@ -152,94 +138,83 @@ index 3fb788f9..c61eda65 100644
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 9f9e3aa0..c1c9ea87 100644
+index 9f9e3aa0..d718491a 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
-@@ -50,6 +50,7 @@ public struct SettingsView: View {
-             }
-             
-             case favoriteFoods
-+            case profiles
-         }
-     }
+@@ -56,6 +56,7 @@ public struct SettingsView: View {
+     @State private var actionSheet: Destination.ActionSheet?
+     @State private var alert: Destination.Alert?
+     @State private var sheet: Destination.Sheet?
++    @State private var showProfiles = false
      
-@@ -119,6 +120,19 @@ public struct SettingsView: View {
-                 switch sheet {
-                 case .favoriteFoods:
-                     FavoriteFoodsView()
-+                case .profiles:
-+                    ProfileView(viewModel: ProfileViewModel(therapySettings: self.viewModel.therapySettings(),
-+                                                            sensitivityOverridesEnabled: FeatureFlags.sensitivityOverridesEnabled,
-+                                                            adultChildInsulinModelSelectionEnabled: FeatureFlags.adultChildInsulinModelSelectionEnabled,
-+                                                            delegate: self.viewModel.therapySettingsViewModelDelegate))
-+                    .environmentObject(displayGlucosePreference)
-+                    .environment(\.dismissAction, self.dismiss)
-+                    .environment(\.appName, self.appName)
-+                    .environment(\.chartColorPalette, .primary)
-+                    .environment(\.carbTintColor, self.carbTintColor)
-+                    .environment(\.glucoseTintColor, self.glucoseTintColor)
-+                    .environment(\.guidanceColors, self.guidanceColors)
-+                    .environment(\.insulinTintColor, self.insulinTintColor)
-                 }
-             }
-         }
-@@ -279,6 +293,11 @@ extension SettingsView {
+     var localizedAppNameAndVersion: String
+ 
+@@ -279,6 +280,25 @@ extension SettingsView {
                              descriptiveText: NSLocalizedString("Diabetes Treatment", comment: "Descriptive text for Therapy Settings"))
              }
  
-+            LargeButton(action: { sheet = .profiles },
++            LargeButton(action: { showProfiles = true },
 +                        includeArrow: true,
 +                        imageView: AnyView(Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 30, weight: .bold))),
 +                        label: NSLocalizedString("Profiles", comment: "Title text for button to Profiles"),
 +                        descriptiveText: NSLocalizedString("Switch between profiles for different scenarios", comment: "Descriptive text for Profiles"))
++            .sheet(isPresented: $showProfiles) {
++                ProfileView(viewModel: ProfileViewModel(therapySettings: self.viewModel.therapySettings(),
++                                                        sensitivityOverridesEnabled: FeatureFlags.sensitivityOverridesEnabled,
++                                                        adultChildInsulinModelSelectionEnabled: FeatureFlags.adultChildInsulinModelSelectionEnabled,
++                                                        delegate: self.viewModel.therapySettingsViewModelDelegate))
++                .environmentObject(displayGlucosePreference)
++                .environment(\.dismissAction, self.dismiss)
++                .environment(\.appName, self.appName)
++                .environment(\.chartColorPalette, .primary)
++                .environment(\.carbTintColor, self.carbTintColor)
++                .environment(\.glucoseTintColor, self.glucoseTintColor)
++                .environment(\.guidanceColors, self.guidanceColors)
++                .environment(\.insulinTintColor, self.insulinTintColor)
++            }
              ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                  item.view
              }
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-index e4423ce6..89045896 100644
+index e4423ce6..84a2e8e9 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
 +++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-@@ -873,6 +873,12 @@
- 		D1A0B000000000000000000C /* ModelMappingv4v5Tov6Policy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A0B0000000000000000007 /* ModelMappingv4v5Tov6Policy.swift */; };
- 		D1A0B000000000000000000D /* ModelMappingv4v5Tov6Policy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A0B0000000000000000007 /* ModelMappingv4v5Tov6Policy.swift */; };
- 		D1A0B0000000000000000081 /* PersistenceControllerMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A0B0000000000000000080 /* PersistenceControllerMigrationTests.swift */; };
+@@ -863,6 +863,12 @@
+ 		C1F8403923DB84B700673141 /* DeviceLogEntry+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F8403723DB84B700673141 /* DeviceLogEntry+CoreDataClass.swift */; };
+ 		C1F8403A23DB84B700673141 /* DeviceLogEntry+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F8403823DB84B700673141 /* DeviceLogEntry+CoreDataProperties.swift */; };
+ 		C1FAC06328C7B0A100754AE2 /* reservoir_iob_test.json in Resources */ = {isa = PBXBuildFile; fileRef = C1FAC06228C7B0A100754AE2 /* reservoir_iob_test.json */; };
 +		DD508E062A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD508E052A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift */; };
 +		DD508E082A17763700EEF8FD /* NewProfileEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD508E072A17763700EEF8FD /* NewProfileEditor.swift */; };
 +		DD7122612A1D2AA4004FE653 /* ProfilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7122602A1D2AA4004FE653 /* ProfilePreviewView.swift */; };
 +		DDAF746729F422C600719F0A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAF746629F422C600719F0A /* ProfileView.swift */; };
 +		DDAF746929F4234000719F0A /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDAF746829F4234000719F0A /* ProfileViewModel.swift */; };
 +		DDCFC91E2AA9F702003DE656 /* RenameProfileEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCFC91D2AA9F702003DE656 /* RenameProfileEditor.swift */; };
- 		E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2624ACD59F0066A88D /* InformationView.swift */; };
- 		E9077D2A24ACDE2C0066A88D /* CorrectionRangeInformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */; };
- 		E9086B2924B39EDC0062F5C8 /* ChartsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */; };
-@@ -1813,6 +1819,12 @@
- 		D1A0B0000000000000000006 /* Modelv5ToModelv6.xcmappingmodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcmappingmodel; path = Modelv5ToModelv6.xcmappingmodel; sourceTree = "<group>"; };
- 		D1A0B0000000000000000007 /* ModelMappingv4v5Tov6Policy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelMappingv4v5Tov6Policy.swift; sourceTree = "<group>"; };
- 		D1A0B0000000000000000080 /* PersistenceControllerMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceControllerMigrationTests.swift; sourceTree = "<group>"; };
+ 		C1FAEC1D264AD6B400A3250B /* DeviceStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */; };
+ 		C1FAEC1F264AE12700A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47ECF8725DC20810024A54D /* UIImage.swift */; };
+ 		C1FAEC21264AEEA300A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC20264AEEA300A3250B /* UIImage.swift */; };
+@@ -1803,6 +1809,12 @@
+ 		C1F8403723DB84B700673141 /* DeviceLogEntry+CoreDataClass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DeviceLogEntry+CoreDataClass.swift"; sourceTree = "<group>"; };
+ 		C1F8403823DB84B700673141 /* DeviceLogEntry+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DeviceLogEntry+CoreDataProperties.swift"; sourceTree = "<group>"; };
+ 		C1FAC06228C7B0A100754AE2 /* reservoir_iob_test.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = reservoir_iob_test.json; sourceTree = "<group>"; };
 +		DD508E052A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProfileViewModel+FileManagement.swift"; sourceTree = "<group>"; };
 +		DD508E072A17763700EEF8FD /* NewProfileEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewProfileEditor.swift; sourceTree = "<group>"; };
 +		DD7122602A1D2AA4004FE653 /* ProfilePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePreviewView.swift; sourceTree = "<group>"; };
 +		DDAF746629F422C600719F0A /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 +		DDAF746829F4234000719F0A /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 +		DDCFC91D2AA9F702003DE656 /* RenameProfileEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenameProfileEditor.swift; sourceTree = "<group>"; };
- 		E9077D2624ACD59F0066A88D /* InformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationView.swift; sourceTree = "<group>"; };
- 		E9077D2924ACDE2C0066A88D /* CorrectionRangeInformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorrectionRangeInformationView.swift; sourceTree = "<group>"; };
- 		E9086B2824B39EDC0062F5C8 /* ChartsTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsTableViewController.swift; sourceTree = "<group>"; };
-@@ -3009,11 +3021,13 @@
+ 		C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceStatusBadge.swift; sourceTree = "<group>"; };
+ 		C1FAEC20264AEEA300A3250B /* UIImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImage.swift; sourceTree = "<group>"; };
+ 		D1A0B0000000000000000001 /* Modelv5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Modelv5.xcdatamodel; sourceTree = "<group>"; };
+@@ -3009,6 +3021,8 @@
  			isa = PBXGroup;
  			children = (
  				B455F3A325FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift */,
 +				DDAF746829F4234000719F0A /* ProfileViewModel.swift */,
++				DD508E052A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift */,
  				B4B7C1BB2604E3FC007379F6 /* CorrectionRangeScheduleEditorViewModel.swift */,
  				B4D4C20C25F95A8700DA809D /* DisplayGlucosePreference.swift */,
  				B455F48025FF9A8B000ED456 /* InsulinSensitivityScheduleEditorViewModel.swift */,
- 				B455F2A125FBE985000ED456 /* SuspendThresholdEditorViewModel.swift */,
- 				1D1FCE2424BD42EF000300A8 /* TherapySettingsViewModel.swift */,
-+				DD508E052A17712D00EEF8FD /* ProfileViewModel+FileManagement.swift */,
- 			);
- 			path = ViewModels;
- 			sourceTree = "<group>";
 @@ -3201,6 +3215,10 @@
  				E96DCB5924AF74AC007117BC /* SuspendThresholdEditor.swift */,
  				1D1FCE2A24BE704A000300A8 /* TherapySetting+Settings.swift */,
@@ -295,23 +270,28 @@ index e4423ce6..89045896 100644
  				892A5DB32231E191008961AB /* LevelHUDView.swift in Sources */,
  				B41A60B223D1DBC700636320 /* UIFont.swift in Sources */,
  				B41A60AF23D1DB5B00636320 /* TableViewTitleLabel.swift in Sources */,
-diff --git a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
-index 7fdc53ad..00fe25ab 100644
---- a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
-+++ b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
-@@ -8,6 +8,12 @@
- 
- import Foundation
- 
+diff --git a/LoopKit/LoopKit/Service/RemoteDataService.swift b/LoopKit/LoopKit/Service/RemoteDataService.swift
+index edf169d7..91d977a3 100644
+--- a/LoopKit/LoopKit/Service/RemoteDataService.swift
++++ b/LoopKit/LoopKit/Service/RemoteDataService.swift
+@@ -128,3 +128,17 @@ public extension RemoteDataService {
+     var pumpEventDataLimit: Int? { return nil }
+     var settingsDataLimit: Int? { return nil }
+ }
++
++/// A remote data service that handles remote profile switch commands itself.
++public protocol RemoteProfileSwitchReceiver: RemoteDataService {
++    /// True when the push notification is a profile switch command.
++    func isProfileSwitch(_ notification: [String: AnyObject]) -> Bool
++
++    func profileSwitchWasReceived(_ notification: [String: AnyObject]) async
++}
++
 +/// Switches to a saved therapy profile on a remote command.
 +public protocol RemoteProfileActionDelegate: AnyObject {
 +    /// `verify` receives the schedules about to be activated and throws to reject them.
 +    func activateRemoteProfile(name: String, verify: (_ correctionRange: GlucoseRangeSchedule, _ carbRatio: CarbRatioSchedule, _ basalRate: BasalRateSchedule, _ insulinSensitivity: InsulinSensitivitySchedule) throws -> Void) async throws
 +}
-+
- public protocol RemoteActionDelegate: AnyObject {
-     func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws
-     func cancelRemoteOverride() async throws
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
 index 00000000..b571cf7b
@@ -1696,87 +1676,390 @@ index cc61f2d..6462e2c 100644
  
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-index 69f7a26..14a7691 100644
+index 69f7a26..2c269a0 100644
 --- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 +++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-@@ -24,6 +24,10 @@
+@@ -24,6 +24,9 @@
  		A9246B2526231B3A00CCDCB3 /* OTPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9246B2426231B3A00CCDCB3 /* OTPManager.swift */; };
  		A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6152358F42A00949C8B /* StoredDosingDecision.swift */; };
  		A934B6182358F49300949C8B /* StoredSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6172358F49300949C8B /* StoredSettings.swift */; };
-+		3E7A51C02F0D4B8100A1C6E2 /* ProfileSwitchAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C12F0D4B8100A1C6E2 /* ProfileSwitchAction.swift */; };
-+		3E7A51C22F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C32F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotification.swift */; };
++		3E7A51C22F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */; };
 +		3E7A51C42F0D4B8100A1C6E2 /* SavedProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */; };
-+		3E7A51C62F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C72F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotificationTestCase.swift */; };
++		3E7A51C62F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */; };
  		A934B61A2358F5FC00949C8B /* TemporaryScheduleOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */; };
  		A941B08729BCB87500F91340 /* RemoteCommandSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08629BCB87500F91340 /* RemoteCommandSource.swift */; };
  		A941B08929BCB99C00F91340 /* RemoteCommandValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */; };
-@@ -158,6 +162,10 @@
+@@ -158,6 +161,9 @@
  		A9246B2426231B3A00CCDCB3 /* OTPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPManager.swift; sourceTree = "<group>"; };
  		A934B6152358F42A00949C8B /* StoredDosingDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredDosingDecision.swift; sourceTree = "<group>"; };
  		A934B6172358F49300949C8B /* StoredSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredSettings.swift; sourceTree = "<group>"; };
-+		3E7A51C12F0D4B8100A1C6E2 /* ProfileSwitchAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileSwitchAction.swift; sourceTree = "<group>"; };
-+		3E7A51C32F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileSwitchRemoteNotification.swift; sourceTree = "<group>"; };
++		3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NightscoutService+RemoteProfileSwitch.swift"; sourceTree = "<group>"; };
 +		3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SavedProfile.swift; sourceTree = "<group>"; };
-+		3E7A51C72F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProfileSwitchRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
++		3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteProfileSwitchTestCase.swift; sourceTree = "<group>"; };
  		A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryScheduleOverride.swift; sourceTree = "<group>"; };
  		A941B08629BCB87500F91340 /* RemoteCommandSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandSource.swift; sourceTree = "<group>"; };
  		A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandValidator.swift; sourceTree = "<group>"; };
-@@ -268,6 +276,7 @@
+@@ -268,6 +274,8 @@
  				A934B6152358F42A00949C8B /* StoredDosingDecision.swift */,
  				A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */,
  				A934B6172358F49300949C8B /* StoredSettings.swift */,
 +				3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */,
++				3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */,
  				A90E39A222BC782C0016DFE8 /* SyncCarbObject.swift */,
  				A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */,
  				A90E399D22BC76DB0016DFE8 /* TimeInterval.swift */,
-@@ -324,6 +333,7 @@
+@@ -324,6 +332,7 @@
  				A95F887426C694E900D8A009 /* OTPManagerTestCase.swift */,
  				A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */,
  				A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */,
-+				3E7A51C72F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotificationTestCase.swift */,
++				3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */,
  				A95F887326C694E800D8A009 /* NightscoutServiceKitTests-Bridging-Header.h */,
  			);
  			path = NightscoutServiceKitTests;
-@@ -364,6 +374,7 @@
- 				A941B08D29BD4A9E00F91340 /* OverrideCancelRemoteNotification.swift */,
- 				A941B08F29BD4A9E00F91340 /* OverrideRemoteNotification.swift */,
- 				A941B08E29BD4A9E00F91340 /* RemoteNotification.swift */,
-+				3E7A51C32F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotification.swift */,
- 			);
- 			path = Notifications;
- 			sourceTree = "<group>";
-@@ -412,6 +423,7 @@
- 		A9AA6E5729EB06AA008FFA78 /* Actions */ = {
- 			isa = PBXGroup;
- 			children = (
-+				3E7A51C12F0D4B8100A1C6E2 /* ProfileSwitchAction.swift */,
- 				A9AA6E5D29EB07D6008FFA78 /* Action.swift */,
- 				A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */,
- 				A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */,
-@@ -744,6 +756,9 @@
+@@ -744,6 +753,8 @@
  				C1398D2227C434FB00416AD6 /* Data.swift in Sources */,
  				A90E39A522BC791E0016DFE8 /* DoseEntry.swift in Sources */,
  				A934B6182358F49300949C8B /* StoredSettings.swift in Sources */,
-+				3E7A51C02F0D4B8100A1C6E2 /* ProfileSwitchAction.swift in Sources */,
-+				3E7A51C22F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotification.swift in Sources */,
++				3E7A51C22F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift in Sources */,
 +				3E7A51C42F0D4B8100A1C6E2 /* SavedProfile.swift in Sources */,
  				A9C62DA42331CAD400535612 /* OSLog.swift in Sources */,
  				C1F7822827CD57A100C0919A /* OverrideTreament.swift in Sources */,
  			);
-@@ -757,6 +772,7 @@
+@@ -757,6 +768,7 @@
  				A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */,
  				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
  				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
-+				3E7A51C62F0D4B8100A1C6E2 /* ProfileSwitchRemoteNotificationTestCase.swift in Sources */,
++				3E7A51C62F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift in Sources */,
  				A95F887526C694E900D8A009 /* OTPManagerTestCase.swift in Sources */,
  			);
  			runOnlyForDeploymentPostprocessing = 0;
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift
+new file mode 100644
+index 0000000..23a7dd1
+--- /dev/null
++++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift
+@@ -0,0 +1,315 @@
++//
++//  NightscoutService+RemoteProfileSwitch.swift
++//  NightscoutServiceKit
++//
++
++import Foundation
++import LoopKit
++import NightscoutKit
++import OSLog
++
++/// Remote profile switch commands. They are handled apart from `RemoteCommandSourceV1` with the same steps:
++/// decode, skip duplicates, check expiration and OTP, act, reply through the return push, and post a
++/// Nightscout note on any error.
++extension NightscoutService: RemoteProfileSwitchReceiver {
++
++    private static let profileSwitchLog = OSLog(category: "RemoteProfileSwitch")
++    private static let recentProfileSwitches = RecentProfileSwitches()
++
++    public func isProfileSwitch(_ notification: [String: AnyObject]) -> Bool {
++        return notification[ProfileSwitchCommand.commandKey] != nil
++    }
++
++    public func profileSwitchWasReceived(_ notification: [String: AnyObject]) async {
++        do {
++            let command = try ProfileSwitchCommand(dictionary: notification)
++            guard await Self.recentProfileSwitches.isNew(command) else {
++                // Duplicate notifications are expected after app is force killed
++                return
++            }
++            try command.validate(otpManager: otpManager)
++            try await activateProfile(command)
++        } catch {
++            os_log("Remote profile switch: %{public}@. Error: %{public}@", log: Self.profileSwitchLog, type: .error, String(describing: notification), String(describing: error))
++            try? await uploadProfileSwitchNote(error: error, notification: notification)
++        }
++    }
++
++    private func activateProfile(_ command: ProfileSwitchCommand) async throws {
++        let returnInfo = command.returnNotificationInfo()
++        do {
++            guard let profileDelegate = serviceDelegate as? RemoteProfileActionDelegate else {
++                throw RemoteProfileSwitchError.unavailable
++            }
++            try await profileDelegate.activateRemoteProfile(name: command.profileName) { correctionRange, carbRatio, basalRate, insulinSensitivity in
++                let savedProfile = SavedProfile(name: command.profileName, correctionRange: correctionRange, carbRatioSchedule: carbRatio, basalRateSchedule: basalRate, insulinSensitivitySchedule: insulinSensitivity)
++                guard savedProfile.matches(fingerprint: command.fingerprint) else {
++                    throw RemoteProfileSwitchError.profileChanged
++                }
++            }
++        } catch {
++            let failure = RemoteProfileSwitchError.notActivated(command.profileName, error)
++            await ProfileSwitchResponse.send(to: returnInfo, success: false, message: "Command failed: \(failure.localizedDescription)")
++            throw failure
++        }
++        await ProfileSwitchResponse.send(to: returnInfo, success: true, message: "Profile '\(command.profileName)' activated")
++    }
++
++    private func uploadProfileSwitchNote(error: Error, notification: [String: AnyObject]) async throws {
++        guard let siteURL, let apiSecret else {
++            throw NightscoutServiceError.missingCredentials
++        }
++        let notificationJSON = try JSONSerialization.data(withJSONObject: notification)
++        let notificationJSONString = String(data: notificationJSON, encoding: .utf8) ?? ""
++
++        let treatment = NightscoutTreatment(
++            timestamp: Date(),
++            enteredBy: LocalizedString("Profile Switch", comment: "The remote action name for Profile Switch"),
++            notes: """
++            \(error.localizedDescription)
++            \(notificationJSONString)
++            """,
++            eventType: .note
++        )
++
++        let uploader = NightscoutClient(siteURL: siteURL, apiSecret: apiSecret)
++        return try await withCheckedThrowingContinuation { continuation in
++            uploader.upload([treatment]) { result in
++                switch result {
++                case .success:
++                    continuation.resume()
++                case .failure(let error):
++                    continuation.resume(throwing: error)
++                }
++            }
++        }
++    }
++}
++
++/// A profile switch push. `expiration` is required: decoding fails without it.
++struct ProfileSwitchCommand: Codable {
++
++    /// Listed in the uploaded `remoteCommands` so followers know this build accepts the command.
++    static let commandKey = "profile-switch"
++
++    let profileName: String
++    let fingerprint: String
++    let remoteAddress: String
++    let expiration: Date
++    let sentAt: Date?
++    let otp: String?
++    let enteredBy: String?
++    let encryptedReturnNotification: String?
++
++    enum CodingKeys: String, CodingKey {
++        case profileName = "profile-switch"
++        case fingerprint = "profile-switch-fingerprint"
++        case remoteAddress = "remote-address"
++        case expiration = "expiration"
++        case sentAt = "sent-at"
++        case otp = "otp"
++        case enteredBy = "entered-by"
++        case encryptedReturnNotification = "encrypted_return_notification"
++    }
++
++    init(dictionary: [String: Any]) throws {
++        let data = try JSONSerialization.data(withJSONObject: dictionary)
++        let jsonDecoder = JSONDecoder()
++        jsonDecoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601DateDecoder)
++        self = try jsonDecoder.decode(Self.self, from: data)
++    }
++
++    /// Expiration first, so an expired command does not use up its OTP.
++    func validate(otpManager: OTPManager, now: Date = Date()) throws {
++        guard now <= expiration else {
++            throw RemoteProfileSwitchError.expired
++        }
++        guard let otp else {
++            throw RemoteProfileSwitchError.missingOTP
++        }
++        try otpManager.validatePassword(password: otp, deliveryDate: sentAt)
++    }
++
++    func returnNotificationInfo() -> ReturnNotificationInfo? {
++        guard let encryptedReturnNotification, let otp, let messenger = OTPSecureMessenger(otpCode: otp) else {
++            return nil
++        }
++        return try? messenger.decrypt(base64EncodedString: encryptedReturnNotification)
++    }
++}
++
++private actor RecentProfileSwitches {
++    private var sentDates = [Date]()
++
++    /// Commands without `sent-at` cannot be matched and always count as new.
++    func isNew(_ command: ProfileSwitchCommand) -> Bool {
++        guard let sentAt = command.sentAt else {
++            return true
++        }
++        if sentDates.contains(sentAt) {
++            return false
++        }
++        sentDates.append(sentAt)
++        return true
++    }
++}
++
++/// The return push to the follower, in the format of `RemoteNotificationResponseManager` with
++/// `command_type` `profile_switch`. Followers match the reply by the profile name in the body.
++enum ProfileSwitchResponse {
++    private static let log = OSLog(category: "RemoteProfileSwitch")
++
++    struct Payload: Encodable {
++        let aps: APS
++        let commandStatus: String
++        let commandType: String
++        let timestamp: TimeInterval
++
++        enum CodingKeys: String, CodingKey {
++            case aps
++            case commandStatus = "command_status"
++            case commandType = "command_type"
++            case timestamp
++        }
++    }
++
++    struct APS: Encodable {
++        let alert: Alert
++        let sound: String = "default"
++    }
++
++    struct Alert: Encodable {
++        let title: String
++        let body: String
++    }
++
++    static func payload(success: Bool, message: String) -> Payload {
++        return Payload(
++            aps: APS(alert: Alert(title: success ? "Command Successful" : "Command Failed", body: message)),
++            commandStatus: success ? "success" : "failed",
++            commandType: "profile_switch",
++            timestamp: Date().timeIntervalSince1970
++        )
++    }
++
++    static func send(to returnInfo: ReturnNotificationInfo?, success: Bool, message: String) async {
++        guard let returnInfo, !returnInfo.deviceToken.isEmpty else {
++            os_log("No return notification info, response not sent", log: log, type: .info)
++            return
++        }
++        guard let jwt = APNSJWTManager.shared.getOrGenerateJWT(keyId: returnInfo.keyId, teamId: returnInfo.teamId, apnsKey: returnInfo.apnsKey) else {
++            os_log("Failed to generate JWT for response notification", log: log, type: .error)
++            return
++        }
++        let host = returnInfo.productionEnvironment ? "api.push.apple.com" : "api.sandbox.push.apple.com"
++        guard let url = URL(string: "https://\(host)/3/device/\(returnInfo.deviceToken)") else {
++            os_log("Failed to construct APNs URL", log: log, type: .error)
++            return
++        }
++
++        var request = URLRequest(url: url)
++        request.httpMethod = "POST"
++        request.setValue("bearer \(jwt)", forHTTPHeaderField: "authorization")
++        request.setValue("application/json", forHTTPHeaderField: "content-type")
++        request.setValue("10", forHTTPHeaderField: "apns-priority")
++        request.setValue("0", forHTTPHeaderField: "apns-expiration")
++        request.setValue(returnInfo.bundleId, forHTTPHeaderField: "apns-topic")
++        request.setValue("alert", forHTTPHeaderField: "apns-push-type")
++
++        do {
++            request.httpBody = try JSONEncoder().encode(payload(success: success, message: message))
++            let (_, response) = try await URLSession.shared.data(for: request)
++            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
++                os_log("Failed to send response notification: %d", log: log, type: .error, httpResponse.statusCode)
++            }
++        } catch {
++            os_log("Error sending response notification: %{public}@", log: log, type: .error, error.localizedDescription)
++        }
++    }
++}
++
++enum RemoteProfileSwitchError: LocalizedError {
++    case profileChanged
++    case unavailable
++    case expired
++    case missingOTP
++    case notActivated(String, Error)
++
++    /// Followers read the profile name from this text to match the reply to their command.
++    var errorDescription: String? {
++        switch self {
++        case .profileChanged:
++            return LocalizedString("It changed after it was uploaded. Review it again and resend.", comment: "Remote profile switch error description: profile differs from the previewed one.")
++        case .unavailable:
++            return LocalizedString("Profile switching is not available", comment: "Remote profile switch error description: host cannot switch profiles.")
++        case .expired:
++            return LocalizedString("Expired", comment: "Remote command error description: expired.")
++        case .missingOTP:
++            return LocalizedString("Missing OTP", comment: "Remote command error description: Missing OTP.")
++        case .notActivated(let name, let error):
++            return String(format: LocalizedString("Profile '%1$@' not activated: %2$@", comment: "Remote profile switch failure. (1: profile name, 2: reason)"), name, error.localizedDescription)
++        }
++    }
++}
++
++extension DeviceStatus {
++    /// Adds `command` to `loop.testingDetails.remoteCommands`, keeping commands already listed there.
++    /// `LoopStatus` is copied field by field; when the copy differs from the original in anything but
++    /// `testingDetails`, the original is returned unchanged so no uploaded data is lost.
++    func addingRemoteCommand(_ command: String) -> DeviceStatus {
++        guard let loopStatus else {
++            return self
++        }
++        var testingDetails = loopStatus.testingDetails ?? [:]
++        let remoteCommands = testingDetails["remoteCommands"] as? [String] ?? []
++        guard !remoteCommands.contains(command) else {
++            return self
++        }
++        testingDetails["remoteCommands"] = remoteCommands + [command]
++
++        let updated = DeviceStatus(
++            device: device,
++            timestamp: timestamp,
++            pumpStatus: pumpStatus,
++            uploaderStatus: uploaderStatus,
++            loopStatus: loopStatus.replacingTestingDetails(testingDetails),
++            radioAdapter: radioAdapter,
++            overrideStatus: overrideStatus,
++            identifier: identifier)
++
++        guard updated.dictionaryRepresentationWithoutTestingDetails == dictionaryRepresentationWithoutTestingDetails else {
++            return self
++        }
++        return updated
++    }
++
++    var dictionaryRepresentationWithoutTestingDetails: NSDictionary {
++        var representation = dictionaryRepresentation
++        if var loop = representation["loop"] as? [String: Any] {
++            loop["testingDetails"] = nil
++            representation["loop"] = loop
++        }
++        return NSDictionary(dictionary: representation)
++    }
++}
++
++extension LoopStatus {
++    func replacingTestingDetails(_ testingDetails: [String: Any]) -> LoopStatus {
++        return LoopStatus(
++            name: name,
++            version: version,
++            timestamp: timestamp,
++            iob: iob,
++            cob: cob,
++            predicted: predicted,
++            automaticDoseRecommendation: automaticDoseRecommendation,
++            recommendedBolus: recommendedBolus,
++            enacted: enacted,
++            rileylinks: rileylinks,
++            failureReason: failureReason,
++            currentCorrectionRange: currentCorrectionRange,
++            forecastError: forecastError,
++            testingDetails: testingDetails
++        )
++    }
++}
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
 new file mode 100644
-index 0000000..de73ca9
+index 0000000..2b9b2d1
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,86 @@
 +//
 +//  SavedProfile.swift
 +//  NightscoutServiceKit
@@ -1863,38 +2146,6 @@ index 0000000..de73ca9
 +        return String(digest.map { String(format: "%02x", $0) }.joined().prefix(16))
 +    }
 +}
-+
-+enum RemoteProfileSwitchError: LocalizedError {
-+    case profileChanged
-+    case unavailable
-+    case notActivated(String, Error)
-+
-+    /// Followers read the profile name from this text to match the reply to their command.
-+    var errorDescription: String? {
-+        switch self {
-+        case .profileChanged:
-+            return LocalizedString("It changed after it was uploaded. Review it again and resend.", comment: "Remote profile switch error description: profile differs from the previewed one.")
-+        case .unavailable:
-+            return LocalizedString("Profile switching is not available", comment: "Remote profile switch error description: host cannot switch profiles.")
-+        case .notActivated(let name, let error):
-+            return String(format: LocalizedString("Profile '%1$@' not activated: %2$@", comment: "Remote profile switch failure. (1: profile name, 2: reason)"), name, error.localizedDescription)
-+        }
-+    }
-+}
-diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-index 4e1d49e..b66fb97 100644
---- a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-+++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-@@ -159,7 +159,8 @@ extension StoredDosingDecision {
-                                    automaticDoseRecommendation: loopStatusAutomaticDoseRecommendation,
-                                    recommendedBolus: loopStatusRecommendedBolus,
-                                    enacted: automaticDoseDecision?.loopStatusEnacted,
--                                   failureReason: automaticDoseDecision?.loopStatusFailureReason),
-+                                   failureReason: automaticDoseDecision?.loopStatusFailureReason,
-+                                   testingDetails: ["remoteCommands": [ProfileSwitchRemoteNotification.commandKey]]),
-             overrideStatus: overrideStatus)
-     }
-     
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 index 2adadb9..dd7ac28 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
@@ -1924,176 +2175,26 @@ index 2adadb9..dd7ac28 100644
              syncIdentifier: syncIdentifier.uuidString,
              isAPNSProduction: Bundle.main.isAPNSProductionEnvironment)
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index 4626630..ef69236 100644
+index 4626630..1fb455a 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-@@ -436,6 +436,24 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
-                 success = true
-                 message = "Override '\(overrideCommand.name)' enacted successfully"
-                 
-+            case .profileSwitch(let profileSwitchCommand):
-+                commandType = .profileSwitch
-+                guard let profileDelegate = self.serviceDelegate as? RemoteProfileActionDelegate else {
-+                    throw RemoteProfileSwitchError.notActivated(profileSwitchCommand.name, RemoteProfileSwitchError.unavailable)
-+                }
-+                do {
-+                    try await profileDelegate.activateRemoteProfile(name: profileSwitchCommand.name) { correctionRange, carbRatio, basalRate, insulinSensitivity in
-+                        let savedProfile = SavedProfile(name: profileSwitchCommand.name, correctionRange: correctionRange, carbRatioSchedule: carbRatio, basalRateSchedule: basalRate, insulinSensitivitySchedule: insulinSensitivity)
-+                        guard savedProfile.matches(fingerprint: profileSwitchCommand.fingerprint) else {
-+                            throw RemoteProfileSwitchError.profileChanged
-+                        }
-+                    }
-+                } catch {
-+                    throw RemoteProfileSwitchError.notActivated(profileSwitchCommand.name, error)
-+                }
-+                success = true
-+                message = "Profile '\(profileSwitchCommand.name)' activated"
-+                
-             case .cancelTemporaryOverride:
-                 commandType = .cancelOverride
-                 try await self.serviceDelegate?.cancelRemoteOverride()
-diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/Action.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/Action.swift
-index a92b509..29313b6 100644
---- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/Action.swift
-+++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/Action.swift
-@@ -9,6 +9,7 @@
- import Foundation
+@@ -293,7 +293,7 @@ extension NightscoutService: RemoteDataService {
+         }
  
- public enum Action: Codable {
-+    case profileSwitch(ProfileSwitchAction)
-     case temporaryScheduleOverride(OverrideAction)
-     case cancelTemporaryOverride(OverrideCancelAction)
-     case bolusEntry(BolusAction)
-@@ -28,6 +29,8 @@ public enum Action: Codable {
-             return LocalizedString("Cancel Override", comment: "The remote action name for Cancel Override")
-         case .temporaryScheduleOverride:
-             return LocalizedString("Override", comment: "The remote action name for Override")
-+        case .profileSwitch:
-+            return LocalizedString("Profile Switch", comment: "The remote action name for Profile Switch")
+         let statuses = uploadPairs.map { (decision, automaticDoseDecision) in
+-            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision)
++            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision).addingRemoteCommand(ProfileSwitchCommand.commandKey)
          }
-     }
-     
-@@ -43,6 +46,8 @@ public enum Action: Codable {
-             return ""
-         case .temporaryScheduleOverride(let overrideAction):
-             return overrideAction.name
-+        case .profileSwitch(let profileSwitchAction):
-+            return profileSwitchAction.name
-         }
-     }
-     
-diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/ProfileSwitchAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/ProfileSwitchAction.swift
+ 
+         guard statuses.count > 0 else {
+diff --git a/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift b/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift
 new file mode 100644
-index 0000000..ce03ded
+index 0000000..369fb3e
 --- /dev/null
-+++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/ProfileSwitchAction.swift
-@@ -0,0 +1,17 @@
++++ b/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift
+@@ -0,0 +1,135 @@
 +//
-+//  ProfileSwitchAction.swift
-+//  NightscoutServiceKit
-+//
-+
-+import Foundation
-+
-+public struct ProfileSwitchAction: Codable {
-+
-+    public let name: String
-+    public let fingerprint: String
-+
-+    public init(name: String, fingerprint: String) {
-+        self.name = name
-+        self.fingerprint = fingerprint
-+    }
-+}
-diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteNotificationResponseManager.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteNotificationResponseManager.swift
-index 95274e4..4457f80 100644
---- a/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteNotificationResponseManager.swift
-+++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/RemoteNotificationResponseManager.swift
-@@ -45,6 +45,7 @@ class RemoteNotificationResponseManager {
-         case carbs = "carbs"
-         case override = "override"
-         case cancelOverride = "cancel_override"
-+        case profileSwitch = "profile_switch"
-     }
-     
-     func sendResponseNotification(
-diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/ProfileSwitchRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/ProfileSwitchRemoteNotification.swift
-new file mode 100644
-index 0000000..487c620
---- /dev/null
-+++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/ProfileSwitchRemoteNotification.swift
-@@ -0,0 +1,50 @@
-+//
-+//  ProfileSwitchRemoteNotification.swift
-+//  NightscoutServiceKit
-+//
-+
-+import Foundation
-+import LoopKit
-+
-+/// Switches to a saved profile. `expiration` is required: decoding fails without it.
-+public struct ProfileSwitchRemoteNotification: RemoteNotification, Codable {
-+
-+    /// Listed in the uploaded `remoteCommands` so followers know this build accepts the command.
-+    static let commandKey = "profile-switch"
-+
-+    public let profileName: String
-+    public let fingerprint: String
-+    public let remoteAddress: String
-+    public let expirationDate: Date
-+    public let sentAt: Date?
-+    public let otp: String?
-+    public let enteredBy: String?
-+    public let encryptedReturnNotification: String?
-+
-+    public var expiration: Date? {
-+        return expirationDate
-+    }
-+
-+    enum CodingKeys: String, CodingKey {
-+        case profileName = "profile-switch"
-+        case fingerprint = "profile-switch-fingerprint"
-+        case remoteAddress = "remote-address"
-+        case expirationDate = "expiration"
-+        case sentAt = "sent-at"
-+        case otp = "otp"
-+        case enteredBy = "entered-by"
-+        case encryptedReturnNotification = "encrypted_return_notification"
-+    }
-+
-+    func toRemoteAction() -> Action {
-+        return .profileSwitch(ProfileSwitchAction(name: profileName, fingerprint: fingerprint))
-+    }
-+
-+    func otpValidationRequired() -> Bool {
-+        return true
-+    }
-+
-+    public static func includedInNotification(_ notification: [String: Any]) -> Bool {
-+        return notification[commandKey] != nil
-+    }
-+}
-diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-index 0c5f8e3..3362bf7 100644
---- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-+++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-@@ -108,6 +108,8 @@ extension Dictionary<String, AnyObject> {
-             return try OverrideRemoteNotification(dictionary: self)
-         } else if OverrideCancelRemoteNotification.includedInNotification(self) {
-             return try OverrideCancelRemoteNotification(dictionary: self)
-+        } else if ProfileSwitchRemoteNotification.includedInNotification(self) {
-+            return try ProfileSwitchRemoteNotification(dictionary: self)
-         } else {
-             throw RemoteNotificationError.unhandledNotification(self)
-         }
-diff --git a/NightscoutService/NightscoutServiceKitTests/ProfileSwitchRemoteNotificationTestCase.swift b/NightscoutService/NightscoutServiceKitTests/ProfileSwitchRemoteNotificationTestCase.swift
-new file mode 100644
-index 0000000..2fcec94
---- /dev/null
-+++ b/NightscoutService/NightscoutServiceKitTests/ProfileSwitchRemoteNotificationTestCase.swift
-@@ -0,0 +1,71 @@
-+//
-+//  ProfileSwitchRemoteNotificationTestCase.swift
++//  RemoteProfileSwitchTestCase.swift
 +//  NightscoutServiceKitTests
 +//
 +
@@ -2102,9 +2203,9 @@ index 0000000..2fcec94
 +import NightscoutKit
 +@testable import NightscoutServiceKit
 +
-+final class ProfileSwitchRemoteNotificationTestCase: XCTestCase {
++final class RemoteProfileSwitchTestCase: XCTestCase {
 +
-+    func testParseProfileSwitchNotification_ValidPayload_Succeeds() throws {
++    func testParseProfileSwitchCommand_ValidPayload_Succeeds() throws {
 +        let notification: [String: Any] = [
 +            "profile-switch": "Sport",
 +            "profile-switch-fingerprint": "fec4f066b5a54ecd",
@@ -2114,20 +2215,15 @@ index 0000000..2fcec94
 +            "otp": "123456"
 +        ]
 +
-+        XCTAssertTrue(ProfileSwitchRemoteNotification.includedInNotification(notification))
-+        let profileSwitch = try ProfileSwitchRemoteNotification(dictionary: notification)
++        let command = try ProfileSwitchCommand(dictionary: notification)
 +
-+        XCTAssertEqual(profileSwitch.profileName, "Sport")
-+        XCTAssertEqual(profileSwitch.fingerprint, "fec4f066b5a54ecd")
-+        XCTAssertEqual(profileSwitch.expiration, ISO8601DateFormatter.fractional.date(from: "2023-02-25T20:51:35.778Z"))
-+        XCTAssertTrue(profileSwitch.otpValidationRequired())
-+        guard case .profileSwitch(let action) = profileSwitch.toRemoteAction() else {
-+            return XCTFail("Expected a profile switch action")
-+        }
-+        XCTAssertEqual(action.name, "Sport")
++        XCTAssertEqual(command.profileName, "Sport")
++        XCTAssertEqual(command.fingerprint, "fec4f066b5a54ecd")
++        XCTAssertEqual(command.expiration, ISO8601DateFormatter.fractional.date(from: "2023-02-25T20:51:35.778Z"))
++        XCTAssertEqual(command.sentAt, ISO8601DateFormatter.fractional.date(from: "2023-02-25T20:46:35.778Z"))
 +    }
 +
-+    func testParseProfileSwitchNotification_MissingExpiration_Fails() {
++    func testParseProfileSwitchCommand_MissingExpiration_Fails() {
 +        let notification: [String: Any] = [
 +            "profile-switch": "Sport",
 +            "profile-switch-fingerprint": "fec4f066b5a54ecd",
@@ -2135,13 +2231,26 @@ index 0000000..2fcec94
 +            "otp": "123456"
 +        ]
 +
-+        XCTAssertThrowsError(try ProfileSwitchRemoteNotification(dictionary: notification))
++        XCTAssertThrowsError(try ProfileSwitchCommand(dictionary: notification))
++    }
++
++    func testValidate_Expired_FailsBeforeOTP() throws {
++        let command = try ProfileSwitchCommand(dictionary: [
++            "profile-switch": "Sport",
++            "profile-switch-fingerprint": "fec4f066b5a54ecd",
++            "remote-address": "LoopFollow",
++            "expiration": "2023-02-25T20:51:35.778Z",
++            "otp": "123456"
++        ])
++
++        XCTAssertThrowsError(try command.validate(otpManager: OTPManager(secretStore: MockSecretStore()))) { error in
++            guard case RemoteProfileSwitchError.expired = error else {
++                return XCTFail("Expected expired, got \(error)")
++            }
++        }
 +    }
 +
 +    func testFingerprint_MatchesFollowerVector() {
-+        func items(_ values: [(TimeInterval, Double)]) -> [ProfileSet.ScheduleItem] {
-+            values.map { ProfileSet.ScheduleItem(offset: $0.0, value: $0.1) }
-+        }
 +        let profile = ProfileSet.Profile(
 +            timezone: TimeZone(secondsFromGMT: 3600)!,
 +            dia: .hours(6),
@@ -2154,6 +2263,62 @@ index 0000000..2fcec94
 +
 +        XCTAssertEqual(profile.remoteFingerprint, "fec4f066b5a54ecd")
 +    }
++
++    func testAddingRemoteCommand_KeepsListedCommandsAndOtherFields() {
++        let status = deviceStatus(testingDetails: ["remoteCommands": ["carbs-delete"], "other": 1])
++
++        let updated = status.addingRemoteCommand(ProfileSwitchCommand.commandKey)
++
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["remoteCommands"] as? [String], ["carbs-delete", "profile-switch"])
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["other"] as? Int, 1)
++        XCTAssertEqual(updated.dictionaryRepresentationWithoutTestingDetails, status.dictionaryRepresentationWithoutTestingDetails)
++    }
++
++    func testAddingRemoteCommand_WithoutTestingDetails_AddsList() {
++        let updated = deviceStatus(testingDetails: nil).addingRemoteCommand(ProfileSwitchCommand.commandKey)
++
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["remoteCommands"] as? [String], ["profile-switch"])
++    }
++
++    func testResponsePayload_UsesProfileSwitchCommandType() throws {
++        let data = try JSONEncoder().encode(ProfileSwitchResponse.payload(success: false, message: "Command failed: Profile 'Sport' not activated: Pod not connected"))
++        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
++
++        XCTAssertEqual(json["command_type"] as? String, "profile_switch")
++        XCTAssertEqual(json["command_status"] as? String, "failed")
++        let alert = try XCTUnwrap((json["aps"] as? [String: Any])?["alert"] as? [String: Any])
++        XCTAssertEqual(alert["body"] as? String, "Command failed: Profile 'Sport' not activated: Pod not connected")
++    }
++
++    private func items(_ values: [(TimeInterval, Double)]) -> [ProfileSet.ScheduleItem] {
++        values.map { ProfileSet.ScheduleItem(offset: $0.0, value: $0.1) }
++    }
++
++    private func deviceStatus(testingDetails: [String: Any]?) -> DeviceStatus {
++        let date = Date(timeIntervalSince1970: 1_700_000_000)
++        let loopStatus = LoopStatus(
++            name: "Loop",
++            version: "3.0",
++            timestamp: date,
++            iob: IOBStatus(timestamp: date, iob: 1.5),
++            recommendedBolus: 0.4,
++            failureReason: "failure",
++            testingDetails: testingDetails)
++        return DeviceStatus(device: "loop://iPhone", timestamp: date, uploaderStatus: UploaderStatus(name: "iPhone", timestamp: date, battery: 50), loopStatus: loopStatus, identifier: "id")
++    }
++}
++
++private final class MockSecretStore: OTPSecretStore {
++    private var key: String? = "2KBHFASYM6DKWFGW"
++    private var keyName: String? = "Mock"
++    private var accepted = [String]()
++
++    func tokenSecretKey() -> String? { key }
++    func tokenSecretKeyName() -> String? { keyName }
++    func setTokenSecretKey(_ key: String?) throws { self.key = key }
++    func setTokenSecretKeyName(_ name: String?) throws { self.keyName = name }
++    func recentAcceptedPasswords() -> [String] { accepted }
++    func setRecentAcceptedPasswords(_ passwords: [String]) throws { accepted = passwords }
 +}
 +
 +private extension ISO8601DateFormatter {
