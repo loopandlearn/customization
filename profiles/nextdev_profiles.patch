@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index 3c9d61cb..6b70853e 100644
+index 856aaca6..1cd6181e 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
-@@ -1407,6 +1407,12 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
+@@ -1408,6 +1408,13 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
          return try await pumpManager?.syncDeliveryLimits(limits: deliveryLimits) ?? deliveryLimits
      }
  
@@ -11,26 +11,126 @@ index 3c9d61cb..6b70853e 100644
 +        NotificationCenter.default.post(name: .LoopDataUpdated,
 +            object: nil,
 +            userInfo: [LoopDataManager.LoopUpdateContextKey: LoopUpdateContext.preferences.rawValue])
++        settingsManager.storeSettings()
 +    }
 +
      func saveCompletion(therapySettings: TherapySettings) {
          settingsManager.mutateLoopSettings { settings in
              settings.glucoseTargetRangeSchedule = therapySettings.glucoseTargetRangeSchedule
-diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 30ab8fb2..28f07307 100644
---- a/Loop/Loop/Managers/LoopDataManager.swift
-+++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1684,7 +1684,7 @@ extension LoopDataManager: ManualDoseViewModelDelegate {
-     var settings: StoredSettings {
-         settingsProvider.settings
+diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
+index 3e1110d1..cc990cd0 100644
+--- a/Loop/Loop/Managers/LoopAppManager.swift
++++ b/Loop/Loop/Managers/LoopAppManager.swift
+@@ -401,6 +401,7 @@ class LoopAppManager: NSObject {
+ 
+         dosingDecisionStore.delegate = deviceDataManager
+         remoteDataServicesManager.delegate = deviceDataManager
++        servicesManager.therapySettingsViewModelDelegate = deviceDataManager
+ 
+         let criticalEventLogs: [CriticalEventLog] = [settingsManager.settingsStore!, glucoseStore, carbStore, dosingDecisionStore, doseStore, temporaryPresetsManager.presetHistory, deviceDataManager.deviceLog, alertManager.alertStore]
+         criticalEventLogExportManager = CriticalEventLogExportManager(logs: criticalEventLogs,
+diff --git a/Loop/Loop/Managers/RemoteDataServicesManager.swift b/Loop/Loop/Managers/RemoteDataServicesManager.swift
+index b28583fb..5a738613 100644
+--- a/Loop/Loop/Managers/RemoteDataServicesManager.swift
++++ b/Loop/Loop/Managers/RemoteDataServicesManager.swift
+@@ -634,6 +634,9 @@ extension RemoteDataServicesManager {
+     
+     public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
+         let service = try serviceForPushNotification(notification)
++        if let receiver = service as? RemoteProfileSwitchReceiver, receiver.isProfileSwitch(notification) {
++            return await receiver.profileSwitchWasReceived(notification)
++        }
+         return try await service.remoteNotificationWasReceived(notification)
      }
--    
+     
+diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
+index b557f184..7fd5b74d 100644
+--- a/Loop/Loop/Managers/ServicesManager.swift
++++ b/Loop/Loop/Managers/ServicesManager.swift
+@@ -30,6 +30,7 @@ class ServicesManager {
+     weak var servicesManagerDelegate: ServicesManagerDelegate?
+     weak var servicesManagerDosingDelegate: ServicesManagerDosingDelegate?
+     weak var supportManager: SupportManager?
++    weak var therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?
+     
+     private var services = [Service]()
+ 
+@@ -423,3 +424,73 @@ extension Service {
+         ]
+     }
+ }
 +
-     var scheduleOverride: TemporaryScheduleOverride? {
-         temporaryPresetsManager.scheduleOverride
-     }
++// MARK: - RemoteProfileActionDelegate
++
++extension ServicesManager: RemoteProfileActionDelegate {
++    @MainActor
++    func activateRemoteProfile(name: String, verify: (GlucoseRangeSchedule, CarbRatioSchedule, BasalRateSchedule, InsulinSensitivitySchedule) throws -> Void) async throws {
++        do {
++            guard let therapySettingsViewModelDelegate else {
++                throw RemoteProfileActionError.unavailable
++            }
++            let viewModel = ProfileViewModel(therapySettings: settingsManager.therapySettings, delegate: therapySettingsViewModelDelegate)
++            guard therapySettingsViewModelDelegate.pumpSupportedIncrements() != nil else {
++                throw RemoteProfileActionError.noPump
++            }
++            guard let profile = try viewModel.savedProfile(named: name) else {
++                throw RemoteProfileActionError.profileNotFound(name)
++            }
++            try profile.verify(with: verify)
++            if case .failure(let error) = viewModel.validateProfile(profile) {
++                throw error
++            }
++            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
++                viewModel.loadProfile(profile: profile) { result in
++                    switch result {
++                    case .success:
++                        continuation.resume()
++                    case .failure(let error):
++                        continuation.resume(throwing: error)
++                    }
++                }
++            }
++            sendRemoteProfileNotification(name: name, error: nil)
++        } catch {
++            sendRemoteProfileNotification(name: name, error: error)
++            throw error
++        }
++    }
++
++    private func sendRemoteProfileNotification(name: String, error: Error?) {
++        let notification = UNMutableNotificationContent()
++        let title = String(format: NSLocalizedString("Remote Profile Switch: %1$@", comment: "The message for a remote profile switch notification. (1: profile name)"), name)
++        notification.body = [title, error?.localizedDescription ?? "Success!"].joined(separator: "\n")
++        notification.sound = .default
++
++        let request = UNNotificationRequest(
++            identifier: error == nil ? "com.loopkit.Loop.RemoteProfile" : "com.loopkit.Loop.RemoteProfileFailure",
++            content: notification,
++            trigger: nil
++        )
++
++        UNUserNotificationCenter.current().add(request)
++    }
++
++    enum RemoteProfileActionError: LocalizedError {
++        case unavailable
++        case noPump
++        case profileNotFound(String)
++
++        var errorDescription: String? {
++            switch self {
++            case .unavailable:
++                return NSLocalizedString("Profile switching is not available", comment: "Remote profile switch error description: profile view model delegate missing.")
++            case .noPump:
++                return NSLocalizedString("No pump is configured", comment: "Remote profile switch error description: no pump.")
++            case .profileNotFound(let name):
++                return String(format: NSLocalizedString("No saved profile named %1$@", comment: "Remote profile switch error description: profile not found. (1: profile name)"), name)
++            }
++        }
++    }
++}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 1faefbc5..737acf28 100644
+index e02112db..7a713a9f 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -55,6 +55,7 @@ struct SettingsView: View {
@@ -41,7 +141,7 @@ index 1faefbc5..737acf28 100644
          }
      }
      
-@@ -155,6 +156,9 @@ struct SettingsView: View {
+@@ -156,6 +157,9 @@ struct SettingsView: View {
                          }
                      case .favoriteFoods:
                          FavoriteFoodsView(insightsDelegate: viewModel.favoriteFoodInsightsDelegate)
@@ -51,7 +151,7 @@ index 1faefbc5..737acf28 100644
                      }
                  }
                  .environmentObject(displayGlucosePreference)
-@@ -416,6 +420,11 @@ extension SettingsView {
+@@ -463,6 +467,11 @@ extension SettingsView {
                  .accessibilityIdentifier("button_TherapySettings")
              }
  
@@ -127,12 +227,34 @@ index cc88ad17..c543b73a 100644
  				898B4E7B246DC6A70053C484 /* CorrectionRangeScheduleEditor.swift in Sources */,
  				892A5DB42231E191008961AB /* LevelMaskView.swift in Sources */,
  				892A5DA02231E130008961AB /* CompletionNotifying.swift in Sources */,
+diff --git a/LoopKit/LoopKit/Service/RemoteDataService.swift b/LoopKit/LoopKit/Service/RemoteDataService.swift
+index 89543d1a..ce8f6c36 100644
+--- a/LoopKit/LoopKit/Service/RemoteDataService.swift
++++ b/LoopKit/LoopKit/Service/RemoteDataService.swift
+@@ -137,3 +137,17 @@ public extension RemoteDataService {
+     var pumpEventDataLimit: Int? { return nil }
+     var settingsDataLimit: Int? { return nil }
+ }
++
++/// A remote data service that handles remote profile switch commands itself.
++public protocol RemoteProfileSwitchReceiver: RemoteDataService {
++    /// True when the push notification is a profile switch command.
++    func isProfileSwitch(_ notification: [String: AnyObject]) -> Bool
++
++    func profileSwitchWasReceived(_ notification: [String: AnyObject]) async
++}
++
++/// Switches to a saved therapy profile on a remote command.
++public protocol RemoteProfileActionDelegate: AnyObject {
++    /// `verify` receives the schedules about to be activated and throws to reject them.
++    func activateRemoteProfile(name: String, verify: (_ correctionRange: GlucoseRangeSchedule, _ carbRatio: CarbRatioSchedule, _ basalRate: BasalRateSchedule, _ insulinSensitivity: InsulinSensitivitySchedule) throws -> Void) async throws
++}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 00000000..cd8d48b8
+index 00000000..6c27aa9f
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,409 @@
+@@ -0,0 +1,467 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -310,6 +432,7 @@ index 00000000..cd8d48b8
 +            try jsonData.write(to: fileURL)
 +            
 +            self.loadProfiles()
++            triggerProfileSync()
 +        } catch {
 +            print("An error occurred while renaming profile: \(error)")
 +        }
@@ -370,17 +493,24 @@ index 00000000..cd8d48b8
 +        else
 +        {
 +            do {
-+                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { [weak self] result in
++                delegate?.syncBasalRateSchedule(items: profile.basalRateSchedule.items, completion: { result in
 +                    switch result {
 +                    case .success(let syncedSchedule):
 +                        DispatchQueue.main.async {
-+                            let unit = self?.therapySettings.glucoseTargetRangeSchedule?.unit ?? LoopUnit.milligramsPerDeciliter
-+                            self?.saveCorrectionRange(range: profile.correctionRange.schedule(for: unit)! )
-+                            self?.saveCarbRatioSchedule(carbRatioSchedule: profile.carbRatioSchedule)
-+                            self?.saveBasalRates(basalRates: syncedSchedule)
-+                            self?.saveInsulinSensitivitySchedule(insulinSensitivitySchedule: profile.insulinSensitivitySchedule.schedule(for: unit)!)
++                            let previousSettings = self.therapySettings
++                            let unit = self.therapySettings.glucoseTargetRangeSchedule?.unit ?? LoopUnit.milligramsPerDeciliter
++                            self.therapySettings.glucoseTargetRangeSchedule = profile.correctionRange.schedule(for: unit)!
++                            self.therapySettings.carbRatioSchedule = profile.carbRatioSchedule
++                            self.therapySettings.basalRateSchedule = syncedSchedule
++                            self.therapySettings.insulinSensitivitySchedule = profile.insulinSensitivitySchedule.schedule(for: unit)!
++                            // One settings change, so the stored and uploaded settings never mix two profiles.
++                            self.setCurrentProfile(name: profile.name, syncChange: false)
++                            self.delegate?.saveCompletion(therapySettings: self.therapySettings)
++                            if self.therapySettings == previousSettings {
++                                // Nothing changed, so only the profile name needs to reach the uploaded settings.
++                                self.triggerProfileSync()
++                            }
 +                            print("New profile loaded")
-+                            self?.setCurrentProfile(name: profile.name, syncChange: false)
 +                            completion(.success)
 +                        }
 +                    case .failure(let error):
@@ -406,6 +536,8 @@ index 00000000..cd8d48b8
 +        removeProfile(profileReference: profileReference)
 +        if getCurrentProfileName() == profile.name {
 +            clearCurrentProfile()
++        } else {
++            triggerProfileSync()
 +        }
 +    }
 +
@@ -429,6 +561,14 @@ index 00000000..cd8d48b8
 +        let data = try Data(contentsOf: fileURL)
 +        let getProfile = try decodeProfile(from: data)
 +        return getProfile
++    }
++
++    /// The saved profile named `name`, or nil when there is none.
++    public func savedProfile(named name: String) throws -> Profile? {
++        guard let profileReference = profiles.first(where: { $0.name == name }) else {
++            return nil
++        }
++        return try getProfile(from: profileReference)
 +    }
 +
 +    public func validateProfile(_ profile: Profile) -> Result<Void, ProfileValidationError> {
@@ -526,11 +666,11 @@ index 00000000..cd8d48b8
 +            print("Glucose target range schedule differs")
 +            isOutOfSync = true
 +        }
-+        if therapySettings.carbRatioSchedule != profile.carbRatioSchedule {
++        if therapySettings.carbRatioSchedule?.items != profile.carbRatioSchedule.items {
 +            print("Carb ratio schedule differs")
 +            isOutOfSync = true
 +        }
-+        if therapySettings.basalRateSchedule != profile.basalRateSchedule {
++        if therapySettings.basalRateSchedule?.items != profile.basalRateSchedule.items {
 +            print("Basal rate schedule differs")
 +            isOutOfSync = true
 +        }
@@ -540,6 +680,46 @@ index 00000000..cd8d48b8
 +        }
 +        
 +        return isOutOfSync
++    }
++}
++
++extension Profile {
++    /// Passes the schedules this profile activates to `check`.
++    public func verify(with check: (GlucoseRangeSchedule, CarbRatioSchedule, BasalRateSchedule, InsulinSensitivitySchedule) throws -> Void) throws {
++        try check(correctionRange, carbRatioSchedule, basalRateSchedule, insulinSensitivitySchedule)
++    }
++}
++
++extension ProfileViewModel {
++    /// The current settings with the schedules of `profile`, for editing the profile with the therapy settings editors.
++    func therapySettings(applying profile: Profile) -> TherapySettings {
++        var settings = therapySettings
++        let unit = settings.glucoseTargetRangeSchedule?.unit ?? LoopUnit.milligramsPerDeciliter
++        settings.glucoseTargetRangeSchedule = profile.correctionRange.schedule(for: unit)
++        settings.carbRatioSchedule = profile.carbRatioSchedule
++        settings.basalRateSchedule = profile.basalRateSchedule
++        settings.insulinSensitivitySchedule = profile.insulinSensitivitySchedule.schedule(for: unit)
++        return settings
++    }
++
++    /// Saves edited schedules to the profile named `name`, keeping its file and place in the list.
++    func updateProfile(named name: String, from settings: TherapySettings) throws {
++        loadProfiles()
++        guard let profileReference = profiles.first(where: { $0.name == name }) else {
++            throw ProfileValidationError.fileLoadError
++        }
++        let profile = try getProfile(from: profileReference)
++        let updatedProfile = Profile(
++            name: profile.name,
++            correctionRange: settings.glucoseTargetRangeSchedule?.schedule(for: .milligramsPerDeciliter) ?? profile.correctionRange,
++            carbRatioSchedule: settings.carbRatioSchedule ?? profile.carbRatioSchedule,
++            basalRateSchedule: settings.basalRateSchedule ?? profile.basalRateSchedule,
++            insulinSensitivitySchedule: settings.insulinSensitivitySchedule?.schedule(for: .milligramsPerDeciliter) ?? profile.insulinSensitivitySchedule,
++            sortOrder: profile.sortOrder
++        )
++        try encodeProfile(updatedProfile).write(to: profilesDirectory.appendingPathComponent(profileReference.fileName), options: .atomic)
++        loadProfiles()
++        triggerProfileSync()
 +    }
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel.swift
@@ -733,10 +913,10 @@ index 00000000..446910e4
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 00000000..3566055d
+index 00000000..9eb00f90
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
-@@ -0,0 +1,334 @@
+@@ -0,0 +1,432 @@
 +//
 +//  ProfilePreviewView.swift
 +//  LoopKitUI
@@ -755,6 +935,7 @@ index 00000000..3566055d
 +    case load
 +    case delete
 +    case error
++    case loadEdited
 +}
 +
 +struct ProfilePreviewView: View {
@@ -762,7 +943,11 @@ index 00000000..3566055d
 +    @ObservedObject var viewModel: ProfileViewModel
 +    @Environment(\.dismissAction) var dismissAction
 +    @Environment(\.presentationMode) var presentationMode
-+    var profile: Profile
++    @Environment(\.appName) private var appName
++    @Environment(\.dosingStrategySelectionEnabled) private var dosingStrategySelectionEnabled
++    @State private var profile: Profile
++    @State private var editingDelegate: ProfileEditingDelegate
++    @State private var therapySettingsViewModel: TherapySettingsViewModel
 +
 +    @State private var showingAlert = false
 +    @State private var activeAlert: ActiveAlert = .load
@@ -773,11 +958,21 @@ index 00000000..3566055d
 +
 +    let nilDestination: (_ dismiss: @escaping () -> Void) -> AnyView = { _ in AnyView(EmptyView()) }
 +
++    init(viewModel: ProfileViewModel, profile: Profile) {
++        self.viewModel = viewModel
++        let editingDelegate = ProfileEditingDelegate(viewModel: viewModel, profile: profile)
++        _profile = State(initialValue: profile)
++        _editingDelegate = State(initialValue: editingDelegate)
++        _therapySettingsViewModel = State(initialValue: TherapySettingsViewModel(
++            therapySettings: viewModel.therapySettings(applying: profile),
++            delegate: editingDelegate))
++    }
++
 +    var body: some View {
 +        ZStack {
 +            ScrollView {
 +                VStack(alignment: .leading) {
-+                    Text("Before proceeding, review the profile details below. Scroll to find options to Load, Rename, or Delete.")
++                    Text("Tap a setting to edit it in this profile. Editing changes only the saved profile; \(appName) keeps using its current settings until the profile is loaded. Scroll to find options to Load, Rename, or Delete.")
 +                        .font(.body)
 +                        .foregroundColor(.primary)
 +                        .padding([.leading, .trailing])
@@ -844,30 +1039,7 @@ index 00000000..3566055d
 +                    return Alert(
 +                        title: Text("Load Profile"),
 +                        message: Text("Do you want to load the profile \(profile.name)?"),
-+                        primaryButton: .default(Text("Yes"), action: {
-+                            let validationResult = viewModel.validateProfile(profile)
-+                            switch validationResult {
-+                            case .success:
-+                                viewModel.loadProfile(profile: profile) { result in
-+                                    switch result {
-+                                    case .success:
-+                                        dismissAction()
-+                                    case .failure(let error):
-+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-+                                            self.errorText = error.localizedDescription
-+                                            self.activeAlert = .error
-+                                            self.showingAlert = true
-+                                        }
-+                                    }
-+                                }
-+                            case .failure(let error):
-+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-+                                    self.errorText = error.localizedDescription
-+                                    self.activeAlert = .error
-+                                    self.showingAlert = true
-+                                }
-+                            }
-+                        }),
++                        primaryButton: .default(Text("Yes"), action: load),
 +                        secondaryButton: .cancel()
 +                    )
 +                case .delete:
@@ -885,6 +1057,13 @@ index 00000000..3566055d
 +                        title: Text("Error loading profile"),
 +                        message: Text(errorText ?? "Unknown error"),
 +                        dismissButton: .default(Text("OK"))
++                    )
++                case .loadEdited:
++                    return Alert(
++                        title: Text("Load Edited Profile?"),
++                        message: Text("\(profile.name) is the active profile. Load it now to use the edited settings. \(appName) writes the basal rates to the pump."),
++                        primaryButton: .default(Text("Load"), action: load),
++                        secondaryButton: .cancel(Text("Later"))
 +                    )
 +                }
 +            }
@@ -907,9 +1086,59 @@ index 00000000..3566055d
 +                .offset(y: -22)
 +            }
 +        }
++        .onAppear {
++            // Runs again when an editor closes.
++            guard let saved = try? viewModel.savedProfile(named: profile.name) else { return }
++            profile = saved
++            // The editors show the saved values, also after a save that failed.
++            therapySettingsViewModel.therapySettings = viewModel.therapySettings(applying: saved)
++            if let error = editingDelegate.saveError {
++                editingDelegate.saveError = nil
++                presentAlertLater(.error, errorText: error.localizedDescription)
++            } else if editingDelegate.savedEdits {
++                editingDelegate.savedEdits = false
++                if viewModel.currentProfileName == profile.name {
++                    presentAlertLater(.loadEdited)
++                }
++            }
++        }
 +        .onChange(of: shouldDismissSelf) { shouldDismiss in
 +            if shouldDismiss {
 +                self.presentationMode.wrappedValue.dismiss()
++            }
++        }
++    }
++
++    private func presentAlertLater(_ alert: ActiveAlert, errorText: String? = nil) {
++        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++            guard !showingAlert else { return }
++            self.errorText = errorText
++            activeAlert = alert
++            showingAlert = true
++        }
++    }
++
++    private func load() {
++        let validationResult = viewModel.validateProfile(profile)
++        switch validationResult {
++        case .success:
++            viewModel.loadProfile(profile: profile) { result in
++                switch result {
++                case .success:
++                    dismissAction()
++                case .failure(let error):
++                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                        self.errorText = error.localizedDescription
++                        self.activeAlert = .error
++                        self.showingAlert = true
++                    }
++                }
++            }
++        case .failure(let error):
++            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
++                self.errorText = error.localizedDescription
++                self.activeAlert = .error
++                self.showingAlert = true
 +            }
 +        }
 +    }
@@ -1011,27 +1240,6 @@ index 00000000..3566055d
 +}
 +
 +
-+struct SectionWithContent<Content>: View where Content: View {
-+    let title: String
-+    let content: Content
-+
-+    init(title: String,
-+         content: () -> Content)
-+    {
-+        self.title = title
-+        self.content = content()
-+    }
-+
-+    public var body: some View {
-+        Section {
-+            Text(title)
-+                .bold()
-+                .frame(maxWidth: .infinity, alignment: .leading)
-+            content
-+        }
-+    }
-+}
-+
 +// MARK: Utilities
 +extension ProfilePreviewView {
 +
@@ -1052,8 +1260,34 @@ index 00000000..3566055d
 +
 +    private func card<Content>(for therapySetting: TherapySetting, @ViewBuilder content: @escaping () -> Content) -> Card where Content: View {
 +        Card {
-+            SectionWithContent(title: therapySetting.title,
-+                               content: content)
++            SectionWithTapToEdit(
++                // The basal editor needs the pump's supported rates.
++                isEnabled: therapySetting != .basalRate || viewModel.pumpSupportedIncrements() != nil,
++                title: therapySetting.title,
++                descriptiveText: therapySetting.descriptiveText(appName: appName, dosingStrategySelectionEnabled: dosingStrategySelectionEnabled),
++                destination: { dismiss in
++                    editor(for: therapySetting, dismiss: dismiss)
++                        .environment(\.dismissAction, dismiss)
++                },
++                content: content
++            )
++        }
++    }
++
++    /// The therapy settings editors, saving to this profile.
++    @ViewBuilder
++    private func editor(for therapySetting: TherapySetting, dismiss: @escaping () -> Void) -> some View {
++        switch therapySetting {
++        case .glucoseTargetRange:
++            CorrectionRangeScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .carbRatio:
++            CarbRatioScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .basalRate:
++            BasalRateScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        case .insulinSensitivity:
++            InsulinSensitivityScheduleEditor(mode: .settings, therapySettingsViewModel: therapySettingsViewModel, didSave: dismiss)
++        default:
++            EmptyView()
 +        }
 +    }
 +}
@@ -1071,9 +1305,53 @@ index 00000000..3566055d
 +            .padding(.trailing, -8)
 +    }
 +}
++
++/// Saves edits made with the therapy settings editors to a saved profile. Loop's current settings and the pump are not changed.
++final class ProfileEditingDelegate: TherapySettingsViewModelDelegate {
++    private let viewModel: ProfileViewModel
++    private let profileName: String
++    private let basalTimeZone: TimeZone
++    /// Set when edits were saved, so the view can offer to load the edited active profile.
++    var savedEdits = false
++    /// Set when saving edits to the profile file failed.
++    var saveError: Error?
++
++    init(viewModel: ProfileViewModel, profile: Profile) {
++        self.viewModel = viewModel
++        self.profileName = profile.name
++        self.basalTimeZone = profile.basalRateSchedule.timeZone
++    }
++
++    func syncBasalRateSchedule(items: [RepeatingScheduleValue<Double>], completion: @escaping (Result<BasalRateSchedule, Error>) -> Void) {
++        guard let schedule = BasalRateSchedule(dailyItems: items, timeZone: basalTimeZone) else {
++            completion(.failure(ProfileValidationError.basalRateError))
++            return
++        }
++        completion(.success(schedule))
++    }
++
++    func syncDeliveryLimits(deliveryLimits: DeliveryLimits) async throws -> DeliveryLimits {
++        return deliveryLimits
++    }
++
++    func saveCompletion(therapySettings: TherapySettings) {
++        do {
++            try viewModel.updateProfile(named: profileName, from: therapySettings)
++            savedEdits = true
++        } catch {
++            saveError = error
++        }
++    }
++
++    func pumpSupportedIncrements() -> PumpSupportedIncrements? {
++        return viewModel.pumpSupportedIncrements()
++    }
++
++    func updateCurrentProfileName() {}
++}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift
 new file mode 100644
-index 00000000..a1f35678
+index 00000000..ffced54b
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfileView.swift	
 @@ -0,0 +1,172 @@
@@ -1191,15 +1469,15 @@ index 00000000..a1f35678
 +                case .update:
 +                    return Alert(
 +                        title: Text("Profile Outdated"),
-+                        message: Text("The current therapy settings have changed. Do you want to update the profile named: \(viewModel.currentProfileName ?? "")?"),
-+                        primaryButton: .default(Text("Update")) {
++                        message: Text("The current therapy settings differ from the saved profile \(viewModel.currentProfileName ?? ""). Save the current settings to it, or keep the saved profile and load it later to use its settings."),
++                        primaryButton: .default(Text("Save Current Settings")) {
 +                            viewModel.saveProfile(withName: viewModel.currentProfileName ?? "")
 +                        },
-+                        secondaryButton: .cancel()
++                        secondaryButton: .cancel(Text("Keep Saved Profile"))
 +                    )
 +                case .info:
 +                    return Alert(title: Text("Information"),
-+                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap on any profile to review its settings in detail. In detail view, you can Load, Rename or Delete that particular profile.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
++                                 message: Text("A checkmark next to a profile name indicates that it's the active one.\n\nUse ‘+’ to create a new profile capturing your glucose targets, carb ratios, basal rates, and insulin sensitivities.\n\nTap a profile to review its settings. There you can edit them without loading the profile, and Load, Rename or Delete it.\n\nWant to change the order of profiles? Simply press and hold on a profile, then drag it to your desired position."),
 +                                 dismissButton: .default(Text("Got it!")))
 +                }
 +            }
@@ -1363,15 +1641,490 @@ index 1ddc82b..54421a1 100644
  
  
 Submodule NightscoutService contains modified content
+diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
+index 00096e2..eaf139d 100644
+--- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
++++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
+@@ -23,6 +23,9 @@
+ 		A9246B2526231B3A00CCDCB3 /* OTPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9246B2426231B3A00CCDCB3 /* OTPManager.swift */; };
+ 		A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6152358F42A00949C8B /* StoredDosingDecision.swift */; };
+ 		A934B6182358F49300949C8B /* StoredSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6172358F49300949C8B /* StoredSettings.swift */; };
++		3E7A51C22F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */; };
++		3E7A51C42F0D4B8100A1C6E2 /* SavedProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */; };
++		3E7A51C62F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */; };
+ 		A934B61A2358F5FC00949C8B /* TemporaryScheduleOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */; };
+ 		A941B08729BCB87500F91340 /* RemoteCommandSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08629BCB87500F91340 /* RemoteCommandSource.swift */; };
+ 		A941B08929BCB99C00F91340 /* RemoteCommandValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */; };
+@@ -156,6 +159,9 @@
+ 		A9246B2426231B3A00CCDCB3 /* OTPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPManager.swift; sourceTree = "<group>"; };
+ 		A934B6152358F42A00949C8B /* StoredDosingDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredDosingDecision.swift; sourceTree = "<group>"; };
+ 		A934B6172358F49300949C8B /* StoredSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredSettings.swift; sourceTree = "<group>"; };
++		3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NightscoutService+RemoteProfileSwitch.swift"; sourceTree = "<group>"; };
++		3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SavedProfile.swift; sourceTree = "<group>"; };
++		3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteProfileSwitchTestCase.swift; sourceTree = "<group>"; };
+ 		A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryScheduleOverride.swift; sourceTree = "<group>"; };
+ 		A941B08629BCB87500F91340 /* RemoteCommandSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandSource.swift; sourceTree = "<group>"; };
+ 		A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandValidator.swift; sourceTree = "<group>"; };
+@@ -265,6 +271,8 @@
+ 				A934B6152358F42A00949C8B /* StoredDosingDecision.swift */,
+ 				A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */,
+ 				A934B6172358F49300949C8B /* StoredSettings.swift */,
++				3E7A51C52F0D4B8100A1C6E2 /* SavedProfile.swift */,
++				3E7A51C32F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift */,
+ 				A90E39A222BC782C0016DFE8 /* SyncCarbObject.swift */,
+ 				A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */,
+ 				A90E399D22BC76DB0016DFE8 /* TimeInterval.swift */,
+@@ -321,6 +329,7 @@
+ 				A95F887426C694E900D8A009 /* OTPManagerTestCase.swift */,
+ 				A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */,
+ 				A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */,
++				3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */,
+ 				A95F887326C694E800D8A009 /* NightscoutServiceKitTests-Bridging-Header.h */,
+ 			);
+ 			path = NightscoutServiceKitTests;
+@@ -740,6 +749,8 @@
+ 				C1398D2227C434FB00416AD6 /* Data.swift in Sources */,
+ 				A90E39A522BC791E0016DFE8 /* DoseEntry.swift in Sources */,
+ 				A934B6182358F49300949C8B /* StoredSettings.swift in Sources */,
++				3E7A51C22F0D4B8100A1C6E2 /* NightscoutService+RemoteProfileSwitch.swift in Sources */,
++				3E7A51C42F0D4B8100A1C6E2 /* SavedProfile.swift in Sources */,
+ 				A9C62DA42331CAD400535612 /* OSLog.swift in Sources */,
+ 				C1F7822827CD57A100C0919A /* OverrideTreament.swift in Sources */,
+ 			);
+@@ -753,6 +764,7 @@
+ 				A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */,
+ 				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
+ 				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
++				3E7A51C62F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift in Sources */,
+ 				A95F887526C694E900D8A009 /* OTPManagerTestCase.swift in Sources */,
+ 			);
+ 			runOnlyForDeploymentPostprocessing = 0;
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift
+new file mode 100644
+index 0000000..2225b1c
+--- /dev/null
++++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift
+@@ -0,0 +1,318 @@
++//
++//  NightscoutService+RemoteProfileSwitch.swift
++//  NightscoutServiceKit
++//
++
++import Foundation
++import LoopKit
++import NightscoutKit
++import OSLog
++
++/// Remote profile switch commands. They are handled apart from `RemoteCommandSourceV1` with the same steps:
++/// decode, skip duplicates, check expiration and OTP, act, reply through the return push, and post a
++/// Nightscout note on any error.
++extension NightscoutService: RemoteProfileSwitchReceiver {
++
++    private static let profileSwitchLog = OSLog(category: "RemoteProfileSwitch")
++    private static let recentProfileSwitches = RecentProfileSwitches()
++
++    public func isProfileSwitch(_ notification: [String: AnyObject]) -> Bool {
++        return notification[ProfileSwitchCommand.commandKey] != nil
++    }
++
++    public func profileSwitchWasReceived(_ notification: [String: AnyObject]) async {
++        do {
++            let command = try ProfileSwitchCommand(dictionary: notification)
++            guard await Self.recentProfileSwitches.isNew(command) else {
++                // Duplicate notifications are expected after app is force killed
++                return
++            }
++            try command.validate(otpManager: otpManager)
++            try await activateProfile(command)
++        } catch {
++            os_log("Remote profile switch: %{public}@. Error: %{public}@", log: Self.profileSwitchLog, type: .error, String(describing: notification), String(describing: error))
++            try? await uploadProfileSwitchNote(error: error, notification: notification)
++        }
++    }
++
++    private func activateProfile(_ command: ProfileSwitchCommand) async throws {
++        let returnInfo = command.returnNotificationInfo()
++        do {
++            guard let profileDelegate = serviceDelegate as? RemoteProfileActionDelegate else {
++                throw RemoteProfileSwitchError.unavailable
++            }
++            try await profileDelegate.activateRemoteProfile(name: command.profileName) { correctionRange, carbRatio, basalRate, insulinSensitivity in
++                let savedProfile = SavedProfile(name: command.profileName, correctionRange: correctionRange, carbRatioSchedule: carbRatio, basalRateSchedule: basalRate, insulinSensitivitySchedule: insulinSensitivity)
++                guard savedProfile.matches(fingerprint: command.fingerprint) else {
++                    throw RemoteProfileSwitchError.profileChanged
++                }
++            }
++        } catch {
++            let failure = RemoteProfileSwitchError.notActivated(command.profileName, error)
++            await ProfileSwitchResponse.send(to: returnInfo, success: false, message: "Command failed: \(failure.localizedDescription)")
++            throw failure
++        }
++        await ProfileSwitchResponse.send(to: returnInfo, success: true, message: "Profile '\(command.profileName)' activated")
++    }
++
++    private func uploadProfileSwitchNote(error: Error, notification: [String: AnyObject]) async throws {
++        guard let siteURL, let apiSecret else {
++            throw NightscoutServiceError.missingCredentials
++        }
++        let notificationJSON = try JSONSerialization.data(withJSONObject: notification)
++        let notificationJSONString = String(data: notificationJSON, encoding: .utf8) ?? ""
++
++        let treatment = NightscoutTreatment(
++            timestamp: Date(),
++            enteredBy: LocalizedString("Profile Switch", comment: "The remote action name for Profile Switch"),
++            notes: """
++            \(error.localizedDescription)
++            \(notificationJSONString)
++            """,
++            eventType: .note
++        )
++
++        let uploader = NightscoutClient(siteURL: siteURL, apiSecret: apiSecret)
++        return try await withCheckedThrowingContinuation { continuation in
++            uploader.upload([treatment]) { result in
++                switch result {
++                case .success:
++                    continuation.resume()
++                case .failure(let error):
++                    continuation.resume(throwing: error)
++                }
++            }
++        }
++    }
++}
++
++/// A profile switch push. `expiration` is required: decoding fails without it.
++struct ProfileSwitchCommand: Codable {
++
++    /// Listed in the uploaded `remoteCommands` so followers know this build accepts the command.
++    static let commandKey = "profile-switch"
++
++    let profileName: String
++    let fingerprint: String
++    let remoteAddress: String
++    let expiration: Date
++    let sentAt: Date?
++    let otp: String?
++    let enteredBy: String?
++    let encryptedReturnNotification: String?
++
++    enum CodingKeys: String, CodingKey {
++        case profileName = "profile-switch"
++        case fingerprint = "profile-switch-fingerprint"
++        case remoteAddress = "remote-address"
++        case expiration = "expiration"
++        case sentAt = "sent-at"
++        case otp = "otp"
++        case enteredBy = "entered-by"
++        case encryptedReturnNotification = "encrypted_return_notification"
++    }
++
++    init(dictionary: [String: Any]) throws {
++        let data = try JSONSerialization.data(withJSONObject: dictionary)
++        let jsonDecoder = JSONDecoder()
++        jsonDecoder.dateDecodingStrategy = .formatted(DateFormatter.iso8601DateDecoder)
++        self = try jsonDecoder.decode(Self.self, from: data)
++    }
++
++    /// Expiration first, so an expired command does not use up its OTP.
++    func validate(otpManager: OTPManager, now: Date = Date()) throws {
++        guard now <= expiration else {
++            throw RemoteProfileSwitchError.expired
++        }
++        guard let otp else {
++            throw RemoteProfileSwitchError.missingOTP
++        }
++        try otpManager.validatePassword(password: otp, deliveryDate: sentAt)
++    }
++
++    func returnNotificationInfo() -> ReturnNotificationInfo? {
++        guard let encryptedReturnNotification, let otp, let messenger = OTPSecureMessenger(otpCode: otp) else {
++            return nil
++        }
++        return try? messenger.decrypt(base64EncodedString: encryptedReturnNotification)
++    }
++}
++
++private actor RecentProfileSwitches {
++    private var sentDates = [Date]()
++
++    /// Commands without `sent-at` cannot be matched and always count as new.
++    func isNew(_ command: ProfileSwitchCommand) -> Bool {
++        guard let sentAt = command.sentAt else {
++            return true
++        }
++        if sentDates.contains(sentAt) {
++            return false
++        }
++        sentDates.append(sentAt)
++        return true
++    }
++}
++
++/// The return push to the follower, in the format of `RemoteNotificationResponseManager` with
++/// `command_type` `profile_switch`. Followers match the reply by the profile name in the body.
++enum ProfileSwitchResponse {
++    private static let log = OSLog(category: "RemoteProfileSwitch")
++
++    struct Payload: Encodable {
++        let aps: APS
++        let commandStatus: String
++        let commandType: String
++        let timestamp: TimeInterval
++
++        enum CodingKeys: String, CodingKey {
++            case aps
++            case commandStatus = "command_status"
++            case commandType = "command_type"
++            case timestamp
++        }
++    }
++
++    struct APS: Encodable {
++        let alert: Alert
++        let sound: String = "default"
++    }
++
++    struct Alert: Encodable {
++        let title: String
++        let body: String
++    }
++
++    static func payload(success: Bool, message: String) -> Payload {
++        return Payload(
++            aps: APS(alert: Alert(title: success ? "Command Successful" : "Command Failed", body: message)),
++            commandStatus: success ? "success" : "failed",
++            commandType: "profile_switch",
++            timestamp: Date().timeIntervalSince1970
++        )
++    }
++
++    static func send(to returnInfo: ReturnNotificationInfo?, success: Bool, message: String) async {
++        guard let returnInfo, !returnInfo.deviceToken.isEmpty else {
++            os_log("No return notification info, response not sent", log: log, type: .info)
++            return
++        }
++        guard let jwt = APNSJWTManager.shared.getOrGenerateJWT(keyId: returnInfo.keyId, teamId: returnInfo.teamId, apnsKey: returnInfo.apnsKey) else {
++            os_log("Failed to generate JWT for response notification", log: log, type: .error)
++            return
++        }
++        let host = returnInfo.productionEnvironment ? "api.push.apple.com" : "api.sandbox.push.apple.com"
++        guard let url = URL(string: "https://\(host)/3/device/\(returnInfo.deviceToken)") else {
++            os_log("Failed to construct APNs URL", log: log, type: .error)
++            return
++        }
++
++        var request = URLRequest(url: url)
++        request.httpMethod = "POST"
++        request.setValue("bearer \(jwt)", forHTTPHeaderField: "authorization")
++        request.setValue("application/json", forHTTPHeaderField: "content-type")
++        request.setValue("10", forHTTPHeaderField: "apns-priority")
++        request.setValue("0", forHTTPHeaderField: "apns-expiration")
++        request.setValue(returnInfo.bundleId, forHTTPHeaderField: "apns-topic")
++        request.setValue("alert", forHTTPHeaderField: "apns-push-type")
++
++        do {
++            request.httpBody = try JSONEncoder().encode(payload(success: success, message: message))
++            let (_, response) = try await URLSession.shared.data(for: request)
++            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
++                os_log("Failed to send response notification: %d", log: log, type: .error, httpResponse.statusCode)
++            }
++        } catch {
++            os_log("Error sending response notification: %{public}@", log: log, type: .error, error.localizedDescription)
++        }
++    }
++}
++
++enum RemoteProfileSwitchError: LocalizedError {
++    case profileChanged
++    case unavailable
++    case expired
++    case missingOTP
++    case notActivated(String, Error)
++
++    /// Followers read the profile name from this text to match the reply to their command.
++    var errorDescription: String? {
++        switch self {
++        case .profileChanged:
++            return LocalizedString("It changed after it was uploaded. Review it again and resend.", comment: "Remote profile switch error description: profile differs from the previewed one.")
++        case .unavailable:
++            return LocalizedString("Profile switching is not available", comment: "Remote profile switch error description: host cannot switch profiles.")
++        case .expired:
++            return LocalizedString("Expired", comment: "Remote command error description: expired.")
++        case .missingOTP:
++            return LocalizedString("Missing OTP", comment: "Remote command error description: Missing OTP.")
++        case .notActivated(let name, let error):
++            return String(format: LocalizedString("Profile '%1$@' not activated: %2$@", comment: "Remote profile switch failure. (1: profile name, 2: reason)"), name, error.localizedDescription)
++        }
++    }
++}
++
++extension DeviceStatus {
++    /// Adds `command` to `loop.testingDetails.remoteCommands`, keeping commands already listed there.
++    /// `LoopStatus` is copied field by field; when the copy differs from the original in anything but
++    /// `testingDetails`, the original is returned unchanged so no uploaded data is lost.
++    func addingRemoteCommand(_ command: String) -> DeviceStatus {
++        guard let loopStatus else {
++            return self
++        }
++        var testingDetails = loopStatus.testingDetails ?? [:]
++        let remoteCommands = testingDetails["remoteCommands"] as? [String] ?? []
++        guard !remoteCommands.contains(command) else {
++            return self
++        }
++        testingDetails["remoteCommands"] = remoteCommands + [command]
++
++        let updated = DeviceStatus(
++            device: device,
++            timestamp: timestamp,
++            pumpStatus: pumpStatus,
++            uploaderStatus: uploaderStatus,
++            loopStatus: loopStatus.replacingTestingDetails(testingDetails),
++            radioAdapter: radioAdapter,
++            overrideStatus: overrideStatus,
++            identifier: identifier)
++
++        guard updated.dictionaryRepresentationWithoutTestingDetails == dictionaryRepresentationWithoutTestingDetails else {
++            return self
++        }
++        return updated
++    }
++
++    var dictionaryRepresentationWithoutTestingDetails: NSDictionary {
++        var representation = dictionaryRepresentation
++        if var loop = representation["loop"] as? [String: Any] {
++            loop["testingDetails"] = nil
++            representation["loop"] = loop
++        }
++        return NSDictionary(dictionary: representation)
++    }
++}
++
++extension LoopStatus {
++    func replacingTestingDetails(_ testingDetails: [String: Any]) -> LoopStatus {
++        return LoopStatus(
++            name: name,
++            version: version,
++            timestamp: timestamp,
++            iob: iob,
++            cob: cob,
++            predicted: predicted,
++            automaticDoseRecommendation: automaticDoseRecommendation,
++            recommendedBolus: recommendedBolus,
++            bolusCalculation: bolusCalculation,
++            enacted: enacted,
++            rileylinks: rileylinks,
++            failureReason: failureReason,
++            failureCode: failureCode,
++            currentCorrectionRange: currentCorrectionRange,
++            forecastError: forecastError,
++            testingDetails: testingDetails,
++            algorithmExperiments: algorithmExperiments
++        )
++    }
++}
+diff --git a/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
+new file mode 100644
+index 0000000..4f5fdeb
+--- /dev/null
++++ b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
+@@ -0,0 +1,86 @@
++//
++//  SavedProfile.swift
++//  NightscoutServiceKit
++//
++
++import CryptoKit
++import Foundation
++import LoopAlgorithm
++import LoopKit
++import NightscoutKit
++
++/// A profile saved with the Profiles settings screen, read from the file it was saved to.
++struct SavedProfile: Decodable {
++    let name: String
++    let correctionRange: GlucoseRangeSchedule
++    let carbRatioSchedule: CarbRatioSchedule
++    let basalRateSchedule: BasalRateSchedule
++    let insulinSensitivitySchedule: InsulinSensitivitySchedule
++
++    private static var directory: URL {
++        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("LoopProfile")
++    }
++
++    static func loadAll() -> [SavedProfile] {
++        let files = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
++        return files
++            .filter { $0.pathExtension == "json" }
++            .compactMap { try? Data(contentsOf: $0) }
++            .compactMap { try? JSONDecoder().decode(SavedProfile.self, from: $0) }
++    }
++
++    /// Saved profiles keyed by name, in the form they are uploaded to the Nightscout profile store.
++    static func nightscoutStore(unit: LoopUnit) -> [String: ProfileSet.Profile] {
++        var store: [String: ProfileSet.Profile] = [:]
++        // Nightscout cannot store keys starting with "$"; "Default" holds the live settings.
++        for savedProfile in loadAll() where !savedProfile.name.hasPrefix("$") && savedProfile.name != "Default" {
++            store[savedProfile.name] = savedProfile.nightscoutProfile(unit: unit)
++        }
++        return store
++    }
++
++    /// True when this profile uploads with this fingerprint, in either glucose unit.
++    func matches(fingerprint: String) -> Bool {
++        [LoopUnit.milligramsPerDeciliter, .millimolesPerLiter].contains {
++            nightscoutProfile(unit: $0)?.remoteFingerprint == fingerprint
++        }
++    }
++
++    func nightscoutProfile(unit: LoopUnit) -> ProfileSet.Profile? {
++        guard let correctionRange = correctionRange.schedule(for: unit),
++              let insulinSensitivity = insulinSensitivitySchedule.schedule(for: unit)
++        else {
++            return nil
++        }
++        return ProfileSet.Profile(
++            timezone: basalRateSchedule.timeZone,
++            dia: .hours(6),
++            sensitivity: insulinSensitivity.items.map { ProfileSet.ScheduleItem(offset: $0.startTime, value: $0.value) },
++            carbratio: carbRatioSchedule.items.map { ProfileSet.ScheduleItem(offset: $0.startTime, value: $0.value) },
++            basal: basalRateSchedule.items.map { ProfileSet.ScheduleItem(offset: $0.startTime, value: $0.value) },
++            targetLow: correctionRange.items.map { ProfileSet.ScheduleItem(offset: $0.startTime, value: $0.value.minValue) },
++            targetHigh: correctionRange.items.map { ProfileSet.ScheduleItem(offset: $0.startTime, value: $0.value.maxValue) },
++            units: unit.shortLocalizedUnitString(avoidLineBreaking: false))
++    }
++}
++
++extension ProfileSet.Profile {
++    /// Followers compute the same value from the uploaded profile and send it with a switch command,
++    /// so Loop only activates the values the follower previewed.
++    /// Format: `basal=<seconds>:<value>,...;carbratio=...;sens=...;target_low=...;target_high=...`
++    /// with values to three decimals, hashed with SHA-256, first 16 hex characters.
++    var remoteFingerprint: String {
++        func items(_ schedule: [ProfileSet.ScheduleItem]) -> String {
++            schedule.map { "\(Int($0.offset)):" + String(format: "%.3f", $0.value) }.joined(separator: ",")
++        }
++        let canonical = [
++            "basal=" + items(basal),
++            "carbratio=" + items(carbratio),
++            "sens=" + items(sensitivity),
++            "target_low=" + items(targetLow),
++            "target_high=" + items(targetHigh),
++        ].joined(separator: ";")
++        let digest = SHA256.hash(data: Data(canonical.utf8))
++        return String(digest.map { String(format: "%02x", $0) }.joined().prefix(16))
++    }
++}
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-index 3142223..790330a 100644
+index 3142223..ae6fb9a 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredSettings.swift
-@@ -93,12 +93,20 @@ extension StoredSettings {
+@@ -93,12 +93,21 @@ extension StoredSettings {
              return nil
          }
  
-+        var store = ["Default": profile]
++        var store = SavedProfile.nightscoutStore(unit: glucoseTargetRangeSchedule?.unit ?? bloodGlucoseUnit)
++        store["Default"] = profile
 +        var defaultProfile = "Default"
 +
 +        if let name = UserDefaults.standard.string(forKey: "currentProfileName") {
@@ -1390,6 +2143,160 @@ index 3142223..790330a 100644
              settings: loopSettings,
              syncIdentifier: syncIdentifier.uuidString,
              isAPNSProduction: Bundle.main.isAPNSProductionEnvironment,
+diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+index cd6d2c6..3561e04 100644
+--- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
++++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+@@ -292,7 +292,7 @@ extension NightscoutService: RemoteDataService {
+         }
+ 
+         let statuses = uploadPairs.map { (decision, automaticDoseDecision) in
+-            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision)
++            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision).addingRemoteCommand(ProfileSwitchCommand.commandKey)
+         }
+ 
+         guard statuses.count > 0 else {
+diff --git a/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift b/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift
+new file mode 100644
+index 0000000..369fb3e
+--- /dev/null
++++ b/NightscoutService/NightscoutServiceKitTests/RemoteProfileSwitchTestCase.swift
+@@ -0,0 +1,135 @@
++//
++//  RemoteProfileSwitchTestCase.swift
++//  NightscoutServiceKitTests
++//
++
++import XCTest
++import LoopKit
++import NightscoutKit
++@testable import NightscoutServiceKit
++
++final class RemoteProfileSwitchTestCase: XCTestCase {
++
++    func testParseProfileSwitchCommand_ValidPayload_Succeeds() throws {
++        let notification: [String: Any] = [
++            "profile-switch": "Sport",
++            "profile-switch-fingerprint": "fec4f066b5a54ecd",
++            "remote-address": "LoopFollow",
++            "sent-at": "2023-02-25T20:46:35.778Z",
++            "expiration": "2023-02-25T20:51:35.778Z",
++            "otp": "123456"
++        ]
++
++        let command = try ProfileSwitchCommand(dictionary: notification)
++
++        XCTAssertEqual(command.profileName, "Sport")
++        XCTAssertEqual(command.fingerprint, "fec4f066b5a54ecd")
++        XCTAssertEqual(command.expiration, ISO8601DateFormatter.fractional.date(from: "2023-02-25T20:51:35.778Z"))
++        XCTAssertEqual(command.sentAt, ISO8601DateFormatter.fractional.date(from: "2023-02-25T20:46:35.778Z"))
++    }
++
++    func testParseProfileSwitchCommand_MissingExpiration_Fails() {
++        let notification: [String: Any] = [
++            "profile-switch": "Sport",
++            "profile-switch-fingerprint": "fec4f066b5a54ecd",
++            "remote-address": "LoopFollow",
++            "otp": "123456"
++        ]
++
++        XCTAssertThrowsError(try ProfileSwitchCommand(dictionary: notification))
++    }
++
++    func testValidate_Expired_FailsBeforeOTP() throws {
++        let command = try ProfileSwitchCommand(dictionary: [
++            "profile-switch": "Sport",
++            "profile-switch-fingerprint": "fec4f066b5a54ecd",
++            "remote-address": "LoopFollow",
++            "expiration": "2023-02-25T20:51:35.778Z",
++            "otp": "123456"
++        ])
++
++        XCTAssertThrowsError(try command.validate(otpManager: OTPManager(secretStore: MockSecretStore()))) { error in
++            guard case RemoteProfileSwitchError.expired = error else {
++                return XCTFail("Expected expired, got \(error)")
++            }
++        }
++    }
++
++    func testFingerprint_MatchesFollowerVector() {
++        let profile = ProfileSet.Profile(
++            timezone: TimeZone(secondsFromGMT: 3600)!,
++            dia: .hours(6),
++            sensitivity: items([(0, 45)]),
++            carbratio: items([(0, 10)]),
++            basal: items([(0, 0.85), (21600, 1.1)]),
++            targetLow: items([(0, 100)]),
++            targetHigh: items([(0, 110)]),
++            units: "mg/dL")
++
++        XCTAssertEqual(profile.remoteFingerprint, "fec4f066b5a54ecd")
++    }
++
++    func testAddingRemoteCommand_KeepsListedCommandsAndOtherFields() {
++        let status = deviceStatus(testingDetails: ["remoteCommands": ["carbs-delete"], "other": 1])
++
++        let updated = status.addingRemoteCommand(ProfileSwitchCommand.commandKey)
++
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["remoteCommands"] as? [String], ["carbs-delete", "profile-switch"])
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["other"] as? Int, 1)
++        XCTAssertEqual(updated.dictionaryRepresentationWithoutTestingDetails, status.dictionaryRepresentationWithoutTestingDetails)
++    }
++
++    func testAddingRemoteCommand_WithoutTestingDetails_AddsList() {
++        let updated = deviceStatus(testingDetails: nil).addingRemoteCommand(ProfileSwitchCommand.commandKey)
++
++        XCTAssertEqual(updated.loopStatus?.testingDetails?["remoteCommands"] as? [String], ["profile-switch"])
++    }
++
++    func testResponsePayload_UsesProfileSwitchCommandType() throws {
++        let data = try JSONEncoder().encode(ProfileSwitchResponse.payload(success: false, message: "Command failed: Profile 'Sport' not activated: Pod not connected"))
++        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
++
++        XCTAssertEqual(json["command_type"] as? String, "profile_switch")
++        XCTAssertEqual(json["command_status"] as? String, "failed")
++        let alert = try XCTUnwrap((json["aps"] as? [String: Any])?["alert"] as? [String: Any])
++        XCTAssertEqual(alert["body"] as? String, "Command failed: Profile 'Sport' not activated: Pod not connected")
++    }
++
++    private func items(_ values: [(TimeInterval, Double)]) -> [ProfileSet.ScheduleItem] {
++        values.map { ProfileSet.ScheduleItem(offset: $0.0, value: $0.1) }
++    }
++
++    private func deviceStatus(testingDetails: [String: Any]?) -> DeviceStatus {
++        let date = Date(timeIntervalSince1970: 1_700_000_000)
++        let loopStatus = LoopStatus(
++            name: "Loop",
++            version: "3.0",
++            timestamp: date,
++            iob: IOBStatus(timestamp: date, iob: 1.5),
++            recommendedBolus: 0.4,
++            failureReason: "failure",
++            testingDetails: testingDetails)
++        return DeviceStatus(device: "loop://iPhone", timestamp: date, uploaderStatus: UploaderStatus(name: "iPhone", timestamp: date, battery: 50), loopStatus: loopStatus, identifier: "id")
++    }
++}
++
++private final class MockSecretStore: OTPSecretStore {
++    private var key: String? = "2KBHFASYM6DKWFGW"
++    private var keyName: String? = "Mock"
++    private var accepted = [String]()
++
++    func tokenSecretKey() -> String? { key }
++    func tokenSecretKeyName() -> String? { keyName }
++    func setTokenSecretKey(_ key: String?) throws { self.key = key }
++    func setTokenSecretKeyName(_ name: String?) throws { self.keyName = name }
++    func recentAcceptedPasswords() -> [String] { accepted }
++    func setRecentAcceptedPasswords(_ passwords: [String]) throws { accepted = passwords }
++}
++
++private extension ISO8601DateFormatter {
++    static let fractional: ISO8601DateFormatter = {
++        let formatter = ISO8601DateFormatter()
++        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
++        return formatter
++    }()
++}
 diff --git a/profiles.loopcustomization b/profiles.loopcustomization
 new file mode 100644
 index 0000000..e69de29
