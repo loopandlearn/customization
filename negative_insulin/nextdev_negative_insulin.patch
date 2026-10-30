@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index a2599fd2..c1413f2e 100644
+index aaaeaf19..30651e1c 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -594,6 +594,7 @@
+@@ -642,6 +642,7 @@
  		C1F8B243223E73FD00DD66CF /* BolusProgressTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F8B1D122375E4200DD66CF /* BolusProgressTableViewCell.swift */; };
  		C1FAD5192E7E0C3400F7FAD9 /* ChartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAD5182E7E0C3100F7FAD9 /* ChartPageView.swift */; };
  		C1FB428C217806A400FAB378 /* StateColorPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428B217806A300FAB378 /* StateColorPalette.swift */; };
@@ -11,7 +11,7 @@ index a2599fd2..c1413f2e 100644
  		C1FB428F217921D600FAB378 /* PumpManagerUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FB428E217921D600FAB378 /* PumpManagerUI.swift */; };
  		C9A47B0180AAB1FC572D3EFE /* CriticalAlertAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A47B0175B13A9543390BC5 /* CriticalAlertAudioPlayer.swift */; };
  		C9A47B0280AAB1FC572D3EFF /* GlucoseAlertManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9A47B0275B13A9543390BC6 /* GlucoseAlertManager.swift */; };
-@@ -1408,6 +1409,7 @@
+@@ -1464,6 +1465,7 @@
  		C1F8B1DB223862D500DD66CF /* BolusProgressTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = BolusProgressTableViewCell.xib; sourceTree = "<group>"; };
  		C1FAD5182E7E0C3100F7FAD9 /* ChartPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartPageView.swift; sourceTree = "<group>"; };
  		C1FB428B217806A300FAB378 /* StateColorPalette.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateColorPalette.swift; sourceTree = "<group>"; };
@@ -19,7 +19,7 @@ index a2599fd2..c1413f2e 100644
  		C1FB428E217921D600FAB378 /* PumpManagerUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PumpManagerUI.swift; sourceTree = "<group>"; };
  		C9A47B0175B13A9543390BC5 /* CriticalAlertAudioPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CriticalAlertAudioPlayer.swift; sourceTree = "<group>"; };
  		C9A47B0275B13A9543390BC6 /* GlucoseAlertManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseAlertManager.swift; sourceTree = "<group>"; };
-@@ -2075,6 +2077,7 @@
+@@ -2176,6 +2178,7 @@
  				C1AF062229426300002C1B19 /* ManualGlucoseEntryRow.swift */,
  				DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */,
  				DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */,
@@ -27,14 +27,14 @@ index a2599fd2..c1413f2e 100644
  				A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */,
  				84DEB10C2C18FABA00170734 /* IOSFocusModesView.swift */,
  				84D1F1A62D09053A00CB271F /* StatusTableView.swift */,
-@@ -3540,6 +3543,7 @@
+@@ -3724,6 +3727,7 @@
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
  				B4F3D25124AF890C0095CE44 /* BluetoothStateManager.swift in Sources */,
  				1DDE273D24AEA4B000796622 /* SettingsViewModel.swift in Sources */,
 +				120490CB2CBFB25A006BDF0A /* NegativeInsulinDamperSelectionView.swift in Sources */,
  				FEEDB0000000000000000001 /* StatisticsViewModel.swift in Sources */,
+ 				414E7082E6A6B9DA8CD11EF3 /* CurrentSetupViewModel.swift in Sources */,
  				DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */,
- 				A1B2C3D42E8F000100000002 /* GuardAndRunwaySelectionView.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
 index 45c48734..5f4f3d55 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
@@ -342,7 +342,7 @@ index 00000000..f1b35973
 +   }
 +}
 diff --git a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
-index 5ff430b8..7ced73ac 100644
+index 770e703a..278e09a0 100644
 --- a/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
 +++ b/Loop/Loop/Views/SettingsView+algorithmExperimentsSection.swift
 @@ -41,6 +41,7 @@ public struct ExperimentRow: View {
@@ -362,10 +362,10 @@ index 5ff430b8..7ced73ac 100644
 +                        name: NSLocalizedString("Negative Insulin Damper", comment: "Title of negative insulin damper experiment"),
 +                        enabled: isNegativeInsulinDamperEnabled)
 +                }
-                 Spacer()
-             }
-             .padding()
-@@ -89,6 +95,7 @@ extension UserDefaults {
+                 Text(NSLocalizedString("About 2 weeks with the same setup is a good amount of time to see a change in outcomes such as time in range and lows. Over just a few days, ordinary day-to-day variation can hide or exaggerate the effect.", comment: "Suggested length of time to try an algorithm experiment setup."))
+                     .font(.footnote)
+                     .foregroundColor(.secondary)
+@@ -93,6 +99,7 @@ extension UserDefaults {
      fileprivate enum Key: String {
          case GlucoseBasedApplicationFactorEnabled = "com.loopkit.algorithmExperiments.glucoseBasedApplicationFactorEnabled"
          case IntegralRetrospectiveCorrectionEnabled = "com.loopkit.algorithmExperiments.integralRetrospectiveCorrectionEnabled"
@@ -373,7 +373,7 @@ index 5ff430b8..7ced73ac 100644
          case GuardAndRunwayEnabled = "com.loopkit.algorithmExperiments.guardAndRunwayEnabled"
      }
  
-@@ -119,4 +126,13 @@ extension UserDefaults {
+@@ -123,4 +130,13 @@ extension UserDefaults {
          }
      }
  
