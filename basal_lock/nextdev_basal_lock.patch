@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index a2599fd2..cd43f345 100644
+index aaaeaf19..10258366 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -603,6 +603,7 @@
+@@ -651,6 +651,7 @@
  		CB1AF8155B1761A30ACA5591 /* Loop/Resources/Sounds/synth.caf in Resources */ = {isa = PBXBuildFile; fileRef = 83081FFB0497A4596F597830 /* Loop/Resources/Sounds/synth.caf */; };
  		D6E28676C2C7751C77C7F2FB /* Loop/Resources/Sounds/spring.caf in Resources */ = {isa = PBXBuildFile; fileRef = 9471E156FC10D6D0FF219C77 /* Loop/Resources/Sounds/spring.caf */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
@@ -11,7 +11,7 @@ index a2599fd2..cd43f345 100644
  		A1B2C3D42E8F000100000002 /* GuardAndRunwaySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */; };
  		DDC389FC2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389FB2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift */; };
  		DDC389FE2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */; };
-@@ -1417,6 +1418,7 @@
+@@ -1513,6 +1514,7 @@
  		C9SCENED0000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
  		CE102E23D8C1C1291EF66387 /* PluginPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PluginPickerView.swift; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
@@ -19,15 +19,15 @@ index a2599fd2..cd43f345 100644
  		A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardAndRunwaySelectionView.swift; sourceTree = "<group>"; };
  		DDC389FB2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+algorithmExperimentsSection.swift"; sourceTree = "<group>"; };
  		DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorSelectionView.swift; sourceTree = "<group>"; };
-@@ -1734,6 +1736,7 @@
+@@ -1831,6 +1833,7 @@
  				C1E3862428247B7100F561A4 /* StoredLoopNotRunningNotification.swift */,
  				4328E0311CFC068900E199AA /* WatchContext+LoopKit.swift */,
  				A987CD4824A58A0100439ADC /* ZipArchive.swift */,
 +				DDC065132B65871E0033FD88 /* Preferences.swift */,
  				C16F51182B891DB600EFD7A1 /* StoredDataAlgorithmInput.swift */,
  				C4C16D18C8806FF48331134C /* InsulinDeliveryHistory.swift */,
- 				C16F511A2B89363A00EFD7A1 /* SimpleInsulinDose.swift */,
-@@ -3535,6 +3538,7 @@
+ 				12CD655083D4816F87B13463 /* SetupChange.swift */,
+@@ -3719,6 +3722,7 @@
  				A1E47000000000000000A001 /* AlertHistoryView.swift in Sources */,
  				C9A47B0380AAB1FC572D3F00 /* GlucoseAlertSettingsView.swift in Sources */,
  				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
@@ -36,10 +36,10 @@ index a2599fd2..cd43f345 100644
  				C178249A1E1999FA00D9D25C /* CaseCountable.swift in Sources */,
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 30ab8fb2..36695026 100644
+index 45c48734..b3e2f28c 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -737,6 +737,16 @@ final class LoopDataManager: ObservableObject {
+@@ -738,6 +738,16 @@ final class LoopDataManager: ObservableObject {
                  let scheduledBasalRate = input.basal.closestPrior(to: loopBaseTime)!.value
                  let activeOverride = temporaryPresetsManager.presetHistory.activeOverride(at: loopBaseTime)
  
@@ -56,7 +56,7 @@ index 30ab8fb2..36695026 100644
                  let basalAdjustment = basal.adjustForCurrentDelivery(
                      at: loopBaseTime,
                      neutralBasalRate: scheduledBasalRate,
-@@ -747,6 +757,9 @@ final class LoopDataManager: ObservableObject {
+@@ -748,6 +758,9 @@ final class LoopDataManager: ObservableObject {
                  
                  if let basalAdjustment {
                      recommendationToEnact.basalAdjustment = basalAdjustment
@@ -123,7 +123,7 @@ index 00000000..ab5d00ec
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index 1faefbc5..86b517fd 100644
+index e02112db..5dd5839e 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -62,6 +62,7 @@ struct SettingsView: View {
@@ -131,10 +131,10 @@ index 1faefbc5..86b517fd 100644
      @State private var sheet: Destination.Sheet?
      @State private var pluginSelection: (() -> Void)?
 +    @State private var showingPreferences = false
+     @State private var setupChange: SetupChange?
      
      var localizedAppNameAndVersion: String
- 
-@@ -93,6 +94,9 @@ struct SettingsView: View {
+@@ -94,6 +95,9 @@ struct SettingsView: View {
                      if FeatureFlags.allowExperimentalFeatures {
                          favoriteFoodsSection
                      }
@@ -144,7 +144,7 @@ index 1faefbc5..86b517fd 100644
                      if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
                          deleteDataSection
                      }
-@@ -499,6 +503,21 @@ extension SettingsView {
+@@ -546,6 +550,21 @@ extension SettingsView {
                          descriptiveText: "Simplify Carb Entry")
          }
      }
