@@ -19779,6 +19779,18 @@ z5LWd;(OmyJSI2F@(0BWgX<K*ch6S!N7zi`0vW<*u5K48fQriajFyJav8`Y=))eMCx
 z*-q6cXjpSI?&`pn>bPU*>zKyl>O-zEKwo3CsoHSu$<kFt4AyG4t{T<AG>B@6fNgue
 l>r2O!y80?t>ds$J|9|QVx8BSDW0U{@002ovPDHLkV1jV0BAEaH
 
+diff --git a/Loop/Scripts/build-derived-assets.sh b/Loop/Scripts/build-derived-assets.sh
+index 18f6bf9..5783629 100755
+--- a/Loop/Scripts/build-derived-assets.sh
++++ b/Loop/Scripts/build-derived-assets.sh
+@@ -38,6 +38,7 @@ fi
+ 
+ DERIVED_ASSETS="${DIRECTORY}/DerivedAssets.xcassets"
+ DERIVED_ASSETS_BASE="${DIRECTORY}/DerivedAssetsBase.xcassets"
++# OverrideAssetsLoop.xcassets carries the Loop and Learn app icon (lnl_icon customization)
+ 
+ # Assets can be overridden by a DerivedAssetsOverride.xcassets in ${DIRECTORY}, or
+ # By a file named ${DIRECTORY}/../../OverrideAssets${EXECUTABLE_NAME}.xcassets
 diff --git a/lnl_icon.loopcustomization b/lnl_icon.loopcustomization
 new file mode 100644
 index 0000000..e69de29
