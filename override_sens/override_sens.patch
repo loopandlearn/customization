@@ -1,6 +1,18 @@
 Submodule LoopKit contains modified content
+diff --git a/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift b/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift
+index 58e948f8..48242267 100644
+--- a/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift	
++++ b/LoopKit/LoopKitUI/View Controllers/AddEditOverrideTableViewController.swift	
+@@ -130,6 +130,7 @@ public final class AddEditOverrideTableViewController: UITableViewController {
+         }
+     }
+ 
++    // The insulin needs picker steps by 5% from 50% to 200% (override_sens customization)
+     private func configure(with settings: TemporaryScheduleOverrideSettings) {
+         if let targetRange = settings.targetRange {
+             self.targetRange = DoubleRange(minValue: targetRange.lowerBound.doubleValue(for: glucoseUnit), maxValue: targetRange.upperBound.doubleValue(for: glucoseUnit))
 diff --git a/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift b/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
-index 250f71b..442ae5d 100644
+index 250f71b7..442ae5df 100644
 --- a/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
 +++ b/LoopKit/LoopKitUI/Views/InsulinSensitivityScalingTableViewCell.swift
 @@ -16,7 +16,7 @@ protocol InsulinSensitivityScalingTableViewCellDelegate: AnyObject {
