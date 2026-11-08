@@ -1,19 +1,19 @@
 Submodule Loop contains modified content
-diff --git a/Loop/Loop/Models/LoopConstants.swift b/Loop/Loop/Models/LoopConstants.swift
-index 5a78c4e8..3aca2f35 100644
---- a/Loop/Loop/Models/LoopConstants.swift
-+++ b/Loop/Loop/Models/LoopConstants.swift
-@@ -15,9 +15,9 @@ enum LoopConstants {
+diff --git a/Loop/LoopCore/Models/LoopConstants.swift b/Loop/LoopCore/Models/LoopConstants.swift
+index b1ce6249..e5380a73 100644
+--- a/Loop/LoopCore/Models/LoopConstants.swift
++++ b/Loop/LoopCore/Models/LoopConstants.swift
+@@ -14,9 +14,9 @@ public enum LoopConstants {
      
      // Input field bounds
      
--    static let maxCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 250) // cannot exceed this value
-+    static let maxCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 99) // cannot exceed this value
+-    public static let maxCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 250) // cannot exceed this value
++    public static let maxCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 99) // cannot exceed this value
  
--    static let warningCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 99) // user is warned above this value
-+    static let warningCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 49) // user is warned above this value
+-    public static let warningCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 99) // user is warned above this value
++    public static let warningCarbEntryQuantity = LoopQuantity(unit: .gram, doubleValue: 49) // user is warned above this value
      
-     static let validManualGlucoseEntryRange = LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 10)...LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 600)
+     public static let validManualGlucoseEntryRange = LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 10)...LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: 600)
      
 diff --git a/low_carb_limit.loopcustomization b/low_carb_limit.loopcustomization
 new file mode 100644
