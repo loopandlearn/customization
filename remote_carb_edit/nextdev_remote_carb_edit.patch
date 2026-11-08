@@ -1,23 +1,15 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2ef40ed8..83cc1b0e 100644
+index e47ae5af..e8283ebd 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1373,32 +1373,65 @@ extension LoopDataManager: ServicesManagerDelegate {
-     //Carb Entry
-     
-     func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws {
--        
-         let absorptionTime = absorptionTime ?? LoopCoreConstants.defaultCarbAbsorptionTimes.medium
-+        let startDate = startDate ?? now
-+        try validateRemoteCarbParameters(amountInGrams: amountInGrams, absorptionTime: absorptionTime, startDate: startDate)
+@@ -1251,6 +1251,76 @@ extension LoopDataManager: LoopControl {
+     }
+ }
+ 
++// MARK: - Remote carb delete and edit
 +
-+        let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
-+        let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate, foodType: foodType, absorptionTime: absorptionTime)
-+
-+        let _ = try await carbStore.addCarbEntry(candidateCarbEntry)
-+    }
-+
++extension LoopDataManager: ServicesManagerCarbEditDelegate {
 +    /// Remote edits and deletes may only target entries this app created within the last 24 hours.
 +    static let remoteCarbEditWindow: TimeInterval = .hours(24)
 +
@@ -29,7 +21,7 @@ index 2ef40ed8..83cc1b0e 100644
 +
 +    func replaceCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws -> StoredCarbEntry {
 +        let existing = try await remoteEditableCarbEntry(syncIdentifier: syncIdentifier)
-+        try validateRemoteCarbParameters(amountInGrams: amountInGrams, absorptionTime: absorptionTime, startDate: startDate)
++        try validateRemoteCarbEdit(amountInGrams: amountInGrams, absorptionTime: absorptionTime, startDate: startDate)
 +
 +        let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
 +        let update = CarbEntryUpdate(quantity: quantity, startDate: startDate, foodType: foodType ?? existing.foodType, absorptionTime: absorptionTime)
@@ -37,72 +29,57 @@ index 2ef40ed8..83cc1b0e 100644
 +        return try await replaceCarbEntry(existing, with: update)
 +    }
 +
-+    private func validateRemoteCarbParameters(amountInGrams: Double, absorptionTime: TimeInterval, startDate: Date) throws {
-         if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
-             throw CarbActionError.invalidAbsorptionTime(absorptionTime)
-         }
--        
++    /// The limits remote carb entries are checked against.
++    private func validateRemoteCarbEdit(amountInGrams: Double, absorptionTime: TimeInterval, startDate: Date) throws {
++        if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
++            throw CarbActionError.invalidAbsorptionTime(absorptionTime)
++        }
 +
-         guard amountInGrams > 0.0 else {
-             throw CarbActionError.invalidCarbs
-         }
--        
++        guard amountInGrams > 0.0 else {
++            throw CarbActionError.invalidCarbs
++        }
 +
-         guard amountInGrams <= LoopConstants.maxCarbEntryQuantity.doubleValue(for: .gram) else {
-             throw CarbActionError.exceedsMaxCarbs
-         }
--        
--        if let startDate = startDate {
--            let maxStartDate = now.addingTimeInterval(LoopConstants.maxCarbEntryFutureTime)
--            let minStartDate = now.addingTimeInterval(LoopConstants.maxCarbEntryPastTime)
--            guard startDate <= maxStartDate  && startDate >= minStartDate else {
--                throw CarbActionError.invalidStartDate(startDate)
--            }
++        guard amountInGrams <= LoopConstants.maxCarbEntryQuantity.doubleValue(for: .gram) else {
++            throw CarbActionError.exceedsMaxCarbs
++        }
 +
 +        let maxStartDate = now.addingTimeInterval(LoopConstants.maxCarbEntryFutureTime)
 +        let minStartDate = now.addingTimeInterval(LoopConstants.maxCarbEntryPastTime)
 +        guard startDate <= maxStartDate && startDate >= minStartDate else {
 +            throw CarbActionError.invalidStartDate(startDate)
-         }
--        
--        let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
--        let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
++        }
 +    }
- 
--        let _ = try await carbStore.addCarbEntry(candidateCarbEntry)
++
 +    private func remoteEditableCarbEntry(syncIdentifier: String) async throws -> StoredCarbEntry {
 +        let now = now
 +        let entries = try await carbStore.getCarbEntries(start: now.addingTimeInterval(-Self.remoteCarbEditWindow), end: now.addingTimeInterval(LoopConstants.maxCarbEntryFutureTime))
 +        guard let entry = entries.first(where: { $0.syncIdentifier == syncIdentifier }) else {
-+            throw CarbActionError.entryNotFound
++            throw RemoteCarbEditError.entryNotFound
 +        }
 +        guard entry.createdByCurrentApp else {
-+            throw CarbActionError.entryNotEditable
++            throw RemoteCarbEditError.entryNotEditable
 +        }
 +        return entry
-     }
-     
-     enum CarbActionError: LocalizedError {
-@@ -1407,6 +1440,8 @@ extension LoopDataManager: ServicesManagerDelegate {
-         case invalidStartDate(Date)
-         case exceedsMaxCarbs
-         case invalidCarbs
++    }
++
++    enum RemoteCarbEditError: LocalizedError {
 +        case entryNotFound
 +        case entryNotEditable
-         
-         var errorDescription: String? {
-             switch  self {
-@@ -1414,6 +1449,10 @@ extension LoopDataManager: ServicesManagerDelegate {
-                 return NSLocalizedString("Exceeds maximum allowed carbs", comment: "Carb error description: carbs exceed maximum amount.")
-             case .invalidCarbs:
-                 return NSLocalizedString("Invalid carb amount", comment: "Carb error description: invalid carb amount.")
++
++        var errorDescription: String? {
++            switch self {
 +            case .entryNotFound:
 +                return NSLocalizedString("Carb entry not found or older than 24 hours", comment: "Carb error description: remote edit target not found.")
 +            case .entryNotEditable:
 +                return NSLocalizedString("Carb entry was not created by Loop", comment: "Carb error description: remote edit target not created by this app.")
-             case .invalidAbsorptionTime(let absorptionTime):
-                 let absorptionHoursFormatted = Self.numberFormatter.string(from: absorptionTime.hours) ?? ""
-                 return String(format: NSLocalizedString("Invalid absorption time: %1$@ hours", comment: "Carb error description: invalid absorption time. (1: Input duration in hours)."), absorptionHoursFormatted)
++            }
++        }
++    }
++}
++
+ extension LoopDataManager: AutomationHistoryProvider {
+     func automationHistory(from start: Date, to end: Date) async throws -> [AbsoluteScheduleValue<Bool>] {
+         return automationHistory.toTimeline(from: start, to: end)
 diff --git a/Loop/Loop/Managers/NotificationManager.swift b/Loop/Loop/Managers/NotificationManager.swift
 index 42eff19f..18975ce1 100644
 --- a/Loop/Loop/Managers/NotificationManager.swift
@@ -143,28 +120,27 @@ index 42eff19f..18975ce1 100644
          let notification = UNMutableNotificationContent()
          /// Notifications should expire after the missed meal is no longer relevant
 diff --git a/Loop/Loop/Managers/ServicesManager.swift b/Loop/Loop/Managers/ServicesManager.swift
-index b557f184..56cb3642 100644
+index b557f184..6c5e00c3 100644
 --- a/Loop/Loop/Managers/ServicesManager.swift
 +++ b/Loop/Loop/Managers/ServicesManager.swift
-@@ -251,6 +251,8 @@ public protocol ServicesManagerDelegate: AnyObject {
-     func enactOverride(name: String, duration: TemporaryScheduleOverride.Duration?, remoteAddress: String) async throws
-     func cancelCurrentOverride() async throws
-     func deliverCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
-+    func deleteCarbs(syncIdentifier: String) async throws -> StoredCarbEntry
-+    func replaceCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws -> StoredCarbEntry
+@@ -380,6 +380,57 @@ extension ServicesManager: ServiceDelegate {
+     }
  }
  
- // MARK: - StatefulPluggableDelegate
-@@ -336,6 +338,48 @@ extension ServicesManager: ServiceDelegate {
-         }
-     }
-     
++// MARK: - RemoteCarbEditActionDelegate
++
++protocol ServicesManagerCarbEditDelegate: AnyObject {
++    func deleteCarbs(syncIdentifier: String) async throws -> StoredCarbEntry
++    func replaceCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws -> StoredCarbEntry
++}
++
++extension ServicesManager: RemoteCarbEditActionDelegate {
 +    func deleteRemoteCarbs(syncIdentifier: String) async throws {
 +        do {
-+            guard let servicesManagerDelegate else {
++            guard let carbEditDelegate = servicesManagerDelegate as? ServicesManagerCarbEditDelegate else {
 +                throw RemoteCarbCommandError.internalError
 +            }
-+            let deleted = try await servicesManagerDelegate.deleteCarbs(syncIdentifier: syncIdentifier)
++            let deleted = try await carbEditDelegate.deleteCarbs(syncIdentifier: syncIdentifier)
 +            let body = String(format: NSLocalizedString("Remote Carbs Delete: %d grams removed", comment: "The notification body for a successful remote carb delete. (1: Carb amount in grams)"), Int(deleted.quantity.doubleValue(for: .gram)))
 +            NotificationManager.sendRemoteCarbChangeNotification(body: body)
 +            await remoteDataServicesManager.performUpload(for: .carb)
@@ -178,10 +154,10 @@ index b557f184..56cb3642 100644
 +    func replaceRemoteCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws {
 +        let body = String(format: NSLocalizedString("Remote Carbs Edit: %d grams", comment: "The carb amount message for a remote carb edit notification. (1: Carb amount in grams)"), Int(amountInGrams))
 +        do {
-+            guard let servicesManagerDelegate else {
++            guard let carbEditDelegate = servicesManagerDelegate as? ServicesManagerCarbEditDelegate else {
 +                throw RemoteCarbCommandError.internalError
 +            }
-+            _ = try await servicesManagerDelegate.replaceCarbs(syncIdentifier: syncIdentifier, amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate)
++            _ = try await carbEditDelegate.replaceCarbs(syncIdentifier: syncIdentifier, amountInGrams: amountInGrams, absorptionTime: absorptionTime, foodType: foodType, startDate: startDate)
 +            NotificationManager.sendRemoteCarbChangeNotification(body: body)
 +            await remoteDataServicesManager.performUpload(for: .carb)
 +        } catch {
@@ -200,28 +176,35 @@ index b557f184..56cb3642 100644
 +            }
 +        }
 +    }
++}
 +
-     func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?) async throws {
-         do {
-             
+ extension ServicesManager: AlertIssuer {
+     func issueAlert(_ alert: Alert) async {
+         await alertManager.issueAlert(alert)
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
-index 8f824906..6d3f9db2 100644
+index 8f824906..a51d5c17 100644
 --- a/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
 +++ b/LoopKit/LoopKit/Service/Remote/RemoteActionDelegate.swift
-@@ -13,4 +13,6 @@ public protocol RemoteActionDelegate: AnyObject {
-     func cancelRemoteOverride() async throws
-     func deliverRemoteCarbs(amountInGrams: Double, absorptionTime: TimeInterval?, foodType: String?, startDate: Date?) async throws
-     func deliverRemoteBolus(amountInUnits: Double, decisionId: UUID?) async throws
+@@ -8,6 +8,12 @@
+ 
+ import Foundation
+ 
++/// Remote delete and edit of carb entries this app created.
++public protocol RemoteCarbEditActionDelegate: AnyObject {
 +    func deleteRemoteCarbs(syncIdentifier: String) async throws
 +    func replaceRemoteCarbs(syncIdentifier: String, amountInGrams: Double, absorptionTime: TimeInterval, foodType: String?, startDate: Date) async throws
- }
++}
++
+ public protocol RemoteActionDelegate: AnyObject {
+     func enactRemoteOverride(name: String, durationTime: TimeInterval?, remoteAddress: String) async throws
+     func cancelRemoteOverride() async throws
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-index 00096e2..ea85f5a 100644
+index 8935465..ac2285b 100644
 --- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 +++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-@@ -27,12 +27,17 @@
+@@ -29,12 +29,17 @@
  		A941B08729BCB87500F91340 /* RemoteCommandSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08629BCB87500F91340 /* RemoteCommandSource.swift */; };
  		A941B08929BCB99C00F91340 /* RemoteCommandValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */; };
  		A941B09029BD4A9E00F91340 /* CarbRemoteNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */; };
@@ -239,7 +222,7 @@ index 00096e2..ea85f5a 100644
  		A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */; };
  		A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */; };
  		A94DA7642353CF930082E26D /* StoredGlucoseSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */; };
-@@ -46,6 +51,8 @@
+@@ -48,6 +53,8 @@
  		A9AA6E5B29EB072E008FFA78 /* OverrideAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */; };
  		A9AA6E6329EB07D7008FFA78 /* Action.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5D29EB07D6008FFA78 /* Action.swift */; };
  		A9AA6E6429EB07D7008FFA78 /* CarbAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */; };
@@ -248,7 +231,7 @@ index 00096e2..ea85f5a 100644
  		A9AA6E6529EB07D7008FFA78 /* OverrideCancelAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */; };
  		A9AA6E6629EB07D7008FFA78 /* BolusAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */; };
  		A9B007B322BD6FF7000131DE /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9B007B222BD6FF7000131DE /* LocalizedString.swift */; };
-@@ -160,12 +167,17 @@
+@@ -164,12 +171,17 @@
  		A941B08629BCB87500F91340 /* RemoteCommandSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandSource.swift; sourceTree = "<group>"; };
  		A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandValidator.swift; sourceTree = "<group>"; };
  		A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbRemoteNotification.swift; sourceTree = "<group>"; };
@@ -266,7 +249,7 @@ index 00096e2..ea85f5a 100644
  		A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideCancelRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
  		A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideRemoteNotificationTestCase.swift; sourceTree = "<group>"; };
  		A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredGlucoseSample.swift; sourceTree = "<group>"; };
-@@ -181,6 +193,8 @@
+@@ -185,6 +197,8 @@
  		A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideAction.swift; sourceTree = "<group>"; };
  		A9AA6E5D29EB07D6008FFA78 /* Action.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Action.swift; sourceTree = "<group>"; };
  		A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CarbAction.swift; sourceTree = "<group>"; };
@@ -275,7 +258,7 @@ index 00096e2..ea85f5a 100644
  		A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OverrideCancelAction.swift; sourceTree = "<group>"; };
  		A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BolusAction.swift; sourceTree = "<group>"; };
  		A9B007B222BD6FF7000131DE /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
-@@ -318,6 +332,9 @@
+@@ -322,6 +336,9 @@
  				A91BAC2B22BC691A00ABF1BB /* Info.plist */,
  				A941B09529BD4AC900F91340 /* BolusRemoteNotificationTestCase.swift */,
  				A941B09629BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift */,
@@ -285,7 +268,7 @@ index 00096e2..ea85f5a 100644
  				A95F887426C694E900D8A009 /* OTPManagerTestCase.swift */,
  				A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */,
  				A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */,
-@@ -358,6 +375,8 @@
+@@ -364,6 +381,8 @@
  			children = (
  				A941B08C29BD4A9D00F91340 /* BolusRemoteNotification.swift */,
  				A941B08B29BD4A9D00F91340 /* CarbRemoteNotification.swift */,
@@ -294,7 +277,7 @@ index 00096e2..ea85f5a 100644
  				A941B08D29BD4A9E00F91340 /* OverrideCancelRemoteNotification.swift */,
  				A941B08F29BD4A9E00F91340 /* OverrideRemoteNotification.swift */,
  				A941B08E29BD4A9E00F91340 /* RemoteNotification.swift */,
-@@ -412,6 +431,8 @@
+@@ -418,6 +437,8 @@
  				A9AA6E5D29EB07D6008FFA78 /* Action.swift */,
  				A9AA6E6029EB07D6008FFA78 /* BolusAction.swift */,
  				A9AA6E5E29EB07D6008FFA78 /* CarbAction.swift */,
@@ -303,7 +286,7 @@ index 00096e2..ea85f5a 100644
  				A9AA6E5A29EB072E008FFA78 /* OverrideAction.swift */,
  				A9AA6E5F29EB07D6008FFA78 /* OverrideCancelAction.swift */,
  			);
-@@ -713,12 +734,16 @@
+@@ -719,12 +740,16 @@
  				A993990322BC7095005E39D3 /* NightscoutService.swift in Sources */,
  				A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */,
  				A9AA6E6429EB07D7008FFA78 /* CarbAction.swift in Sources */,
@@ -320,7 +303,7 @@ index 00096e2..ea85f5a 100644
  				A94DA7642353CF930082E26D /* StoredGlucoseSample.swift in Sources */,
  				A941B09429BD4A9F00F91340 /* OverrideRemoteNotification.swift in Sources */,
  				C1E703642506BE9400DAB534 /* ObjectIdCache.swift in Sources */,
-@@ -750,6 +775,9 @@
+@@ -756,6 +781,9 @@
  			buildActionMask = 2147483647;
  			files = (
  				A941B09A29BD4ACA00F91340 /* CarbRemoteNotificationTestCase.swift in Sources */,
@@ -331,10 +314,10 @@ index 00096e2..ea85f5a 100644
  				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
  				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-index 2f12b47..e7bb1ad 100644
+index 6b60566..63b5246 100644
 --- a/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/StoredDosingDecision.swift
-@@ -180,6 +180,7 @@ extension StoredDosingDecision {
+@@ -179,6 +179,7 @@ extension StoredDosingDecision {
                                     enacted: automaticDoseDecision?.loopStatusEnacted,
                                     failureReason: automaticDoseDecision?.loopStatusFailureReason,
                                     failureCode: automaticDoseDecision?.errors.first?.id,
@@ -343,7 +326,7 @@ index 2f12b47..e7bb1ad 100644
              overrideStatus: overrideStatus)
      }
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index cd6d2c6..fe3c774 100644
+index 9ae01e0..7036193 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 @@ -23,7 +23,7 @@ public final class NightscoutService: Service {
@@ -355,15 +338,15 @@ index cd6d2c6..fe3c774 100644
  
      public weak var serviceDelegate: ServiceDelegate?
      
-@@ -446,6 +446,7 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -479,6 +479,7 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+             os_log("Return notification info available, will send response after command processing", log: .default, type: .info)
+         }
+         
++        var syncIdentifier: String? = nil
          var commandType: RemoteNotificationResponseManager.CommandType = .bolus // Default, will be set in switch
          var success = false
          var message = ""
-+        var syncIdentifier: String? = nil
-         
-         do {
-             switch action {
-@@ -481,6 +482,26 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -517,6 +518,26 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
                  )
                  success = true
                  message = String(format: "Carbs entry of %.1f g delivered successfully", carbCommand.amountInGrams)
@@ -371,14 +354,14 @@ index cd6d2c6..fe3c774 100644
 +            case .carbsDelete(let deleteCommand):
 +                commandType = .carbsDelete
 +                syncIdentifier = deleteCommand.syncIdentifier
-+                try await self.serviceDelegate?.deleteRemoteCarbs(syncIdentifier: deleteCommand.syncIdentifier)
++                try await remoteCarbEditDelegate().deleteRemoteCarbs(syncIdentifier: deleteCommand.syncIdentifier)
 +                success = true
 +                message = "Carb entry deleted successfully"
 +
 +            case .carbsEdit(let editCommand):
 +                commandType = .carbsEdit
 +                syncIdentifier = editCommand.syncIdentifier
-+                try await self.serviceDelegate?.replaceRemoteCarbs(
++                try await remoteCarbEditDelegate().replaceRemoteCarbs(
 +                    syncIdentifier: editCommand.syncIdentifier,
 +                    amountInGrams: editCommand.amountInGrams,
 +                    absorptionTime: editCommand.absorptionTime,
@@ -390,7 +373,7 @@ index cd6d2c6..fe3c774 100644
              }
          } catch {
              message = "Command failed: \(error.localizedDescription)"
-@@ -490,7 +511,8 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -526,7 +547,8 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
                      to: returnInfo,
                      commandType: commandType,
                      success: false,
@@ -400,7 +383,7 @@ index cd6d2c6..fe3c774 100644
                  )
              }
              throw error
-@@ -502,7 +524,8 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -538,7 +560,8 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
                  to: returnInfo,
                  commandType: commandType,
                  success: success,
@@ -448,16 +431,17 @@ index a92b509..91ad56c 100644
              return "\(amountFormatted)" + " " + bolusUnitAbbreviation
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbDeleteAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbDeleteAction.swift
 new file mode 100644
-index 0000000..77e9900
+index 0000000..7e68061
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbDeleteAction.swift
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,32 @@
 +//
 +//  CarbDeleteAction.swift
 +//  NightscoutServiceKit
 +//
 +
 +import Foundation
++import LoopKit
 +
 +public struct CarbDeleteAction: Codable {
 +
@@ -465,6 +449,22 @@ index 0000000..77e9900
 +
 +    public init(syncIdentifier: String) {
 +        self.syncIdentifier = syncIdentifier
++    }
++}
++
++extension NightscoutService {
++    /// The delegate for remote carb delete and edit; throws when the app does not provide one.
++    func remoteCarbEditDelegate() throws -> RemoteCarbEditActionDelegate {
++        guard let delegate = serviceDelegate as? RemoteCarbEditActionDelegate else {
++            throw RemoteCarbEditUnavailableError()
++        }
++        return delegate
++    }
++}
++
++struct RemoteCarbEditUnavailableError: LocalizedError {
++    var errorDescription: String? {
++        LocalizedString("Remote carb delete and edit are not available", comment: "Remote command error description: carb delete and edit unavailable.")
 +    }
 +}
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbEditAction.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Actions/CarbEditAction.swift
@@ -546,10 +546,10 @@ index 95274e4..6092bc9 100644
          await sendPushNotification(
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbDeleteRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbDeleteRemoteNotification.swift
 new file mode 100644
-index 0000000..1593a74
+index 0000000..178f8ce
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbDeleteRemoteNotification.swift
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,87 @@
 +//
 +//  CarbDeleteRemoteNotification.swift
 +//  NightscoutServiceKit
@@ -558,12 +558,12 @@ index 0000000..1593a74
 +import Foundation
 +import LoopKit
 +
-+public struct CarbDeleteRemoteNotification: RemoteNotification, Codable {
++public struct CarbDeleteRemoteNotification: RemoteNotification, RemoteCarbChangeNotification, Codable {
 +
 +    public let syncIdentifier: String
 +    public let remoteAddress: String
 +    public let expiration: Date?
-+    public let sentAt: Date?
++    public let sentAtValue: Date?
 +    public let otp: String?
 +    public let enteredBy: String?
 +    public let encryptedReturnNotification: String?
@@ -572,7 +572,7 @@ index 0000000..1593a74
 +        case syncIdentifier = "carbs-delete"
 +        case remoteAddress = "remote-address"
 +        case expiration = "expiration"
-+        case sentAt = "sent-at"
++        case sentAtValue = "sent-at"
 +        case otp = "otp"
 +        case enteredBy = "entered-by"
 +        case encryptedReturnNotification = "encrypted_return_notification"
@@ -594,9 +594,52 @@ index 0000000..1593a74
 +        return notification["carbs-delete"] != nil
 +    }
 +}
++
++/// Followers read this to know which remote commands this build accepts.
++enum RemoteNotificationCapabilities {
++    static let supported: [String] = ["carbs-delete", "carbs-edit"]
++}
++
++/// Carb delete and edit commands. They require `expiration` and `sent-at`, which
++/// `RemoteCommandValidator` checks before the OTP.
++protocol RemoteCarbChangeNotification: RemoteCarbChangeOptionalSentAt {
++    var expiration: Date? { get }
++    func expirationRequired() -> Bool
++}
++
++/// `RemoteNotification.sentAt` is `Date?` in NightscoutService and `Date` with the remote_window
++/// customization; these two extensions provide whichever the protocol requires.
++protocol RemoteCarbChangeSentAt {
++    var sentAtValue: Date? { get }
++}
++
++protocol RemoteCarbChangeOptionalSentAt: RemoteCarbChangeSentAt {}
++
++extension RemoteCarbChangeSentAt {
++    /// Only read after validation has required `sent-at`.
++    var sentAt: Date { sentAtValue ?? .distantPast }
++}
++
++extension RemoteCarbChangeOptionalSentAt {
++    var sentAt: Date? { sentAtValue }
++}
++
++enum RemoteCarbChangeValidationError: LocalizedError {
++    case missingExpiration
++    case missingSentAt
++
++    var errorDescription: String? {
++        switch self {
++        case .missingExpiration:
++            return LocalizedString("Missing expiration", comment: "Remote command error description: missing expiration.")
++        case .missingSentAt:
++            return LocalizedString("Missing sent-at time", comment: "Remote command error description: missing sent-at.")
++        }
++    }
++}
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbEditRemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbEditRemoteNotification.swift
 new file mode 100644
-index 0000000..fde3e4c
+index 0000000..fa2dea7
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/CarbEditRemoteNotification.swift
 @@ -0,0 +1,58 @@
@@ -609,7 +652,7 @@ index 0000000..fde3e4c
 +import LoopKit
 +
 +/// Replacement values use prefixed keys so an unpatched Loop never reads them as a new carb entry.
-+public struct CarbEditRemoteNotification: RemoteNotification, Codable {
++public struct CarbEditRemoteNotification: RemoteNotification, RemoteCarbChangeNotification, Codable {
 +
 +    public let syncIdentifier: String
 +    public let amount: Double
@@ -618,7 +661,7 @@ index 0000000..fde3e4c
 +    public let startDate: Date
 +    public let remoteAddress: String
 +    public let expiration: Date?
-+    public let sentAt: Date?
++    public let sentAtValue: Date?
 +    public let otp: String?
 +    public let enteredBy: String?
 +    public let encryptedReturnNotification: String?
@@ -631,7 +674,7 @@ index 0000000..fde3e4c
 +        case startDate = "carbs-edit-start-time"
 +        case remoteAddress = "remote-address"
 +        case expiration = "expiration"
-+        case sentAt = "sent-at"
++        case sentAtValue = "sent-at"
 +        case otp = "otp"
 +        case enteredBy = "entered-by"
 +        case encryptedReturnNotification = "encrypted_return_notification"
@@ -659,33 +702,10 @@ index 0000000..fde3e4c
 +    }
 +}
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-index 0c5f8e3..6f0524d 100644
+index 0c5f8e3..533caae 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/V1/Notifications/RemoteNotification.swift
-@@ -22,12 +22,22 @@ protocol RemoteNotification: Codable {
-     
-     func toRemoteAction() -> Action
-     func otpValidationRequired() -> Bool
-+    func expirationRequired() -> Bool
-     func getReturnNotificationInfo() -> ReturnNotificationInfo?
-     
-     static func includedInNotification(_ notification: [String: Any]) -> Bool
- }
- 
-+/// Followers read this to know which remote commands this build accepts.
-+enum RemoteNotificationCapabilities {
-+    static let supported: [String] = ["carbs-delete", "carbs-edit"]
-+}
-+
- extension RemoteNotification {
-+
-+    func expirationRequired() -> Bool {
-+        return false
-+    }
-     
-     var id: String {
-         //There is no unique identifier so we use the sent date when available
-@@ -102,6 +112,10 @@ extension Dictionary<String, AnyObject> {
+@@ -102,6 +102,10 @@ extension Dictionary<String, AnyObject> {
      func toRemoteNotification() throws -> RemoteNotification {
          if BolusRemoteNotification.includedInNotification(self) {
              return try BolusRemoteNotification(dictionary: self)
@@ -697,45 +717,27 @@ index 0c5f8e3..6f0524d 100644
              return try CarbRemoteNotification(dictionary: self)
          }  else if OverrideRemoteNotification.includedInNotification(self) {
 diff --git a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
-index 634eb4e..21d0e0a 100644
+index 634eb4e..d84ca11 100644
 --- a/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
 +++ b/NightscoutService/NightscoutServiceKit/RemoteCommands/Validators/RemoteCommandValidator.swift
 @@ -16,6 +16,14 @@ struct RemoteCommandValidator {
      }
      
      func validate(remoteNotification: RemoteNotification) throws {
-+        if remoteNotification.expirationRequired() {
-+            guard remoteNotification.expiration != nil else {
-+                throw NotificationValidationError.missingExpiration
++        if let carbChange = remoteNotification as? RemoteCarbChangeNotification, carbChange.expirationRequired() {
++            guard carbChange.expiration != nil else {
++                throw RemoteCarbChangeValidationError.missingExpiration
 +            }
-+            guard remoteNotification.sentAt != nil else {
-+                throw NotificationValidationError.missingSentAt
++            guard carbChange.sentAtValue != nil else {
++                throw RemoteCarbChangeValidationError.missingSentAt
 +            }
 +        }
          try validateExpirationDate(remoteNotification: remoteNotification)
          if remoteNotification.otpValidationRequired() {
              try validateOTP(remoteNotification: remoteNotification)
-@@ -45,11 +53,17 @@ struct RemoteCommandValidator {
-     enum NotificationValidationError: LocalizedError {
-         case missingOTP
-         case expiredNotification
-+        case missingExpiration
-+        case missingSentAt
-         
-         var errorDescription: String? {
-             switch  self {
-             case .missingOTP:
-                 return LocalizedString("Missing OTP", comment: "Remote command error description: Missing OTP.")
-+            case .missingExpiration:
-+                return LocalizedString("Missing expiration", comment: "Remote command error description: missing expiration.")
-+            case .missingSentAt:
-+                return LocalizedString("Missing sent-at time", comment: "Remote command error description: missing sent-at.")
-             case .expiredNotification:
-                 return LocalizedString("Expired", comment: "Remote command error description: expired.")
-             }
 diff --git a/NightscoutService/NightscoutServiceKitTests/CarbDeleteRemoteNotificationTestCase.swift b/NightscoutService/NightscoutServiceKitTests/CarbDeleteRemoteNotificationTestCase.swift
 new file mode 100644
-index 0000000..6a3aba6
+index 0000000..3f190cd
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKitTests/CarbDeleteRemoteNotificationTestCase.swift
 @@ -0,0 +1,67 @@
@@ -783,7 +785,7 @@ index 0000000..6a3aba6
 +        let validator = RemoteCommandValidator(otpManager: OTPTestCoordinator().createOTPManager())
 +
 +        XCTAssertThrowsError(try validator.validate(remoteNotification: remoteNotification)) { error in
-+            guard case RemoteCommandValidator.NotificationValidationError.missingExpiration = error else {
++            guard case RemoteCarbChangeValidationError.missingExpiration = error else {
 +                return XCTFail("Unexpected error \(error)")
 +            }
 +        }
@@ -800,7 +802,7 @@ index 0000000..6a3aba6
 +        let validator = RemoteCommandValidator(otpManager: OTPTestCoordinator().createOTPManager())
 +
 +        XCTAssertThrowsError(try validator.validate(remoteNotification: remoteNotification)) { error in
-+            guard case RemoteCommandValidator.NotificationValidationError.missingSentAt = error else {
++            guard case RemoteCarbChangeValidationError.missingSentAt = error else {
 +                return XCTFail("Unexpected error \(error)")
 +            }
 +        }

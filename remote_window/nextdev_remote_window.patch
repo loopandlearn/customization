@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
-index 3091e304..28e8dfbe 100644
+index 2e976147..60350b95 100644
 --- a/Loop/Loop/Managers/LoopAppManager.swift
 +++ b/Loop/Loop/Managers/LoopAppManager.swift
-@@ -1064,8 +1064,42 @@ extension LoopAppManager: ResetLoopManagerDelegate {
+@@ -1091,8 +1091,42 @@ extension LoopAppManager: ResetLoopManagerDelegate {
  // MARK: - ServicesManagerDosingDelegate
  
  extension LoopAppManager: ServicesManagerDosingDelegate {
@@ -49,10 +49,10 @@ index 3091e304..28e8dfbe 100644
  }
  
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 2ef40ed8..8800cb2f 100644
+index e47ae5af..88efbf73 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -1372,8 +1372,8 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -830,8 +830,8 @@ extension LoopDataManager: ServicesManagerDelegate {
      
      //Carb Entry
      
@@ -63,7 +63,7 @@ index 2ef40ed8..8800cb2f 100644
          let absorptionTime = absorptionTime ?? LoopCoreConstants.defaultCarbAbsorptionTimes.medium
          if absorptionTime < LoopConstants.minCarbAbsorptionTime || absorptionTime > LoopConstants.maxCarbAbsorptionTime {
              throw CarbActionError.invalidAbsorptionTime(absorptionTime)
-@@ -1395,6 +1395,22 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -853,6 +853,22 @@ extension LoopDataManager: ServicesManagerDelegate {
              }
          }
          
@@ -86,7 +86,7 @@ index 2ef40ed8..8800cb2f 100644
          let quantity = LoopQuantity(unit: .gram, doubleValue: amountInGrams)
          let candidateCarbEntry = NewCarbEntry(syncIdentifier: UUID().uuidString, quantity: quantity, startDate: startDate ?? now, foodType: foodType, absorptionTime: absorptionTime)
  
-@@ -1407,9 +1423,14 @@ extension LoopDataManager: ServicesManagerDelegate {
+@@ -865,9 +881,14 @@ extension LoopDataManager: ServicesManagerDelegate {
          case invalidStartDate(Date)
          case exceedsMaxCarbs
          case invalidCarbs
@@ -208,7 +208,7 @@ index 8f824906..90d64a0f 100644
  }
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index cd6d2c6..c625152 100644
+index 9ae01e0..3da6169 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 @@ -14,6 +14,7 @@ public enum NightscoutServiceError: Error {
@@ -219,7 +219,7 @@ index cd6d2c6..c625152 100644
  }
  
  
-@@ -66,10 +67,12 @@ public final class NightscoutService: Service {
+@@ -69,11 +70,13 @@ public final class NightscoutService: Service {
  
      private let log = OSLog(category: "NightscoutService")
  
@@ -228,21 +228,22 @@ index cd6d2c6..c625152 100644
      public init() {
          self.isOnboarded = false
          self.lockedObjectIdCache = Locked(ObjectIdCache())
+         self.lastUploadedProfile = Locked(nil)
 -        self.otpManager = OTPManager(secretStore: KeychainManager())
 +        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
          self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
          self.commandSourceV1.delegate = self
      }
-@@ -85,7 +88,7 @@ public final class NightscoutService: Service {
-             self.lockedObjectIdCache = Locked(ObjectIdCache())
-         }
-         
+@@ -91,7 +94,7 @@ public final class NightscoutService: Service {
+ 
+         self.lastUploadedProfile = Locked(rawState["lastUploadedProfile"] as? String)
+ 
 -        self.otpManager = OTPManager(secretStore: KeychainManager())
 +        self.otpManager = OTPManager(secretStore: KeychainManager(), maxMinutesValid: notificationExpirationInMinutes)
          self.commandSourceV1 = RemoteCommandSourceV1(otpManager: otpManager)
          self.commandSourceV1.delegate = self
          
-@@ -422,6 +425,14 @@ extension NightscoutService: RemoteDataService {
+@@ -458,6 +461,14 @@ extension NightscoutService: RemoteDataService {
  
      
      public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
@@ -257,7 +258,7 @@ index cd6d2c6..c625152 100644
          let commandSource = try commandSource(notification: notification)
          await commandSource.remoteNotificationWasReceived(notification)
      }
-@@ -448,10 +459,13 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -484,10 +495,13 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
          var message = ""
          
          do {
@@ -272,7 +273,7 @@ index cd6d2c6..c625152 100644
                      name: overrideCommand.name,
                      durationTime: overrideCommand.durationTime,
                      remoteAddress: overrideCommand.remoteAddress
-@@ -461,23 +475,28 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
+@@ -497,23 +511,28 @@ extension NightscoutService: RemoteCommandSourceV1Delegate {
                  
              case .cancelTemporaryOverride:
                  commandType = .cancelOverride

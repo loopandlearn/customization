@@ -30,11 +30,8 @@ git apply --whitespace=nowarn dev_remote_carb_edit.patch
 - `remote_window/remote_window_remote_carb_edit.patch`: remote_window applied on top of `dev_remote_carb_edit.patch` on main.
 - `remote_window/dev_remote_window_remote_carb_edit.patch`: the same on dev.
 
-For `next-dev`:
-
-- `nextdev_remote_carb_edit_remote_window.patch`: this customization applied on top of `remote_window/nextdev_remote_window.patch`.
-- `remote_window/nextdev_remote_window_remote_carb_edit.patch`: remote_window applied on top of `nextdev_remote_carb_edit.patch`.
-
 Both orders produce the same tree. The selector script tries each folder's patches in sorted order and uses the first one that applies, so choosing both customizations picks the right file whichever is applied first. Applying by hand, use the plain patch for the first customization and the combined one for the second.
+
+On `next-dev` there are no combined patches: `nextdev_remote_carb_edit.patch` and `remote_window/nextdev_remote_window.patch` apply in either order and give the same tree. The carb delete and edit code sits in its own protocol (`RemoteCarbEditActionDelegate`), its own `ServicesManager` and `LoopDataManager` extensions and its own validation error, so it shares no lines with remote_window.
 
 With remote_window, `sent-at` is required on every remote command (the notification is rejected without it). On `dev`, delete and edit commands also appear in the remote command history with the entry's `syncIdentifier`; the `next-dev` remote_window has no command history.
