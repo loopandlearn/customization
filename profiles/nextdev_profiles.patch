@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index 856aaca6..1cd6181e 100644
+index 19db4821..a663bc67 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
-@@ -1408,6 +1408,13 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
+@@ -1396,6 +1396,13 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
          return try await pumpManager?.syncDeliveryLimits(limits: deliveryLimits) ?? deliveryLimits
      }
  
@@ -18,10 +18,10 @@ index 856aaca6..1cd6181e 100644
          settingsManager.mutateLoopSettings { settings in
              settings.glucoseTargetRangeSchedule = therapySettings.glucoseTargetRangeSchedule
 diff --git a/Loop/Loop/Managers/LoopAppManager.swift b/Loop/Loop/Managers/LoopAppManager.swift
-index 3e1110d1..cc990cd0 100644
+index 2e976147..d5061f5e 100644
 --- a/Loop/Loop/Managers/LoopAppManager.swift
 +++ b/Loop/Loop/Managers/LoopAppManager.swift
-@@ -401,6 +401,7 @@ class LoopAppManager: NSObject {
+@@ -402,6 +402,7 @@ class LoopAppManager: NSObject {
  
          dosingDecisionStore.delegate = deviceDataManager
          remoteDataServicesManager.delegate = deviceDataManager
@@ -30,10 +30,10 @@ index 3e1110d1..cc990cd0 100644
          let criticalEventLogs: [CriticalEventLog] = [settingsManager.settingsStore!, glucoseStore, carbStore, dosingDecisionStore, doseStore, temporaryPresetsManager.presetHistory, deviceDataManager.deviceLog, alertManager.alertStore]
          criticalEventLogExportManager = CriticalEventLogExportManager(logs: criticalEventLogs,
 diff --git a/Loop/Loop/Managers/RemoteDataServicesManager.swift b/Loop/Loop/Managers/RemoteDataServicesManager.swift
-index b28583fb..5a738613 100644
+index 76c6e21d..3b6cf08e 100644
 --- a/Loop/Loop/Managers/RemoteDataServicesManager.swift
 +++ b/Loop/Loop/Managers/RemoteDataServicesManager.swift
-@@ -634,6 +634,9 @@ extension RemoteDataServicesManager {
+@@ -693,6 +693,9 @@ extension RemoteDataServicesManager {
      
      public func remoteNotificationWasReceived(_ notification: [String: AnyObject]) async throws {
          let service = try serviceForPushNotification(notification)
@@ -130,7 +130,7 @@ index b557f184..7fd5b74d 100644
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index e02112db..7a713a9f 100644
+index 70f6d26b..899dd489 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -55,6 +55,7 @@ struct SettingsView: View {
@@ -151,7 +151,7 @@ index e02112db..7a713a9f 100644
                      }
                  }
                  .environmentObject(displayGlucosePreference)
-@@ -463,6 +467,11 @@ extension SettingsView {
+@@ -464,6 +468,11 @@ extension SettingsView {
                  .accessibilityIdentifier("button_TherapySettings")
              }
  
@@ -165,7 +165,7 @@ index e02112db..7a713a9f 100644
              }
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-index cc88ad17..c543b73a 100644
+index 2ae94234..df3d06ac 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
 +++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
 @@ -7,6 +7,12 @@
@@ -181,7 +181,7 @@ index cc88ad17..c543b73a 100644
  		9D3D2DA3B9824EF48981F0E4 /* StoredInsulinModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CAB9E826A3254800A57273 /* StoredInsulinModel.swift */; };
  		485ACF65C30744BFBC979CEF /* NotificationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A985464E251449FE0099C1A6 /* NotificationSettings.swift */; };
  		2383C3D7967B4602B8EB4A5B /* SettingsObject+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = A912BE2A245B9E8600CBE199 /* SettingsObject+CoreDataProperties.swift */; };
-@@ -1065,6 +1071,12 @@
+@@ -1067,6 +1073,12 @@
  /* End PBXCopyFilesBuildPhase section */
  
  /* Begin PBXFileReference section */
@@ -194,7 +194,7 @@ index cc88ad17..c543b73a 100644
  		D1A0B0000000000000000080 /* PersistenceControllerMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceControllerMigrationTests.swift; sourceTree = "<group>"; };
  		142CB75C2A60C01E0075748A /* ListButtonStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListButtonStyle.swift; sourceTree = "<group>"; };
  		142CB7602A60C0440075748A /* FavoriteFood.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FavoriteFood.swift; sourceTree = "<group>"; };
-@@ -2971,6 +2983,8 @@
+@@ -2941,6 +2953,8 @@
  				B455F48025FF9A8B000ED456 /* InsulinSensitivityScheduleEditorViewModel.swift */,
  				B455F2A125FBE985000ED456 /* SuspendThresholdEditorViewModel.swift */,
  				1D1FCE2424BD42EF000300A8 /* TherapySettingsViewModel.swift */,
@@ -203,7 +203,7 @@ index cc88ad17..c543b73a 100644
  			);
  			path = ViewModels;
  			sourceTree = "<group>";
-@@ -3146,6 +3160,10 @@
+@@ -3116,6 +3130,10 @@
  				E96DCB5924AF74AC007117BC /* SuspendThresholdEditor.swift */,
  				1D1FCE2A24BE704A000300A8 /* TherapySetting+Settings.swift */,
  				1D1A019D24B678BF0077D86E /* TherapySettingsView.swift */,
@@ -214,7 +214,7 @@ index cc88ad17..c543b73a 100644
  			);
  			path = "Settings Editors";
  			sourceTree = "<group>";
-@@ -3815,6 +3833,12 @@
+@@ -3747,6 +3765,12 @@
  				E9086B4824B5405E0062F5C8 /* ChartAxisValueDoubleUnit.swift in Sources */,
  				B429D66C24BF7204003E1B4A /* GlucoseTrend.swift in Sources */,
  				432CF86720D76AB90066B889 /* SettingsTableViewCell.swift in Sources */,
@@ -228,10 +228,10 @@ index cc88ad17..c543b73a 100644
  				892A5DB42231E191008961AB /* LevelMaskView.swift in Sources */,
  				892A5DA02231E130008961AB /* CompletionNotifying.swift in Sources */,
 diff --git a/LoopKit/LoopKit/Service/RemoteDataService.swift b/LoopKit/LoopKit/Service/RemoteDataService.swift
-index 89543d1a..ce8f6c36 100644
+index ee2dc500..b3c91a1b 100644
 --- a/LoopKit/LoopKit/Service/RemoteDataService.swift
 +++ b/LoopKit/LoopKit/Service/RemoteDataService.swift
-@@ -137,3 +137,17 @@ public extension RemoteDataService {
+@@ -136,3 +136,17 @@ public extension RemoteDataService {
      var pumpEventDataLimit: Int? { return nil }
      var settingsDataLimit: Int? { return nil }
  }
@@ -251,10 +251,10 @@ index 89543d1a..ce8f6c36 100644
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
 new file mode 100644
-index 00000000..6c27aa9f
+index 00000000..81b25365
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/ProfileViewModel+FileManagement.swift
-@@ -0,0 +1,467 @@
+@@ -0,0 +1,466 @@
 +//
 +//  ProfileViewModel+FileManagement.swift
 +//  LoopKitUI
@@ -265,7 +265,6 @@ index 00000000..6c27aa9f
 +
 +import LoopKit
 +import HealthKit
-+import LoopAlgorithm
 +
 +public enum ProfileValidationError: Error, LocalizedError {
 +    case fileLoadError
@@ -815,10 +814,10 @@ index 00000000..a48fa667
 +    }
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-index 81be1865..913c82ac 100644
+index 639bdd07..a25da05e 100644
 --- a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
 +++ b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-@@ -16,6 +16,7 @@ public protocol TherapySettingsViewModelDelegate: AnyObject {
+@@ -15,6 +15,7 @@ public protocol TherapySettingsViewModelDelegate: AnyObject {
      func syncDeliveryLimits(deliveryLimits: DeliveryLimits) async throws -> DeliveryLimits
      func saveCompletion(therapySettings: TherapySettings)
      func pumpSupportedIncrements() -> PumpSupportedIncrements?
@@ -913,10 +912,10 @@ index 00000000..446910e4
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift
 new file mode 100644
-index 00000000..9eb00f90
+index 00000000..ee9d9744
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Settings Editors/ProfilePreviewView.swift	
-@@ -0,0 +1,432 @@
+@@ -0,0 +1,431 @@
 +//
 +//  ProfilePreviewView.swift
 +//  LoopKitUI
@@ -929,7 +928,6 @@ index 00000000..9eb00f90
 +import SwiftUI
 +import HealthKit
 +import LoopKit
-+import LoopAlgorithm
 +
 +enum ActiveAlert {
 +    case load
@@ -1627,10 +1625,10 @@ index 00000000..8fd26665
 +}
 Submodule LoopOnboarding contains modified content
 diff --git a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift b/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift
-index 1ddc82b..54421a1 100644
+index 0db16e8..5a4887b 100644
 --- a/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift	
 +++ b/LoopOnboarding/LoopOnboardingKitUI/View Controllers/OnboardingUICoordinator.swift	
-@@ -381,6 +381,9 @@ extension OnboardingUICoordinator: TherapySettingsViewModelDelegate {
+@@ -380,6 +380,9 @@ extension OnboardingUICoordinator: TherapySettingsViewModelDelegate {
              maximumBasalScheduleEntryCount: maximumBasalScheduleEntryCount
          )
      }
@@ -1642,10 +1640,10 @@ index 1ddc82b..54421a1 100644
  
 Submodule NightscoutService contains modified content
 diff --git a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-index 00096e2..eaf139d 100644
+index 8935465..51d36c9 100644
 --- a/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
 +++ b/NightscoutService/NightscoutService.xcodeproj/project.pbxproj
-@@ -23,6 +23,9 @@
+@@ -25,6 +25,9 @@
  		A9246B2526231B3A00CCDCB3 /* OTPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9246B2426231B3A00CCDCB3 /* OTPManager.swift */; };
  		A934B6162358F42A00949C8B /* StoredDosingDecision.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6152358F42A00949C8B /* StoredDosingDecision.swift */; };
  		A934B6182358F49300949C8B /* StoredSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6172358F49300949C8B /* StoredSettings.swift */; };
@@ -1655,7 +1653,7 @@ index 00096e2..eaf139d 100644
  		A934B61A2358F5FC00949C8B /* TemporaryScheduleOverride.swift in Sources */ = {isa = PBXBuildFile; fileRef = A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */; };
  		A941B08729BCB87500F91340 /* RemoteCommandSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08629BCB87500F91340 /* RemoteCommandSource.swift */; };
  		A941B08929BCB99C00F91340 /* RemoteCommandValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */; };
-@@ -156,6 +159,9 @@
+@@ -160,6 +163,9 @@
  		A9246B2426231B3A00CCDCB3 /* OTPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPManager.swift; sourceTree = "<group>"; };
  		A934B6152358F42A00949C8B /* StoredDosingDecision.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredDosingDecision.swift; sourceTree = "<group>"; };
  		A934B6172358F49300949C8B /* StoredSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredSettings.swift; sourceTree = "<group>"; };
@@ -1665,7 +1663,7 @@ index 00096e2..eaf139d 100644
  		A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryScheduleOverride.swift; sourceTree = "<group>"; };
  		A941B08629BCB87500F91340 /* RemoteCommandSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandSource.swift; sourceTree = "<group>"; };
  		A941B08829BCB99C00F91340 /* RemoteCommandValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteCommandValidator.swift; sourceTree = "<group>"; };
-@@ -265,6 +271,8 @@
+@@ -269,6 +275,8 @@
  				A934B6152358F42A00949C8B /* StoredDosingDecision.swift */,
  				A94DA7632353CF930082E26D /* StoredGlucoseSample.swift */,
  				A934B6172358F49300949C8B /* StoredSettings.swift */,
@@ -1674,15 +1672,15 @@ index 00096e2..eaf139d 100644
  				A90E39A222BC782C0016DFE8 /* SyncCarbObject.swift */,
  				A934B6192358F5FC00949C8B /* TemporaryScheduleOverride.swift */,
  				A90E399D22BC76DB0016DFE8 /* TimeInterval.swift */,
-@@ -321,6 +329,7 @@
+@@ -325,6 +333,7 @@
  				A95F887426C694E900D8A009 /* OTPManagerTestCase.swift */,
  				A941B09729BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift */,
  				A941B09829BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift */,
 +				3E7A51C72F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift */,
  				A95F887326C694E800D8A009 /* NightscoutServiceKitTests-Bridging-Header.h */,
- 			);
- 			path = NightscoutServiceKitTests;
-@@ -740,6 +749,8 @@
+ 				98A0E460E47723C898DFCB0B /* ProfileContentTests.swift */,
+ 				C3A1D7E42F1B4A0E00A1B2C3 /* OverrideTreatmentTests.swift */,
+@@ -746,6 +755,8 @@
  				C1398D2227C434FB00416AD6 /* Data.swift in Sources */,
  				A90E39A522BC791E0016DFE8 /* DoseEntry.swift in Sources */,
  				A934B6182358F49300949C8B /* StoredSettings.swift in Sources */,
@@ -1691,14 +1689,14 @@ index 00096e2..eaf139d 100644
  				A9C62DA42331CAD400535612 /* OSLog.swift in Sources */,
  				C1F7822827CD57A100C0919A /* OverrideTreament.swift in Sources */,
  			);
-@@ -753,6 +764,7 @@
+@@ -759,6 +770,7 @@
  				A941B09C29BD4ACA00F91340 /* OverrideRemoteNotificationTestCase.swift in Sources */,
  				A941B09929BD4ACA00F91340 /* BolusRemoteNotificationTestCase.swift in Sources */,
  				A941B09B29BD4ACA00F91340 /* OverrideCancelRemoteNotificationTestCase.swift in Sources */,
 +				3E7A51C62F0D4B8100A1C6E2 /* RemoteProfileSwitchTestCase.swift in Sources */,
  				A95F887526C694E900D8A009 /* OTPManagerTestCase.swift in Sources */,
- 			);
- 			runOnlyForDeploymentPostprocessing = 0;
+ 				70FF0FC9AA94F041D23350F9 /* ProfileContentTests.swift in Sources */,
+ 				C3A1D7E52F1B4A0E00A1B2C3 /* OverrideTreatmentTests.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+RemoteProfileSwitch.swift
 new file mode 100644
 index 0000000..2225b1c
@@ -2025,10 +2023,10 @@ index 0000000..2225b1c
 +}
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
 new file mode 100644
-index 0000000..4f5fdeb
+index 0000000..874b43b
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/SavedProfile.swift
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,85 @@
 +//
 +//  SavedProfile.swift
 +//  NightscoutServiceKit
@@ -2036,7 +2034,6 @@ index 0000000..4f5fdeb
 +
 +import CryptoKit
 +import Foundation
-+import LoopAlgorithm
 +import LoopKit
 +import NightscoutKit
 +
@@ -2144,10 +2141,10 @@ index 3142223..ae6fb9a 100644
              syncIdentifier: syncIdentifier.uuidString,
              isAPNSProduction: Bundle.main.isAPNSProductionEnvironment,
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index cd6d2c6..3561e04 100644
+index 9ae01e0..a1e6a45 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-@@ -292,7 +292,7 @@ extension NightscoutService: RemoteDataService {
+@@ -301,7 +301,7 @@ extension NightscoutService: RemoteDataService {
          }
  
          let statuses = uploadPairs.map { (decision, automaticDoseDecision) in
