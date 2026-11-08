@@ -1,17 +1,17 @@
+diff --git a/2hlollipop.loopcustomization b/2hlollipop.loopcustomization
+new file mode 100644
+index 0000000..e69de29
 Submodule Loop contains modified content
 diff --git a/Loop/LoopCore/LoopCoreConstants.swift b/Loop/LoopCore/LoopCoreConstants.swift
-index 6d8edfea..0cf0b2a0 100644
+index 0b94b11e..7c036ce9 100644
 --- a/Loop/LoopCore/LoopCoreConstants.swift
 +++ b/Loop/LoopCore/LoopCoreConstants.swift
-@@ -15,7 +15,7 @@ public enum LoopCoreConstants {
-     /// The amount of time in the future a glucose value should be considered valid
-     public static let futureGlucoseDataInterval = TimeInterval(minutes: 5)
+@@ -21,7 +21,7 @@ public enum LoopCoreConstants {
+     /// The longest a carb entry can take to absorb; matches LoopAlgorithm's limit
+     public static let maximumCarbAbsorptionTimeInterval = TimeInterval(hours: 10)
  
 -    public static let defaultCarbAbsorptionTimes: DefaultAbsorptionTimes = (fast: .minutes(30), medium: .hours(3), slow: .hours(5))
 +    public static let defaultCarbAbsorptionTimes: DefaultAbsorptionTimes = (fast: .hours(2), medium: .hours(3), slow: .hours(5))
  
      /// How much historical glucose to include in a dosing decision
      /// Somewhat arbitrary, but typical maximum visible in bolus glucose preview
-diff --git a/2hlollipop.loopcustomization b/2hlollipop.loopcustomization
-new file mode 100644
-index 0000000..e69de29
