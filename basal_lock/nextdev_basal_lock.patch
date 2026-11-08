@@ -1,33 +1,33 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop.xcodeproj/project.pbxproj b/Loop/Loop.xcodeproj/project.pbxproj
-index aaaeaf19..10258366 100644
+index e02e0753..88231824 100644
 --- a/Loop/Loop.xcodeproj/project.pbxproj
 +++ b/Loop/Loop.xcodeproj/project.pbxproj
-@@ -651,6 +651,7 @@
+@@ -690,6 +690,7 @@
  		CB1AF8155B1761A30ACA5591 /* Loop/Resources/Sounds/synth.caf in Resources */ = {isa = PBXBuildFile; fileRef = 83081FFB0497A4596F597830 /* Loop/Resources/Sounds/synth.caf */; };
  		D6E28676C2C7751C77C7F2FB /* Loop/Resources/Sounds/spring.caf in Resources */ = {isa = PBXBuildFile; fileRef = 9471E156FC10D6D0FF219C77 /* Loop/Resources/Sounds/spring.caf */; };
  		DD3DBD292A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */; };
 +		DDC065142B65871E0033FD88 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC065132B65871E0033FD88 /* Preferences.swift */; };
+ 		DDBD0002000000000000BD02 /* BuildDetails.plist in Resources */ = {isa = PBXBuildFile; fileRef = C1EE9E802A38D0FB0064784A /* BuildDetails.plist */; };
  		A1B2C3D42E8F000100000002 /* GuardAndRunwaySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */; };
- 		DDC389FC2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389FB2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift */; };
- 		DDC389FE2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */; };
-@@ -1513,6 +1514,7 @@
+ 		883675B93130EED04D819D0A /* SlowRetrospectiveCorrectionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1622757183D5C361AFB3FB5C /* SlowRetrospectiveCorrectionSelectionView.swift */; };
+@@ -1570,6 +1571,7 @@
  		C9SCENED0000000000000002 /* SceneDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
  		CE102E23D8C1C1291EF66387 /* PluginPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PluginPickerView.swift; sourceTree = "<group>"; };
  		DD3DBD282A33AFE9000F8B5B /* IntegralRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegralRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
 +		DDC065132B65871E0033FD88 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
  		A1B2C3D42E8F000100000001 /* GuardAndRunwaySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardAndRunwaySelectionView.swift; sourceTree = "<group>"; };
+ 		1622757183D5C361AFB3FB5C /* SlowRetrospectiveCorrectionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlowRetrospectiveCorrectionSelectionView.swift; sourceTree = "<group>"; };
  		DDC389FB2A2BC6670066E2E8 /* SettingsView+algorithmExperimentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsView+algorithmExperimentsSection.swift"; sourceTree = "<group>"; };
- 		DDC389FD2A2C4C830066E2E8 /* GlucoseBasedApplicationFactorSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseBasedApplicationFactorSelectionView.swift; sourceTree = "<group>"; };
-@@ -1831,6 +1833,7 @@
+@@ -1922,6 +1924,7 @@
  				C1E3862428247B7100F561A4 /* StoredLoopNotRunningNotification.swift */,
  				4328E0311CFC068900E199AA /* WatchContext+LoopKit.swift */,
  				A987CD4824A58A0100439ADC /* ZipArchive.swift */,
 +				DDC065132B65871E0033FD88 /* Preferences.swift */,
- 				C16F51182B891DB600EFD7A1 /* StoredDataAlgorithmInput.swift */,
  				C4C16D18C8806FF48331134C /* InsulinDeliveryHistory.swift */,
  				12CD655083D4816F87B13463 /* SetupChange.swift */,
-@@ -3719,6 +3722,7 @@
+ 				22F7AB4EB9F6CCDF1593CB2E /* OutcomesPackage.swift */,
+@@ -3827,6 +3830,7 @@
  				A1E47000000000000000A001 /* AlertHistoryView.swift in Sources */,
  				C9A47B0380AAB1FC572D3F00 /* GlucoseAlertSettingsView.swift in Sources */,
  				E9C00EF524C623EF00628F35 /* LoopSettings+Loop.swift in Sources */,
@@ -36,42 +36,26 @@ index aaaeaf19..10258366 100644
  				C178249A1E1999FA00D9D25C /* CaseCountable.swift in Sources */,
  				C1F2CAAC2B7A980600D7F581 /* BasalRelativeDose.swift in Sources */,
 diff --git a/Loop/Loop/Managers/LoopDataManager.swift b/Loop/Loop/Managers/LoopDataManager.swift
-index 45c48734..b3e2f28c 100644
+index e47ae5af..6cfc530d 100644
 --- a/Loop/Loop/Managers/LoopDataManager.swift
 +++ b/Loop/Loop/Managers/LoopDataManager.swift
-@@ -738,6 +738,16 @@ final class LoopDataManager: ObservableObject {
-                 let scheduledBasalRate = input.basal.closestPrior(to: loopBaseTime)!.value
-                 let activeOverride = temporaryPresetsManager.presetHistory.activeOverride(at: loopBaseTime)
- 
-+                // Basal Lock: while glucose is above the threshold, don't let the temp basal
-+                // drop below the scheduled rate.
-+                let shouldApplyBasalLock = Preferences.shared.isBasalLockEnabled
-+                    && latestGlucose.quantity > Preferences.shared.basalLockThreshold
-+                    && basal.unitsPerHour < scheduledBasalRate
-+                if shouldApplyBasalLock {
-+                    // unrounded on purpose: must equal the neutralBasalRate passed below
-+                    basal = TempBasalRecommendation(unitsPerHour: scheduledBasalRate, duration: LoopAlgorithm.tempBasalDuration)
-+                }
+@@ -547,6 +547,10 @@ extension LoopDataManager: LoopCycleHost {
+     var controllerStatus: StoredDosingDecision.ControllerStatus {
+         UIDevice.current.controllerStatus
+     }
 +
-                 let basalAdjustment = basal.adjustForCurrentDelivery(
-                     at: loopBaseTime,
-                     neutralBasalRate: scheduledBasalRate,
-@@ -748,6 +758,9 @@ final class LoopDataManager: ObservableObject {
-                 
-                 if let basalAdjustment {
-                     recommendationToEnact.basalAdjustment = basalAdjustment
-+                    if shouldApplyBasalLock {
-+                        recommendationToEnact.direction = .neutral // no longer a reduction
-+                    }
-                 }
-                 
-                 output.recommendationResult = .success(.init(automatic: recommendationToEnact))
++    var basalLockThreshold: LoopQuantity? {
++        Preferences.shared.isBasalLockEnabled ? Preferences.shared.basalLockThreshold : nil
++    }
+ }
+ 
+ extension LoopDataManager: PersistenceControllerDelegate {
 diff --git a/Loop/Loop/Models/Preferences.swift b/Loop/Loop/Models/Preferences.swift
 new file mode 100644
-index 00000000..ab5d00ec
+index 00000000..b03befc5
 --- /dev/null
 +++ b/Loop/Loop/Models/Preferences.swift
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,49 @@
 +//
 +//  Preferences.swift
 +//  Loop
@@ -82,7 +66,6 @@ index 00000000..ab5d00ec
 +
 +import Foundation
 +import LoopKit
-+import LoopAlgorithm
 +
 +struct Preferences: PreferencesProvider {
 +
@@ -123,7 +106,7 @@ index 00000000..ab5d00ec
 +    }
 +}
 diff --git a/Loop/Loop/Views/SettingsView.swift b/Loop/Loop/Views/SettingsView.swift
-index e02112db..5dd5839e 100644
+index 70f6d26b..9d8cd79f 100644
 --- a/Loop/Loop/Views/SettingsView.swift
 +++ b/Loop/Loop/Views/SettingsView.swift
 @@ -62,6 +62,7 @@ struct SettingsView: View {
@@ -144,7 +127,7 @@ index e02112db..5dd5839e 100644
                      if (viewModel.pumpManagerSettingsViewModel.isTestingDevice || viewModel.cgmManagerSettingsViewModel.isTestingDevice) && viewModel.showDeleteTestData {
                          deleteDataSection
                      }
-@@ -546,6 +550,21 @@ extension SettingsView {
+@@ -547,6 +551,21 @@ extension SettingsView {
                          descriptiveText: "Simplify Carb Entry")
          }
      }
@@ -166,12 +149,60 @@ index e02112db..5dd5839e 100644
      
      @ViewBuilder
      private func pluginPickerView(for picker: Destination.PluginPicker) -> some View {
+diff --git a/Loop/LoopCore/Managers/LoopCycle.swift b/Loop/LoopCore/Managers/LoopCycle.swift
+index 72f0c84e..af2c2348 100644
+--- a/Loop/LoopCore/Managers/LoopCycle.swift
++++ b/Loop/LoopCore/Managers/LoopCycle.swift
+@@ -135,6 +135,14 @@ public protocol LoopCycleHost: AnyObject {
+ 
+     /// The device's battery, for the dosing decisions it stores.
+     var controllerStatus: StoredDosingDecision.ControllerStatus { get }
++
++    /// Basal Lock: while glucose is above this threshold, the temp basal does not drop below the
++    /// scheduled rate. Nil when Basal Lock is off.
++    var basalLockThreshold: LoopKit.LoopQuantity? { get }
++}
++
++extension LoopCycleHost {
++    public var basalLockThreshold: LoopKit.LoopQuantity? { nil }
+ }
+ 
+ public final class LoopCycle {
+@@ -267,6 +275,18 @@ public final class LoopCycle {
+                 let scheduledBasalRate = input.basal.closestPrior(to: loopBaseTime)!.value
+                 let activeOverride = host.overrideHistory.activeOverride(at: loopBaseTime)
+ 
++                // Basal Lock: while glucose is above the threshold, don't let the temp basal
++                // drop below the scheduled rate.
++                var shouldApplyBasalLock = false
++                if let basalLockThreshold = host.basalLockThreshold, let latestGlucose = input.glucoseHistory.last {
++                    shouldApplyBasalLock = latestGlucose.quantity > basalLockThreshold
++                        && basal.unitsPerHour < scheduledBasalRate
++                }
++                if shouldApplyBasalLock {
++                    // unrounded on purpose: must equal the neutralBasalRate passed below
++                    basal = type(of: basal).init(unitsPerHour: scheduledBasalRate, duration: Algorithm.tempBasalDuration)
++                }
++
+                 let basalAdjustment = basal.loopKit.adjustForCurrentDelivery(
+                     at: loopBaseTime,
+                     neutralBasalRate: scheduledBasalRate,
+@@ -277,6 +297,9 @@ public final class LoopCycle {
+ 
+                 if let basalAdjustment {
+                     recommendationToEnact.basalAdjustment = basalAdjustment.algorithm
++                    if shouldApplyBasalLock {
++                        recommendationToEnact.direction = .neutral // no longer a reduction
++                    }
+                 }
+ 
+                 output.recommendationResult = .success(.init(automatic: recommendationToEnact))
 Submodule LoopKit contains modified content
 diff --git a/LoopKit/LoopKit.xcodeproj/project.pbxproj b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-index cc88ad17..60bbe37a 100644
+index 2ae94234..7081a7a6 100644
 --- a/LoopKit/LoopKit.xcodeproj/project.pbxproj
 +++ b/LoopKit/LoopKit.xcodeproj/project.pbxproj
-@@ -863,6 +863,13 @@
+@@ -828,6 +828,13 @@
  		C1FAEC1D264AD6B400A3250B /* DeviceStatusBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */; };
  		C1FAEC1F264AE12700A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47ECF8725DC20810024A54D /* UIImage.swift */; };
  		C1FAEC21264AEEA300A3250B /* UIImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1FAEC20264AEEA300A3250B /* UIImage.swift */; };
@@ -185,7 +216,7 @@ index cc88ad17..60bbe37a 100644
  		E0E99C342C0E7AD300F9300C /* ConfirmationToggle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0E99C332C0E7AD300F9300C /* ConfirmationToggle.swift */; };
  		E0E99C392C0E80C200F9300C /* LoopCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0E99C382C0E80C200F9300C /* LoopCircleView.swift */; };
  		E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9077D2624ACD59F0066A88D /* InformationView.swift */; };
-@@ -1790,6 +1797,13 @@
+@@ -1759,6 +1766,13 @@
  		C1FAC06228C7B0A100754AE2 /* reservoir_iob_test.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = reservoir_iob_test.json; sourceTree = "<group>"; };
  		C1FAEC1C264AD6B400A3250B /* DeviceStatusBadge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceStatusBadge.swift; sourceTree = "<group>"; };
  		C1FAEC20264AEEA300A3250B /* UIImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImage.swift; sourceTree = "<group>"; };
@@ -199,7 +230,7 @@ index cc88ad17..60bbe37a 100644
  		E0E99C332C0E7AD300F9300C /* ConfirmationToggle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConfirmationToggle.swift; sourceTree = "<group>"; };
  		E0E99C382C0E80C200F9300C /* LoopCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopCircleView.swift; sourceTree = "<group>"; };
  		E9077D2624ACD59F0066A88D /* InformationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InformationView.swift; sourceTree = "<group>"; };
-@@ -2076,6 +2090,7 @@
+@@ -2061,6 +2075,7 @@
  			isa = PBXGroup;
  			children = (
  				B4C004B2241085DB00B40429 /* ActionButton.swift */,
@@ -207,7 +238,7 @@ index cc88ad17..60bbe37a 100644
  				89AF78C524482268002B4FCC /* ActionButtonStyle.swift */,
  				C1E4B307242E995200E70CCB /* ActivityIndicator.swift */,
  				89BE75CA2464BC2000B145D9 /* AlertContent.swift */,
-@@ -2251,6 +2266,7 @@
+@@ -2236,6 +2251,7 @@
  				C187338229B9486200519CDF /* TimeInterval.swift */,
  				C187339629B9488300519CDF /* TimeZone.swift */,
  				C187339729B9488300519CDF /* UUID.swift */,
@@ -215,16 +246,16 @@ index cc88ad17..60bbe37a 100644
  				842E40282F22D8C6000CCCE0 /* Character+IsEmoji.swift */,
  			);
  			path = Extensions;
-@@ -2458,6 +2474,8 @@
+@@ -2443,6 +2459,8 @@
  				C1814B8B226371DF008D2D8E /* WeakSynchronizedDelegate.swift */,
  				43CACE0D2247F89100F90AF5 /* WeakSynchronizedSet.swift */,
  				B4A2ABEE2AAB5160007E3EC1 /* Pluggable.swift */,
 +				DD28B3702B80C074001044D4 /* PreferencesSetting.swift */,
 +				DD545A642B814CA800915F95 /* PreferencesProvider.swift */,
  				840A2F102C0F9882003D5E90 /* LoopCompletionFreshness.swift */,
- 			);
- 			path = LoopKit;
-@@ -2965,6 +2983,7 @@
+ 				08EC944C0D4386A9C074AB47 /* LoopUnit.swift */,
+ 				26DD4BC775696C6B469C1E56 /* LoopQuantity.swift */,
+@@ -2935,6 +2953,7 @@
  			isa = PBXGroup;
  			children = (
  				C10759A12E4E3F2900EFF99A /* Environment+FeatureFlags.swift */,
@@ -232,7 +263,7 @@ index cc88ad17..60bbe37a 100644
  				B455F3A325FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift */,
  				B4B7C1BB2604E3FC007379F6 /* CorrectionRangeScheduleEditorViewModel.swift */,
  				B4D4C20C25F95A8700DA809D /* DisplayGlucosePreference.swift */,
-@@ -3084,6 +3103,16 @@
+@@ -3054,6 +3073,16 @@
  			path = Resources;
  			sourceTree = "<group>";
  		};
@@ -249,7 +280,7 @@ index cc88ad17..60bbe37a 100644
  		E9077D2824ACD5AA0066A88D /* Information Screens */ = {
  			isa = PBXGroup;
  			children = (
-@@ -3807,6 +3836,7 @@
+@@ -3739,6 +3768,7 @@
  				842E404B2F22EAD8000CCCE0 /* EditPresetView.swift in Sources */,
  				A9D3FF0B2A6C198C000C891D /* CGPoint.swift in Sources */,
  				B429D66E24BF7255003E1B4A /* UIImage.swift in Sources */,
@@ -257,7 +288,7 @@ index cc88ad17..60bbe37a 100644
  				B46B62A923FF05F8001E69BA /* LabeledNumberInput.swift in Sources */,
  				842E40502F22ED57000CCCE0 /* ExistingPresetInsulinNeedsEdit.swift in Sources */,
  				892155152245C57E009112BC /* SegmentedGaugeBarLayer.swift in Sources */,
-@@ -3846,6 +3876,7 @@
+@@ -3778,6 +3808,7 @@
  				A9D3FF042A6C1944000C891D /* PredictedGlucoseChart.swift in Sources */,
  				C1DE4C2125A253BD007065F8 /* Color.swift in Sources */,
  				898E6E702241EDB70019E459 /* PercentageTextFieldTableViewController.swift in Sources */,
@@ -265,7 +296,7 @@ index cc88ad17..60bbe37a 100644
  				89CAB36D24C9EC98009EE3CE /* Keyboard.swift in Sources */,
  				89186C0724BF7FC70003D0F3 /* Guardrail+UI.swift in Sources */,
  				84EE97B32D7A59AE00D5E941 /* ManualBolusDoseChartLayer.swift in Sources */,
-@@ -3904,6 +3935,7 @@
+@@ -3836,6 +3867,7 @@
  				B46B62B323FF0E62001E69BA /* SelectableLabel.swift in Sources */,
  				89FC6893245A2D680075CF59 /* ScheduleItemView.swift in Sources */,
  				43BA716F201E49220058961E /* FoodEmojiDataSource.swift in Sources */,
@@ -273,7 +304,7 @@ index cc88ad17..60bbe37a 100644
  				E9077D2724ACD59F0066A88D /* InformationView.swift in Sources */,
  				E94141D024C8F31C0096C326 /* DeliveryLimitsEditor.swift in Sources */,
  				1452F4BA2A85266500F8B9E4 /* CarbQuantityRow.swift in Sources */,
-@@ -3973,6 +4005,7 @@
+@@ -3905,6 +3937,7 @@
  				43BA717D201EE7090058961E /* GlucoseRangeTableViewCell.swift in Sources */,
  				B455F3A425FF7FF0000ED456 /* CorrectionRangeOverridesEditorViewModel.swift in Sources */,
  				A9D3FF002A6C1944000C891D /* ChartConstants.swift in Sources */,
@@ -281,7 +312,7 @@ index cc88ad17..60bbe37a 100644
  				89BE75CB2464BC2000B145D9 /* AlertContent.swift in Sources */,
  				43BA7184201EE7090058961E /* TextFieldTableViewController.swift in Sources */,
  				1452F4B22A8521CD00F8B9E4 /* TextFieldRow.swift in Sources */,
-@@ -4065,6 +4098,7 @@
+@@ -3997,6 +4030,7 @@
  				89AE222F228BC68000BDFD85 /* DoseProgressTimerEstimator.swift in Sources */,
  				43D8FDF61C7290350073BE78 /* DailyQuantitySchedule.swift in Sources */,
  				43D8FDF51C7290350073BE78 /* CarbRatioSchedule.swift in Sources */,
@@ -289,7 +320,7 @@ index cc88ad17..60bbe37a 100644
  				89AE222C228BC66E00BDFD85 /* Locked.swift in Sources */,
  				432CF87120D76D5A0066B889 /* GlucoseDisplayable.swift in Sources */,
  				A919889F2355016B00B75EEE /* DosingDecisionStore.swift in Sources */,
-@@ -4130,7 +4164,9 @@
+@@ -4062,7 +4096,9 @@
  				840A2DD32E399BD400D4E245 /* Modelv5ToModelv6.xcmappingmodel in Sources */,
  				433BC7A720523DB7000B1200 /* NewGlucoseSample.swift in Sources */,
  				4322B78E202FA2B30002837D /* InsulinMath.swift in Sources */,
@@ -301,10 +332,10 @@ index cc88ad17..60bbe37a 100644
  				A912BE29245B9CD500CBE199 /* SettingsObject+CoreDataClass.swift in Sources */,
 diff --git a/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
 new file mode 100644
-index 00000000..c0fa0dd0
+index 00000000..c466ec5d
 --- /dev/null
 +++ b/LoopKit/LoopKit/Extensions/Guardrail+Preferences.swift
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,17 @@
 +//
 +//  Guardrail+Preferences.swift
 +//  LoopKit
@@ -314,7 +345,6 @@ index 00000000..c0fa0dd0
 +//
 +
 +import Foundation
-+import LoopAlgorithm
 +
 +public extension Guardrail where Value == LoopQuantity {
 +    static let basalLockThreshold = Guardrail(
@@ -325,10 +355,10 @@ index 00000000..c0fa0dd0
 +}
 diff --git a/LoopKit/LoopKit/PreferencesProvider.swift b/LoopKit/LoopKit/PreferencesProvider.swift
 new file mode 100644
-index 00000000..e3d5d21e
+index 00000000..d0f2a392
 --- /dev/null
 +++ b/LoopKit/LoopKit/PreferencesProvider.swift
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,14 @@
 +//
 +//  PreferencesProvider.swift
 +//  LoopKit
@@ -338,7 +368,6 @@ index 00000000..e3d5d21e
 +//
 +
 +import Foundation
-+import LoopAlgorithm
 +
 +public protocol PreferencesProvider {
 +    var basalLockThreshold: LoopQuantity { get set }
@@ -412,10 +441,10 @@ index 00000000..3cdd9129
 +}
 diff --git a/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
 new file mode 100644
-index 00000000..03e08f9a
+index 00000000..ae6b6f31
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/ViewModels/PreferencesViewModel.swift
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,33 @@
 +//
 +//  PreferencesViewModel.swift
 +//  LoopKitUI
@@ -426,7 +455,6 @@ index 00000000..03e08f9a
 +
 +import Foundation
 +import LoopKit
-+import LoopAlgorithm
 +
 +public class PreferencesViewModel: ObservableObject {
 +    @Published var basalLockThreshold: LoopQuantity
@@ -452,10 +480,10 @@ index 00000000..03e08f9a
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift
 new file mode 100644
-index 00000000..c0df1d94
+index 00000000..33cd1676
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Preferences Editors/BasalLockEditor.swift	
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,221 @@
 +//
 +//  BasalLockEditor.swift
 +//  LoopKitUI
@@ -466,7 +494,6 @@ index 00000000..c0df1d94
 +
 +import SwiftUI
 +import LoopKit
-+import LoopAlgorithm
 +
 +public struct BasalLockEditor: View {
 +    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
@@ -776,10 +803,10 @@ index 00000000..32133be0
 +}
 diff --git a/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift
 new file mode 100644
-index 00000000..350395d5
+index 00000000..c423579c
 --- /dev/null
 +++ b/LoopKit/LoopKitUI/Views/Preferences Editors/PreferencesView.swift	
-@@ -0,0 +1,141 @@
+@@ -0,0 +1,140 @@
 +//
 +//  PreferencesView.swift
 +//  LoopKitUI
@@ -790,7 +817,6 @@ index 00000000..350395d5
 +
 +import SwiftUI
 +import LoopKit
-+import LoopAlgorithm
 +
 +public struct PreferencesView: View {
 +    @Environment(\.dismissAction) private var dismiss
