@@ -15,7 +15,7 @@ This is not medical advice. Switching a profile changes the settings Loop doses 
 - Scheduled switches make a profile active at a time each week, for example Weekend on Saturday 07:00 and Default on Monday 06:00. A profile stays active until the next start. A scheduled switch waits for a running bolus, tries again while delivery is suspended, alerts you if it has not run 30 minutes after its time, and tells you when it has switched. Each start can be paused.
 - Nightscout gets every profile in one profile document, with the active profile as `defaultProfile`, and each switch as a Profile Switch treatment.
 - Caregivers using LoopFollow can switch, create, edit, rename and delete profiles and change the scheduled starts. Every remote command needs the one-time password (OTP) and an expiration. A save or delete carries a fingerprint of the profile the caregiver saw, so a change made on the phone in the meantime is not overwritten. The active profile and Default can never be deleted remotely. Loop shows a notification for every remote change.
-- LoopFollow releases without profile editing, such as 8.0.0, can still switch profiles, but they do not list Default, so switching back to Default has to be done on the phone. To have it available remotely, save a copy of Default under another name.
+- LoopFollow releases without profile editing, such as 8.0.0, can still switch profiles. As with the earlier customization, they do not offer a profile named Default.
 - When you set up Loop again and import settings from Nightscout, every profile and the scheduled starts are offered for import, including from a document Trio wrote.
 
 ## Moving from the earlier Profiles customization
