@@ -4363,10 +4363,10 @@ index c0b4e63..7c536a3 100644
  				A9246B2526231B3A00CCDCB3 /* OTPManager.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
 new file mode 100644
-index 0000000..b322d20
+index 0000000..15632e7
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
-@@ -0,0 +1,1055 @@
+@@ -0,0 +1,1128 @@
 +//
 +//  NightscoutService+TherapyProfiles.swift
 +//  NightscoutServiceKit
@@ -5422,6 +5422,79 @@ index 0000000..b322d20
 +        }
 +    }
 +}
++
++// MARK: - Profile switch in the device status
++
++extension TherapyProfileRemoteCommand {
++    /// Listed in `loop.testingDetails.remoteCommands` of each uploaded device status. LoopFollow releases without
++    /// profile editing offer remote switching when they find it there; newer LoopFollow reads the profile document.
++    static let deviceStatusSwitchCommand = "profile-switch"
++}
++
++extension DeviceStatus {
++    /// Adds `command` to `loop.testingDetails.remoteCommands`, keeping commands already listed there.
++    /// `LoopStatus` is copied field by field; when the copy differs from the original in anything but
++    /// `testingDetails`, the original is returned unchanged so no uploaded data is lost.
++    func addingRemoteCommand(_ command: String) -> DeviceStatus {
++        guard let loopStatus else {
++            return self
++        }
++        var testingDetails = loopStatus.testingDetails ?? [:]
++        let remoteCommands = testingDetails["remoteCommands"] as? [String] ?? []
++        guard !remoteCommands.contains(command) else {
++            return self
++        }
++        testingDetails["remoteCommands"] = remoteCommands + [command]
++
++        let updated = DeviceStatus(
++            device: device,
++            timestamp: timestamp,
++            pumpStatus: pumpStatus,
++            uploaderStatus: uploaderStatus,
++            loopStatus: loopStatus.replacingTestingDetails(testingDetails),
++            radioAdapter: radioAdapter,
++            overrideStatus: overrideStatus,
++            identifier: identifier)
++
++        guard updated.dictionaryRepresentationWithoutTestingDetails == dictionaryRepresentationWithoutTestingDetails else {
++            return self
++        }
++        return updated
++    }
++
++    var dictionaryRepresentationWithoutTestingDetails: NSDictionary {
++        var representation = dictionaryRepresentation
++        if var loop = representation["loop"] as? [String: Any] {
++            loop["testingDetails"] = nil
++            representation["loop"] = loop
++        }
++        return NSDictionary(dictionary: representation)
++    }
++}
++
++extension LoopStatus {
++    func replacingTestingDetails(_ testingDetails: [String: Any]) -> LoopStatus {
++        return LoopStatus(
++            name: name,
++            version: version,
++            timestamp: timestamp,
++            iob: iob,
++            cob: cob,
++            predicted: predicted,
++            automaticDoseRecommendation: automaticDoseRecommendation,
++            recommendedBolus: recommendedBolus,
++            bolusCalculation: bolusCalculation,
++            enacted: enacted,
++            rileylinks: rileylinks,
++            failureReason: failureReason,
++            failureCode: failureCode,
++            currentCorrectionRange: currentCorrectionRange,
++            forecastError: forecastError,
++            testingDetails: testingDetails,
++            algorithmExperiments: algorithmExperiments
++        )
++    }
++}
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/TherapyProfile.swift b/NightscoutService/NightscoutServiceKit/Extensions/TherapyProfile.swift
 new file mode 100644
 index 0000000..483829f
@@ -5515,9 +5588,18 @@ index 0000000..483829f
 +    }
 +}
 diff --git a/NightscoutService/NightscoutServiceKit/NightscoutService.swift b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
-index 07447a6..6d49571 100644
+index 07447a6..7157cc0 100644
 --- a/NightscoutService/NightscoutServiceKit/NightscoutService.swift
 +++ b/NightscoutService/NightscoutServiceKit/NightscoutService.swift
+@@ -301,7 +301,7 @@ extension NightscoutService: RemoteDataService {
+         }
+ 
+         let statuses = uploadPairs.map { (decision, automaticDoseDecision) in
+-            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision)
++            return decision.deviceStatus(automaticDoseDecision: automaticDoseDecision).addingRemoteCommand(TherapyProfileRemoteCommand.deviceStatusSwitchCommand)
+         }
+ 
+         guard statuses.count > 0 else {
 @@ -379,30 +379,13 @@ extension NightscoutService: RemoteDataService {
              return
          }
