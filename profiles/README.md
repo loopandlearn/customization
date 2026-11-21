@@ -1,49 +1,56 @@
 # Profiles
 
-Save the current therapy settings (correction range, carb ratios, basal rates and insulin sensitivities) as named profiles under Settings → Profiles, and load one later.
+Named therapy profiles for Loop. A profile is a name plus the four scheduled therapy settings: correction range, carb ratios, basal rates and insulin sensitivities. Overrides, pre-meal and workout ranges are not part of a profile. You can switch profiles by hand, on a weekly schedule, or from a caregiver's phone with LoopFollow.
 
-Loading a profile writes its basal schedule to the pump and then saves all four settings in one change, so stored and uploaded settings never mix two profiles.
+This customization works the same way as the profiles pull request to Loop (LoopKit/LoopWorkspace#583): profiles are stored in Loop's own settings, and the Nightscout profile document and the remote commands have the same format. If that pull request is merged, Loop reads the profiles this customization stored.
 
-## Editing saved profiles
+This is not medical advice. Switching a profile changes the settings Loop doses with. Agree on your profiles, and when to use them, with your care team.
 
-Tap a profile to see its settings, then tap a setting to edit it with the same editors as Therapy Settings: the same guardrail warnings, confirmations and authentication. Edits change only the saved profile. Loop keeps dosing with its current settings and nothing is sent to the pump until the profile is loaded. When the edited profile is the active one, Loop offers to load it right away.
+## What it does
 
-## Remote profile switch
+- Settings → Profiles lists the profiles. Default always exists. The active profile has a checkmark, and the status screen shows it once you have more than one profile.
+- Use + to create a profile from the active profile's settings. Tap a profile to review it, edit its settings with the usual Therapy Settings editors, activate, rename or delete it. Press and hold to reorder.
+- Editing Therapy Settings edits the active profile, and the editors say which profile that is.
+- A switch first checks the profile against the guardrails and the pump's supported basal rates, then writes the basal schedule to the pump, and only then changes the settings. If any step fails, nothing changes. A switch is refused while insulin delivery is suspended.
+- Scheduled switches make a profile active at a time each week, for example Weekend on Saturday 07:00 and Default on Monday 06:00. A profile stays active until the next start. A scheduled switch waits for a running bolus, tries again while delivery is suspended, alerts you if it has not run 30 minutes after its time, and tells you when it has switched. Each start can be paused.
+- Nightscout gets every profile in one profile document, with the active profile as `defaultProfile`, and each switch as a Profile Switch treatment.
+- Caregivers using LoopFollow can switch, create, edit, rename and delete profiles and change the scheduled starts. Every remote command needs the one-time password (OTP) and an expiration. A save or delete carries a fingerprint of the profile the caregiver saw, so a change made on the phone in the meantime is not overwritten. The active profile and Default can never be deleted remotely. Loop shows a notification for every remote change.
+- When you set up Loop again and import settings from Nightscout, every profile and the scheduled starts are offered for import, including from a document Trio wrote.
 
-A caregiver app (LoopFollow) can switch Loop to one of the saved profiles, through the same OTP-protected APNS remote command path as remote carbs and boluses.
+## Moving from the earlier Profiles customization
 
-Switching a profile changes the correction range, carb ratios, basal rates and insulin sensitivities Loop doses with. It runs the same steps as loading the profile on the phone: Loop checks the profile against the guardrails and the pump's supported basal rates, writes the basal schedule to the pump, and only then saves the new settings. If any step fails, nothing changes and the caregiver is told why. This is not medical advice; agree on the saved profiles and when to use them with your care team.
+The earlier version saved profiles as files on the phone. The first time the new version runs, it moves those profiles into Loop's settings, and once settings that hold them are saved, it deletes the files. Nothing needs to be done by hand.
 
-## What Loop uploads
+- Names that the new rules do not allow are adjusted: spaces at the start or end are removed, a `.` becomes `,`, a leading `$` is removed, and a profile named Default becomes "Saved Default". If two names end up the same, a number is added.
+- The profile that was loaded last stays active only when its values equal the settings Loop doses with. Otherwise Default, holding the current settings, is active. No settings Loop doses with are changed by the move.
+- Check the Profiles screen after the update.
 
-- Every saved profile is added to the Nightscout profile document's `store`, keyed by its name, in the same format as the active profile. `Default` and the active profile's name still hold the live settings, and `defaultProfile` names the active profile. A saved profile named `Default`, or with a name starting with `$`, is not uploaded and cannot be switched to remotely.
-- Saving, renaming or deleting a profile on the phone uploads the profile document again, so followers see the change.
-- Every devicestatus upload lists `profile-switch` in `loop.testingDetails.remoteCommands`. LoopFollow shows the Profiles button only when it is there.
-
-## The command
-
-Payload keys, in addition to the usual `otp`, `sent-at`, `remote-address` and `entered-by`:
-
-- `profile-switch`: the profile's name as it appears in the `store`.
-- `profile-switch-fingerprint`: a fingerprint of the profile values the caregiver previewed.
-- `expiration` is required; a command without it is rejected.
-
-The fingerprint is the first 16 hex characters of the SHA-256 of `basal=<seconds>:<value>,...;carbratio=...;sens=...;target_low=...;target_high=...`, built from the `store` entry with each value formatted to three decimals. Loop computes it from the saved profile it is about to activate, in mg/dL and mmol/L, and rejects the command when neither matches, for example when the profile was edited on the phone after the caregiver loaded the preview. The caregiver and the phone both get a notice, and the caregiver can review the profile again once Loop has uploaded it.
-
-Loop answers through the existing return push (`encrypted_return_notification`) with `command_type` `profile_switch` and `command_status` `success` or `failed`. The alert body names the profile (`Profile '<name>' activated`, or `Profile '<name>' not activated: <reason>`, for example a pump communication error), which is how LoopFollow matches the reply to the command. Failures also post the usual Nightscout Note, and Loop shows a local notification for both outcomes.
+If you remove this customization again, Loop keeps dosing with the settings of the profile that was active. The other profiles stay in the stored settings, but Loop without the customization does not show them, and the old files are gone.
 
 ## Patches
 
-Touches Loop, LoopKit, LoopOnboarding and NightscoutService. `dev_profiles.patch` is for LoopWorkspace `dev` and `main` (3.14.11), `nextdev_profiles.patch` for `next-dev`. `main380_*` and `main382_*` are for older main releases and do not include remote switching. Apply from the LoopWorkspace folder:
+| file | LoopWorkspace branch |
+|---|---|
+| `dev_profiles.patch` | `dev` and `main` (3.14.x) |
+| `nextdev_profiles.patch` | `next-dev` |
+| `main380_*`, `main382_*` | older main releases, file-based profiles without remote commands |
+
+Both patches touch Loop, LoopKit, LoopOnboarding, NightscoutService and TidepoolService. Apply from the LoopWorkspace folder:
 
 ```
 git apply --whitespace=nowarn dev_profiles.patch
 ```
 
-The patch needs no variant for any other customization. Its changes sit where no other customization edits, so it applies before or after any of them, in any order, and can be removed on its own. The profiles patches without remote switching are in `archive/*_noremote.patch`, so the selector reports an update for workspaces that have them applied.
+The earlier patches are in `archive/dev_profiles_20261120.patch` and `archive/nextdev_profiles_20261120.patch`, so the selector reports an update for workspaces that have them applied.
 
-## Other remote commands
+## Notes for maintainers
 
-The profile switch is handled apart from the shared remote command code (`RemoteCommandSourceV1`), with the same steps in the same order: duplicates are skipped, then expiration and the OTP are checked, then the profile is activated, the reply is pushed and any error is posted as a Nightscout note. It uses the same OTP secret and list of used OTPs as the other commands. `profile-switch` is added to `remoteCommands` when the device status is uploaded, next to the commands other customizations list there, such as `carbs-delete` and `carbs-edit` from remote_carb_edit.
+The patches are built from the pull request branches and arranged so they apply cleanly next to every other customization, in any order:
 
-With remote_window, profile switches keep the `expiration` sent by the caregiver app; remote_window's longer acceptance window applies to the shared remote commands only. On `dev`, profile switches are not listed in remote_window's command history.
+- The NightscoutKit changes of the pull request are not used: the workspace pins NightscoutKit through Swift Package Manager, so the profile document fields, the Profile Switch treatment and the import of a document without Loop's settings are written and read as JSON in `NightscoutService+TherapyProfiles.swift`.
+- The remote profile commands are handled apart from the shared remote command code (`Action`, `RemoteNotification`, `RemoteNotificationResponseManager`, `RemoteActionDelegate`), which remote_carb_edit and remote_window change. `RemoteDataServicesManager` hands a profile command to `TherapyProfileRemoteCommandReceiver` before the shared path. The steps are the same: duplicates skipped, then expiration and OTP, then the action, the return push (with `command_type` `profile_switch`, `profile_save`, `profile_delete` or `profile_scheduled_switches_save` and a `result` code) and a Nightscout note on failure. remote_window's longer acceptance window does not apply to profile commands; they keep the expiration LoopFollow sends.
+- The accepted commands are listed in the profile document's `remoteCommands`, as in the pull request, once Loop can receive remote notifications and has a pump and a maximum basal rate.
+- Strings are English only and the tests of the pull request are not included.
+- On `dev`, LoopDataManager holds the settings, so the profile code keeps the active profile in step with the live schedules before each read and change. SettingsView gets a Profiles row next to Therapy Settings that opens the profiles in the settings navigation, because basal_lock changes the settings sheets.
+
+Checked on 2026-11-20: each patch applies before and after every other customization for its branch and reverses cleanly, and with all of them together (remote_carb_edit and remote_window, and high_carb_limit and low_carb_limit, do not apply together with each other, with or without this one). Both branches build alone and together with the other customizations.
