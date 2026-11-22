@@ -1,6 +1,6 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index cabca1e6..305a4f4a 100644
+index cabca1e6..a4654c2d 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
 @@ -149,6 +149,15 @@ final class DeviceDataManager {
@@ -150,7 +150,7 @@ index cabca1e6..305a4f4a 100644
      }
      
      func pumpSupportedIncrements() -> PumpSupportedIncrements? {
-@@ -1789,8 +1876,698 @@ extension DeviceDataManager: DeviceSupportDelegate {
+@@ -1789,8 +1876,716 @@ extension DeviceDataManager: DeviceSupportDelegate {
      }
  }
  
@@ -699,6 +699,14 @@ index cabca1e6..305a4f4a 100644
 +        let basalRateSchedule: BasalRateSchedule
 +        let insulinSensitivitySchedule: InsulinSensitivitySchedule
 +        let sortOrder: Int?
++
++        func therapyProfile(named name: String) -> TherapyProfile {
++            TherapyProfile(name: name,
++                           glucoseTargetRangeSchedule: correctionRange,
++                           carbRatioSchedule: carbRatioSchedule,
++                           basalRateSchedule: basalRateSchedule,
++                           insulinSensitivitySchedule: insulinSensitivitySchedule)
++        }
 +    }
 +
 +    private static let fileTherapyProfileActiveNameKey = "currentProfileName"
@@ -710,8 +718,9 @@ index cabca1e6..305a4f4a 100644
 +
 +    /// Moves profiles saved as files by the earlier Profiles customization into the stored settings. The files of
 +    /// imported profiles are deleted once settings holding every imported profile are stored; until then each call
-+    /// imports what is missing. Names are changed to pass the name rules. A profile beyond the profile limit or with a
-+    /// name that can not be used is named in one alert and not tried again; its file, and any file that can not be
++    /// imports what is missing. Names are changed to pass the name rules. A profile beyond the profile limit, with a
++    /// name that can not be used, or with the name of a stored profile holding other values is named in one alert and
++    /// not tried again; its file, and any file that can not be
 +    /// read, is kept in `LoopProfile/NotMoved`. The saved active profile stays active only when its values equal the
 +    /// live settings; otherwise the active profile is unchanged.
 +    func importFileTherapyProfilesIfNeeded(defaults: UserDefaults = .standard) {
@@ -741,9 +750,15 @@ index cabca1e6..305a4f4a 100644
 +        let saved = savedFiles.map(\.profile)
 +
 +        let names = Self.importNames(for: saved.map(\.name))
-+        let storedNames = Set((settingsManager.settingsStore.latestSettings?.therapyProfiles ?? []).map { $0.name.lowercased() })
++        let storedProfiles = settingsManager.settingsStore.latestSettings?.therapyProfiles ?? []
 +        let leftOut = Set(defaults.stringArray(forKey: Self.fileTherapyProfileLeftOutKey) ?? [])
-+        if names.allSatisfy({ storedNames.contains($0.lowercased()) || leftOut.contains($0) }) {
++        // A file is settled once its profile is stored with the same values, or once it has been left out.
++        let settled = zip(saved, names).allSatisfy { file, name in
++            leftOut.contains(name) || storedProfiles.contains { stored in
++                stored.name.lowercased() == name.lowercased() && stored.hasSameValues(as: file.therapyProfile(named: name))
++            }
++        }
++        if settled {
 +            let notMoved = directory.appendingPathComponent("NotMoved")
 +            do {
 +                for (file, name) in zip(savedFiles.map(\.url), names) where !leftOut.contains(name) {
@@ -774,12 +789,15 @@ index cabca1e6..305a4f4a 100644
 +        var imported: [String] = []
 +        var newlyLeftOut: [String] = []
 +        for (file, name) in zip(saved, names) {
-+            let profile = TherapyProfile(name: name,
-+                                         glucoseTargetRangeSchedule: file.correctionRange,
-+                                         carbRatioSchedule: file.carbRatioSchedule,
-+                                         basalRateSchedule: file.basalRateSchedule,
-+                                         insulinSensitivitySchedule: file.insulinSensitivitySchedule)
-+            guard !profiles.contains(where: { $0.name.lowercased() == profile.name.lowercased() }), !leftOut.contains(name) else {
++            let profile = file.therapyProfile(named: name)
++            guard !leftOut.contains(name) else {
++                continue
++            }
++            if let existing = profiles.first(where: { $0.name.lowercased() == profile.name.lowercased() }) {
++                if !existing.hasSameValues(as: profile) {
++                    log.error("Profile file %{public}@ not imported: a profile with that name exists", profile.name)
++                    newlyLeftOut.append(name)
++                }
 +                continue
 +            }
 +            guard profiles.count < TherapyProfileValidator.maximumProfileCount else {
@@ -798,7 +816,7 @@ index cabca1e6..305a4f4a 100644
 +        }
 +        if !newlyLeftOut.isEmpty {
 +            defaults.set(Array(leftOut) + newlyLeftOut, forKey: Self.fileTherapyProfileLeftOutKey)
-+            let body = String(format: "These profiles saved by the earlier version of Profiles were not moved into Loop's settings, because Loop keeps at most %1$d profiles or the name can not be used. Their files are kept on this phone, in Loop's LoopProfile/NotMoved folder:\n\n%2$@", TherapyProfileValidator.maximumProfileCount, newlyLeftOut.joined(separator: "\n"))
++            let body = String(format: "These profiles saved by the earlier version of Profiles were not moved into Loop's settings, because Loop keeps at most %1$d profiles, or the name can not be used or is already taken. Their files are kept on this phone, in Loop's LoopProfile/NotMoved folder:\n\n%2$@", TherapyProfileValidator.maximumProfileCount, newlyLeftOut.joined(separator: "\n"))
 +            let content = Alert.Content(title: "Profiles Not Moved", body: body, acknowledgeActionButtonLabel: "OK")
 +            therapyProfileAlertIssuer?.issueAlert(Alert(identifier: Alert.Identifier(managerIdentifier: "TherapyProfiles", alertIdentifier: "fileImport"),
 +                                     foregroundContent: content,
