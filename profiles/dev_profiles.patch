@@ -1,6 +1,6 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index cabca1e6..27261260 100644
+index cabca1e6..305a4f4a 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
 @@ -149,6 +149,15 @@ final class DeviceDataManager {
@@ -150,7 +150,7 @@ index cabca1e6..27261260 100644
      }
      
      func pumpSupportedIncrements() -> PumpSupportedIncrements? {
-@@ -1789,8 +1876,681 @@ extension DeviceDataManager: DeviceSupportDelegate {
+@@ -1789,8 +1876,698 @@ extension DeviceDataManager: DeviceSupportDelegate {
      }
  }
  
@@ -708,12 +708,12 @@ index cabca1e6..27261260 100644
 +        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("LoopProfile")
 +    }
 +
-+    /// Moves profiles saved as files by the earlier Profiles customization into the stored settings. The files are
-+    /// deleted once settings holding every imported profile are stored; until then each call imports what is missing.
-+    /// Names are changed to pass the name rules. A file that can not be read is left out, and so is a profile beyond
-+    /// the profile limit or with a name that can not be used; those are named in one alert and not tried again. The
-+    /// saved active profile stays active only when its values equal the live settings; otherwise the active profile is
-+    /// unchanged.
++    /// Moves profiles saved as files by the earlier Profiles customization into the stored settings. The files of
++    /// imported profiles are deleted once settings holding every imported profile are stored; until then each call
++    /// imports what is missing. Names are changed to pass the name rules. A profile beyond the profile limit or with a
++    /// name that can not be used is named in one alert and not tried again; its file, and any file that can not be
++    /// read, is kept in `LoopProfile/NotMoved`. The saved active profile stays active only when its values equal the
++    /// live settings; otherwise the active profile is unchanged.
 +    func importFileTherapyProfilesIfNeeded(defaults: UserDefaults = .standard) {
 +        let directory = Self.fileTherapyProfileDirectory
 +        guard FileManager.default.fileExists(atPath: directory.path) else {
@@ -723,27 +723,44 @@ index cabca1e6..27261260 100644
 +            .filter { $0.pathExtension == "json" }
 +            .sorted { $0.lastPathComponent < $1.lastPathComponent }
 +
-+        var saved: [FileTherapyProfile] = []
++        guard !files.isEmpty else {
++            return
++        }
++
++        var savedFiles: [(url: URL, profile: FileTherapyProfile)] = []
++        var unreadable: [URL] = []
 +        for file in files {
 +            do {
-+                saved.append(try JSONDecoder().decode(FileTherapyProfile.self, from: Data(contentsOf: file)))
++                savedFiles.append((file, try JSONDecoder().decode(FileTherapyProfile.self, from: Data(contentsOf: file))))
 +            } catch {
++                unreadable.append(file)
 +                log.error("Profile file %{public}@ not imported: %{public}@", file.lastPathComponent, String(describing: error))
 +            }
 +        }
-+        saved.sort { ($0.sortOrder ?? 0) < ($1.sortOrder ?? 0) }
++        savedFiles.sort { ($0.profile.sortOrder ?? 0) < ($1.profile.sortOrder ?? 0) }
++        let saved = savedFiles.map(\.profile)
 +
 +        let names = Self.importNames(for: saved.map(\.name))
 +        let storedNames = Set((settingsManager.settingsStore.latestSettings?.therapyProfiles ?? []).map { $0.name.lowercased() })
 +        let leftOut = Set(defaults.stringArray(forKey: Self.fileTherapyProfileLeftOutKey) ?? [])
 +        if names.allSatisfy({ storedNames.contains($0.lowercased()) || leftOut.contains($0) }) {
++            let notMoved = directory.appendingPathComponent("NotMoved")
 +            do {
-+                try FileManager.default.removeItem(at: directory)
++                for (file, name) in zip(savedFiles.map(\.url), names) where !leftOut.contains(name) {
++                    try FileManager.default.removeItem(at: file)
++                }
++                let kept = zip(savedFiles.map(\.url), names).filter { leftOut.contains($0.1) }.map(\.0) + unreadable
++                if !kept.isEmpty {
++                    try FileManager.default.createDirectory(at: notMoved, withIntermediateDirectories: true)
++                    for file in kept {
++                        try FileManager.default.moveItem(at: file, to: notMoved.appendingPathComponent(file.lastPathComponent))
++                    }
++                }
 +                defaults.removeObject(forKey: Self.fileTherapyProfileActiveNameKey)
 +                defaults.removeObject(forKey: Self.fileTherapyProfileLeftOutKey)
-+                log.default("Profiles saved as files are stored in the settings; the files are deleted")
++                log.default("Profiles saved as files are stored in the settings; %d files are deleted, %d kept in NotMoved", files.count - kept.count, kept.count)
 +            } catch {
-+                log.error("Profile files not deleted: %{public}@", String(describing: error))
++                log.error("Profile files not settled: %{public}@", String(describing: error))
 +            }
 +            return
 +        }
@@ -781,7 +798,7 @@ index cabca1e6..27261260 100644
 +        }
 +        if !newlyLeftOut.isEmpty {
 +            defaults.set(Array(leftOut) + newlyLeftOut, forKey: Self.fileTherapyProfileLeftOutKey)
-+            let body = String(format: "These profiles saved by the earlier version of Profiles were not moved into Loop's settings, because Loop keeps at most %1$d profiles or the name can not be used. They are deleted with the old files:\n\n%2$@", TherapyProfileValidator.maximumProfileCount, newlyLeftOut.joined(separator: "\n"))
++            let body = String(format: "These profiles saved by the earlier version of Profiles were not moved into Loop's settings, because Loop keeps at most %1$d profiles or the name can not be used. Their files are kept on this phone, in Loop's LoopProfile/NotMoved folder:\n\n%2$@", TherapyProfileValidator.maximumProfileCount, newlyLeftOut.joined(separator: "\n"))
 +            let content = Alert.Content(title: "Profiles Not Moved", body: body, acknowledgeActionButtonLabel: "OK")
 +            therapyProfileAlertIssuer?.issueAlert(Alert(identifier: Alert.Identifier(managerIdentifier: "TherapyProfiles", alertIdentifier: "fileImport"),
 +                                     foregroundContent: content,

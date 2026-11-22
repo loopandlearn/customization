@@ -21,13 +21,13 @@ This is not medical advice. Switching a profile changes the settings Loop doses 
 
 ## Moving from the earlier Profiles customization
 
-The earlier version saved profiles as files on the phone. The first time the new version runs, it moves those profiles into Loop's settings, and once settings that hold them are saved, it deletes the files. Nothing needs to be done by hand. Loop keeps at most 20 profiles, Default included; profiles beyond that are not moved, and Loop names them in an alert.
+The earlier version saved profiles as files on the phone. The first time the new version runs, it moves those profiles into Loop's settings, and once settings that hold them are saved, it deletes their files. Nothing needs to be done by hand. Loop keeps at most 20 profiles, Default included. Profiles beyond that, or with a name that can not be used, are not moved: Loop names them in an alert and keeps their files on the phone in `Documents/LoopProfile/NotMoved`, as it does with any file it can not read. Only the files of profiles that were moved are deleted.
 
 - Names that the new rules do not allow are adjusted: spaces at the start or end are removed, a `.` becomes `,`, a leading `$` is removed, and a profile named Default becomes "Saved Default". If two names end up the same, a number is added.
 - The profile that was loaded last stays active only when its values equal the settings Loop doses with. Otherwise Default, holding the current settings, is active. No settings Loop doses with are changed by the move.
 - Check the Profiles screen after the update.
 
-If you remove this customization again, Loop keeps dosing with the settings of the profile that was active. The other profiles stay in the stored settings, but Loop without the customization does not show them, and the old files are gone.
+If you remove this customization again, Loop keeps dosing with the settings of the profile that was active. The other profiles stay in the stored settings, but Loop without the customization does not show them, and the files of moved profiles are gone.
 
 ## Patches
 
