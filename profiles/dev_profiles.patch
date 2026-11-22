@@ -2429,10 +2429,10 @@ index 00000000..d246e6f1
 +}
 diff --git a/LoopKit/LoopKit/TherapyProfileValidator.swift b/LoopKit/LoopKit/TherapyProfileValidator.swift
 new file mode 100644
-index 00000000..4bd474f5
+index 00000000..e2b89f4d
 --- /dev/null
 +++ b/LoopKit/LoopKit/TherapyProfileValidator.swift
-@@ -0,0 +1,317 @@
+@@ -0,0 +1,313 @@
 +//
 +//  TherapyProfileValidator.swift
 +//  LoopKit
@@ -2548,10 +2548,7 @@ index 00000000..4bd474f5
 +        if schedules.contains(.correctionRange) {
 +            let targetUnit = profile.glucoseTargetRangeSchedule.unit
 +            let guardrailValues = Guardrail.correctionRange.absoluteBounds.roundedDisplayValues(for: targetUnit)
-+            guard let lowerRange = correctionRangeLowerBoundRange(suspendThreshold: suspendThreshold) else {
-+                throw TherapyProfileError.correctionRangeBelowSuspendThreshold
-+            }
-+            let lowerValues = lowerRange.roundedDisplayValues(for: targetUnit)
++            let lowerValues = correctionRangeLowerValues(suspendThreshold: suspendThreshold, unit: targetUnit)
 +            for item in profile.glucoseTargetRangeSchedule.items {
 +                guard item.value.minValue <= item.value.maxValue else {
 +                    throw TherapyProfileError.invalidSchedule(LocalizedString("A correction range has its lower value above its upper value", comment: "Therapy profile error: target low above high"))
@@ -2644,15 +2641,15 @@ index 00000000..4bd474f5
 +        value >= range.lowerBound - tolerance && value <= range.upperBound + tolerance
 +    }
 +
-+    /// The values a correction range's lower bound may take with `suspendThreshold`, or nil when the threshold is above
-+    /// every correction range the guardrail allows.
-+    private static func correctionRangeLowerBoundRange(suspendThreshold: GlucoseThreshold?) -> ClosedRange<HKQuantity>? {
++    /// The lower correction range values the picker offers in `unit` above `suspendThreshold`, empty when the threshold
++    /// is above the correction range guardrail, so every correction range is below it.
++    static func correctionRangeLowerValues(suspendThreshold: GlucoseThreshold?, unit: HKUnit) -> [Double] {
 +        let floor = Guardrail.minCorrectionRangeValue(suspendThreshold: suspendThreshold)
-+        let ceiling = Guardrail.correctionRange.absoluteBounds.upperBound
-+        guard floor <= ceiling else {
-+            return nil
++        let upper = Guardrail.correctionRange.absoluteBounds.upperBound
++        guard floor <= upper else {
++            return []
 +        }
-+        return floor...ceiling
++        return (floor...upper).roundedDisplayValues(for: unit)
 +    }
 +
 +    /// True when `value` lies between the lowest and the highest of `values`.
@@ -2668,7 +2665,7 @@ index 00000000..4bd474f5
 +        let absolute = Guardrail.correctionRange.absoluteBounds.doubleBounds(for: mgdl)
 +        let recommended = Guardrail.correctionRange.recommendedBounds.doubleBounds(for: mgdl)
 +        let lower = max(absolute.lowerBound, suspendThreshold?.quantity.doubleValue(for: mgdl) ?? absolute.lowerBound)
-+        return max(lower, recommended.lowerBound)...recommended.upperBound
++        return min(max(lower, recommended.lowerBound), recommended.upperBound)...recommended.upperBound
 +    }
 +
 +    // MARK: Edit limits
@@ -2685,12 +2682,11 @@ index 00000000..4bd474f5
 +            let upper = HKQuantity(unit: mgdl, doubleValue: range.upperBound).doubleValue(for: unit)
 +            return Self.onStep(lower, glucoseStep, .up)...Self.onStep(upper, glucoseStep, .down)
 +        }
-+        guard let targetLowerRange = Self.correctionRangeLowerBoundRange(suspendThreshold: suspendThreshold) else {
-+            return nil
-+        }
-+        let targetLowerValues = targetLowerRange.roundedDisplayValues(for: unit)
 +        let targetValues = Guardrail.correctionRange.absoluteBounds.roundedDisplayValues(for: unit)
-+        let targetAbsolute = (targetLowerValues.min() ?? 0)...(targetValues.max() ?? 0)
++        let targetUpper = targetValues.max() ?? 0
++        // With the glucose safety limit above the guardrail no correction range passes; the bounds collapse to the top.
++        let targetLower = Self.correctionRangeLowerValues(suspendThreshold: suspendThreshold, unit: unit).min() ?? targetUpper
++        let targetAbsolute = min(targetLower, targetUpper)...targetUpper
 +        let targetRecommended = glucose(recommendedTargetBoundsInMilligramsPerDeciliter)
 +        let sensitivityUnit: HKUnit = unit == .millimolesPerLiter ? .millimolesPerLiterPerInternationalUnit : .milligramsPerDeciliterPerInternationalUnit
 +        let sensitivityValues = Guardrail.insulinSensitivity.allValues(forUnit: sensitivityUnit)
@@ -4794,7 +4790,7 @@ index 69f7a26..6ca9431 100644
  				A99A115E29AA28EE007919CE /* RemoteCommandSourceV1.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
 new file mode 100644
-index 0000000..febb2d5
+index 0000000..cfeb102
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
 @@ -0,0 +1,1156 @@
@@ -5337,7 +5333,7 @@ index 0000000..febb2d5
 +            skippedProfiles.append(.init(name: liveName, reason: String(format: reason, error.localizedDescription)))
 +        }
 +
-+        // A glucose safety limit outside the guardrail, such as a mg/dL value read as mmol/L, is left out.
++        // A glucose safety limit outside its guardrail, such as one left in mg/dL after the units changed, is dropped.
 +        let suspendThreshold = settings?.minimumBGGuard
 +            .map { GlucoseThreshold(unit: settingsGlucoseUnit, value: $0) }
 +            .flatMap { Guardrail.suspendThreshold.absoluteBounds.contains($0.quantity) ? $0 : nil }
