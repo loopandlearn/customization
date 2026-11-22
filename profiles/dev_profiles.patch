@@ -1,9 +1,9 @@
 Submodule Loop contains modified content
 diff --git a/Loop/Loop/Managers/DeviceDataManager.swift b/Loop/Loop/Managers/DeviceDataManager.swift
-index cabca1e6..03e9cf33 100644
+index cabca1e6..27261260 100644
 --- a/Loop/Loop/Managers/DeviceDataManager.swift
 +++ b/Loop/Loop/Managers/DeviceDataManager.swift
-@@ -149,6 +149,12 @@ final class DeviceDataManager {
+@@ -149,6 +149,15 @@ final class DeviceDataManager {
  
      
      var doseEnactor = DoseEnactor()
@@ -13,10 +13,13 @@ index cabca1e6..03e9cf33 100644
 +
 +    /// Issues the alerts about scheduled profile switches and profiles a new pump can not take.
 +    weak var therapyProfileAlertIssuer: AlertIssuer?
++
++    /// The profiles the issued pump-change alert names, or nil when it is not issued.
++    var therapyProfilesFailingAlertNames: [String]?
      
      // MARK: Stores
      let healthStore: HKHealthStore
-@@ -269,6 +275,7 @@ final class DeviceDataManager {
+@@ -269,6 +278,7 @@ final class DeviceDataManager {
  
          self.pluginManager = pluginManager
          self.alertManager = alertManager
@@ -24,7 +27,7 @@ index cabca1e6..03e9cf33 100644
          self.bluetoothProvider = bluetoothProvider
          self.alertPresenter = alertPresenter
          
-@@ -935,6 +942,9 @@ extension DeviceDataManager {
+@@ -935,6 +945,9 @@ extension DeviceDataManager {
  
      func didBecomeActive() {
          updatePumpManagerBLEHeartbeatPreference()
@@ -34,7 +37,7 @@ index cabca1e6..03e9cf33 100644
      }
  
      func updatePumpManagerBLEHeartbeatPreference() {
-@@ -1198,6 +1208,13 @@ extension DeviceDataManager: PumpManagerDelegate {
+@@ -1198,6 +1211,13 @@ extension DeviceDataManager: PumpManagerDelegate {
                  }
              }
          }
@@ -48,7 +51,7 @@ index cabca1e6..03e9cf33 100644
      }
  
      func updatePumpIsAllowingAutomation(status: PumpManagerStatus) {
-@@ -1300,6 +1317,9 @@ extension DeviceDataManager: PumpManagerOnboardingDelegate {
+@@ -1300,6 +1320,9 @@ extension DeviceDataManager: PumpManagerOnboardingDelegate {
          DispatchQueue.main.async {
              self.refreshDeviceData()
              self.settingsManager.storeSettings()
@@ -58,7 +61,7 @@ index cabca1e6..03e9cf33 100644
          }
      }
  
-@@ -1656,8 +1676,35 @@ extension DeviceDataManager : RemoteDataServicesManagerDelegate {
+@@ -1656,8 +1679,35 @@ extension DeviceDataManager : RemoteDataServicesManagerDelegate {
  
  extension DeviceDataManager: TherapySettingsViewModelDelegate {
      
@@ -95,7 +98,7 @@ index cabca1e6..03e9cf33 100644
      }
      
      func syncDeliveryLimits(deliveryLimits: DeliveryLimits, completion: @escaping (Swift.Result<DeliveryLimits, Error>) -> Void) {
-@@ -1673,7 +1720,41 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
+@@ -1673,7 +1723,41 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
          }
      }
      
@@ -137,17 +140,17 @@ index cabca1e6..03e9cf33 100644
  
          loopManager.mutateSettings { settings in
              settings.glucoseTargetRangeSchedule = therapySettings.glucoseTargetRangeSchedule
-@@ -1687,6 +1768,9 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
+@@ -1687,6 +1771,9 @@ extension DeviceDataManager: TherapySettingsViewModelDelegate {
              settings.carbRatioSchedule = therapySettings.carbRatioSchedule
              settings.insulinSensitivitySchedule = therapySettings.insulinSensitivitySchedule
          }
 +        Task {
-+            await retractTherapyProfilesFailingAlertIfResolved()
++            await updateTherapyProfilesFailingAlert()
 +        }
      }
      
      func pumpSupportedIncrements() -> PumpSupportedIncrements? {
-@@ -1789,8 +1873,660 @@ extension DeviceDataManager: DeviceSupportDelegate {
+@@ -1789,8 +1876,681 @@ extension DeviceDataManager: DeviceSupportDelegate {
      }
  }
  
@@ -261,11 +264,11 @@ index cabca1e6..03e9cf33 100644
 +        try await loggingFailure("Saving therapy profile \(profile.name)") {
 +            try await self.performSaveTherapyProfile(profile, originalName: originalName, expectedFingerprint: expectedFingerprint)
 +        }
-+        await retractTherapyProfilesFailingAlertIfResolved()
++        await updateTherapyProfilesFailingAlert()
 +    }
 +
 +    /// Saves `profile`; for the active profile the basal schedule goes to the pump first. Only the schedules that differ
-+    /// from the stored profile are validated, so a profile that no longer passes can be repaired one schedule at a time;
++    /// from the stored profile are validated, so a profile that fails the checks can be repaired one schedule at a time;
 +    /// a copy of a stored profile is not validated again. Glucose values sent back unchanged keep their stored value.
 +    private func performSaveTherapyProfile(_ profile: TherapyProfile, originalName: String?, expectedFingerprint: String?) async throws {
 +        var profile = profile
@@ -346,7 +349,7 @@ index cabca1e6..03e9cf33 100644
 +        try await loggingFailure("Deleting therapy profile \(name)") {
 +            try await self.performDeleteTherapyProfile(named: name, expectedFingerprint: expectedFingerprint)
 +        }
-+        await retractTherapyProfilesFailingAlertIfResolved()
++        await updateTherapyProfilesFailingAlert()
 +    }
 +
 +    private func performDeleteTherapyProfile(named name: String, expectedFingerprint: String?) async throws {
@@ -630,9 +633,11 @@ index cabca1e6..03e9cf33 100644
 +    func issueTherapyProfilesFailingAlert() async {
 +        let failing = therapyProfilesFailing
 +        guard !failing.isEmpty else {
++            therapyProfilesFailingAlertNames = nil
 +            therapyProfileAlertIssuer?.retractAlert(identifier: therapyProfilesFailingAlertIdentifier)
 +            return
 +        }
++        therapyProfilesFailingAlertNames = failing.map(\.name)
 +        log.default("Profiles that fail the activation checks with the new pump: %{public}@", failing.map(\.name).joined(separator: ", "))
 +        let list = failing.map { $0.name + "\n" + $0.reasons }.joined(separator: "\n\n")
 +        let body = String(format: NSLocalizedString("These profiles cannot be activated with this pump until their settings are edited in Settings > Profiles:\n\n%1$@", comment: "Alert body after a pump change naming the profiles that fail the activation checks (1: each profile with its reasons)"), list)
@@ -645,11 +650,13 @@ index cabca1e6..03e9cf33 100644
 +                                                          trigger: .immediate))
 +    }
 +
-+    /// Retracts the pump-change alert once every profile passes the activation checks.
-+    func retractTherapyProfilesFailingAlertIfResolved() async {
-+        if therapyProfilesFailing.isEmpty {
-+            therapyProfileAlertIssuer?.retractAlert(identifier: therapyProfilesFailingAlertIdentifier)
++    /// Brings an issued pump-change alert up to date: retracts it once every profile passes the activation checks,
++    /// and names the profiles that still fail when fewer do.
++    func updateTherapyProfilesFailingAlert() async {
++        guard let issued = therapyProfilesFailingAlertNames, issued != therapyProfilesFailing.map(\.name) else {
++            return
 +        }
++        await issueTherapyProfilesFailingAlert()
 +    }
 +}
 +
@@ -695,6 +702,7 @@ index cabca1e6..03e9cf33 100644
 +    }
 +
 +    private static let fileTherapyProfileActiveNameKey = "currentProfileName"
++    private static let fileTherapyProfileLeftOutKey = "com.loopkit.Loop.TherapyProfileFilesLeftOut"
 +
 +    private static var fileTherapyProfileDirectory: URL {
 +        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("LoopProfile")
@@ -702,8 +710,10 @@ index cabca1e6..03e9cf33 100644
 +
 +    /// Moves profiles saved as files by the earlier Profiles customization into the stored settings. The files are
 +    /// deleted once settings holding every imported profile are stored; until then each call imports what is missing.
-+    /// Names are changed to pass the name rules. A file that can not be read is left out. The saved active profile
-+    /// stays active only when its values equal the live settings; otherwise the active profile is unchanged.
++    /// Names are changed to pass the name rules. A file that can not be read is left out, and so is a profile beyond
++    /// the profile limit or with a name that can not be used; those are named in one alert and not tried again. The
++    /// saved active profile stays active only when its values equal the live settings; otherwise the active profile is
++    /// unchanged.
 +    func importFileTherapyProfilesIfNeeded(defaults: UserDefaults = .standard) {
 +        let directory = Self.fileTherapyProfileDirectory
 +        guard FileManager.default.fileExists(atPath: directory.path) else {
@@ -725,10 +735,12 @@ index cabca1e6..03e9cf33 100644
 +
 +        let names = Self.importNames(for: saved.map(\.name))
 +        let storedNames = Set((settingsManager.settingsStore.latestSettings?.therapyProfiles ?? []).map { $0.name.lowercased() })
-+        if names.allSatisfy({ storedNames.contains($0.lowercased()) }) {
++        let leftOut = Set(defaults.stringArray(forKey: Self.fileTherapyProfileLeftOutKey) ?? [])
++        if names.allSatisfy({ storedNames.contains($0.lowercased()) || leftOut.contains($0) }) {
 +            do {
 +                try FileManager.default.removeItem(at: directory)
 +                defaults.removeObject(forKey: Self.fileTherapyProfileActiveNameKey)
++                defaults.removeObject(forKey: Self.fileTherapyProfileLeftOutKey)
 +                log.default("Profiles saved as files are stored in the settings; the files are deleted")
 +            } catch {
 +                log.error("Profile files not deleted: %{public}@", String(describing: error))
@@ -743,17 +755,19 @@ index cabca1e6..03e9cf33 100644
 +
 +        var profiles = TherapyProfiles.resolved(therapyProfileSettings.therapyProfiles, activeProfileName: therapyProfileSettings.activeProfileName, live: live)
 +        var imported: [String] = []
++        var newlyLeftOut: [String] = []
 +        for (file, name) in zip(saved, names) {
 +            let profile = TherapyProfile(name: name,
 +                                         glucoseTargetRangeSchedule: file.correctionRange,
 +                                         carbRatioSchedule: file.carbRatioSchedule,
 +                                         basalRateSchedule: file.basalRateSchedule,
 +                                         insulinSensitivitySchedule: file.insulinSensitivitySchedule)
-+            guard !profiles.contains(where: { $0.name.lowercased() == profile.name.lowercased() }) else {
++            guard !profiles.contains(where: { $0.name.lowercased() == profile.name.lowercased() }), !leftOut.contains(name) else {
 +                continue
 +            }
 +            guard profiles.count < TherapyProfileValidator.maximumProfileCount else {
 +                log.error("Profile file %{public}@ not imported: Loop keeps at most %d profiles", profile.name, TherapyProfileValidator.maximumProfileCount)
++                newlyLeftOut.append(name)
 +                continue
 +            }
 +            do {
@@ -762,7 +776,17 @@ index cabca1e6..03e9cf33 100644
 +                imported.append(profile.name)
 +            } catch {
 +                log.error("Profile file %{public}@ not imported: %{public}@", profile.name, error.localizedDescription)
++                newlyLeftOut.append(name)
 +            }
++        }
++        if !newlyLeftOut.isEmpty {
++            defaults.set(Array(leftOut) + newlyLeftOut, forKey: Self.fileTherapyProfileLeftOutKey)
++            let body = String(format: "These profiles saved by the earlier version of Profiles were not moved into Loop's settings, because Loop keeps at most %1$d profiles or the name can not be used. They are deleted with the old files:\n\n%2$@", TherapyProfileValidator.maximumProfileCount, newlyLeftOut.joined(separator: "\n"))
++            let content = Alert.Content(title: "Profiles Not Moved", body: body, acknowledgeActionButtonLabel: "OK")
++            therapyProfileAlertIssuer?.issueAlert(Alert(identifier: Alert.Identifier(managerIdentifier: "TherapyProfiles", alertIdentifier: "fileImport"),
++                                     foregroundContent: content,
++                                     backgroundContent: content,
++                                     trigger: .immediate))
 +        }
 +        guard !imported.isEmpty else {
 +            return
@@ -1249,7 +1273,7 @@ index 9f9e3aa0..090d4412 100644
                  item.view
              }
 diff --git a/Loop/LoopCore/LoopSettings.swift b/Loop/LoopCore/LoopSettings.swift
-index 82ad76b6..3aa6df25 100644
+index 82ad76b6..138873d4 100644
 --- a/Loop/LoopCore/LoopSettings.swift
 +++ b/Loop/LoopCore/LoopSettings.swift
 @@ -74,7 +74,22 @@ public struct LoopSettings: Equatable {
@@ -1290,7 +1314,7 @@ index 82ad76b6..3aa6df25 100644
      ) {
          self.dosingEnabled = dosingEnabled
          self.glucoseTargetRangeSchedule = glucoseTargetRangeSchedule
-@@ -111,6 +131,69 @@ public struct LoopSettings: Equatable {
+@@ -111,6 +131,64 @@ public struct LoopSettings: Equatable {
          self.suspendThreshold = suspendThreshold
          self.automaticDosingStrategy = automaticDosingStrategy
          self.defaultRapidActingModel = defaultRapidActingModel
@@ -1327,11 +1351,6 @@ index 82ad76b6..3aa6df25 100644
 +        if let name = activeProfileName, name != TherapyProfile.defaultName, !therapyProfiles.contains(where: { $0.name == name }) {
 +            guard let live = liveTherapyProfile else {
 +                return nil
-+            }
-+            if !therapyProfiles.contains(where: \.isDefault) {
-+                var defaultProfile = live
-+                defaultProfile.name = TherapyProfile.defaultName
-+                therapyProfiles.insert(defaultProfile, at: 0)
 +            }
 +            therapyProfiles.append(live)
 +            unknownName = name
@@ -2410,10 +2429,10 @@ index 00000000..d246e6f1
 +}
 diff --git a/LoopKit/LoopKit/TherapyProfileValidator.swift b/LoopKit/LoopKit/TherapyProfileValidator.swift
 new file mode 100644
-index 00000000..b7d9f828
+index 00000000..4bd474f5
 --- /dev/null
 +++ b/LoopKit/LoopKit/TherapyProfileValidator.swift
-@@ -0,0 +1,299 @@
+@@ -0,0 +1,317 @@
 +//
 +//  TherapyProfileValidator.swift
 +//  LoopKit
@@ -2529,7 +2548,10 @@ index 00000000..b7d9f828
 +        if schedules.contains(.correctionRange) {
 +            let targetUnit = profile.glucoseTargetRangeSchedule.unit
 +            let guardrailValues = Guardrail.correctionRange.absoluteBounds.roundedDisplayValues(for: targetUnit)
-+            let lowerValues = (Guardrail.minCorrectionRangeValue(suspendThreshold: suspendThreshold)...Guardrail.correctionRange.absoluteBounds.upperBound).roundedDisplayValues(for: targetUnit)
++            guard let lowerRange = correctionRangeLowerBoundRange(suspendThreshold: suspendThreshold) else {
++                throw TherapyProfileError.correctionRangeBelowSuspendThreshold
++            }
++            let lowerValues = lowerRange.roundedDisplayValues(for: targetUnit)
 +            for item in profile.glucoseTargetRangeSchedule.items {
 +                guard item.value.minValue <= item.value.maxValue else {
 +                    throw TherapyProfileError.invalidSchedule(LocalizedString("A correction range has its lower value above its upper value", comment: "Therapy profile error: target low above high"))
@@ -2622,6 +2644,17 @@ index 00000000..b7d9f828
 +        value >= range.lowerBound - tolerance && value <= range.upperBound + tolerance
 +    }
 +
++    /// The values a correction range's lower bound may take with `suspendThreshold`, or nil when the threshold is above
++    /// every correction range the guardrail allows.
++    private static func correctionRangeLowerBoundRange(suspendThreshold: GlucoseThreshold?) -> ClosedRange<HKQuantity>? {
++        let floor = Guardrail.minCorrectionRangeValue(suspendThreshold: suspendThreshold)
++        let ceiling = Guardrail.correctionRange.absoluteBounds.upperBound
++        guard floor <= ceiling else {
++            return nil
++        }
++        return floor...ceiling
++    }
++
 +    /// True when `value` lies between the lowest and the highest of `values`.
 +    private static func contains(_ values: [Double], _ value: Double) -> Bool {
 +        guard let lowest = values.min(), let highest = values.max() else {
@@ -2652,7 +2685,10 @@ index 00000000..b7d9f828
 +            let upper = HKQuantity(unit: mgdl, doubleValue: range.upperBound).doubleValue(for: unit)
 +            return Self.onStep(lower, glucoseStep, .up)...Self.onStep(upper, glucoseStep, .down)
 +        }
-+        let targetLowerValues = (Guardrail.minCorrectionRangeValue(suspendThreshold: suspendThreshold)...Guardrail.correctionRange.absoluteBounds.upperBound).roundedDisplayValues(for: unit)
++        guard let targetLowerRange = Self.correctionRangeLowerBoundRange(suspendThreshold: suspendThreshold) else {
++            return nil
++        }
++        let targetLowerValues = targetLowerRange.roundedDisplayValues(for: unit)
 +        let targetValues = Guardrail.correctionRange.absoluteBounds.roundedDisplayValues(for: unit)
 +        let targetAbsolute = (targetLowerValues.min() ?? 0)...(targetValues.max() ?? 0)
 +        let targetRecommended = glucose(recommendedTargetBoundsInMilligramsPerDeciliter)
@@ -2666,7 +2702,7 @@ index 00000000..b7d9f828
 +
 +        return TherapyProfileEditLimits(
 +            unit: unit,
-+            maximumBasalRatePerHour: maximumBasalRatePerHour,
++            maximumBasalRatePerHour: max(maximumBasalRatePerHour, basalRates.last ?? maximumBasalRatePerHour),
 +            basalRates: basalRates,
 +            maximumBasalScheduleEntryCount: maximumBasalScheduleEntryCount,
 +            carbRatio: .init(bounds: carbRatioAbsolute, step: 0.1, recommended: carbRatioRecommended),
@@ -2692,6 +2728,7 @@ index 00000000..b7d9f828
 +    }
 +
 +    public let unit: HKUnit
++    /// The maximum basal rate, raised to the highest of `basalRates` when that is within the tolerance above it.
 +    public let maximumBasalRatePerHour: Double
 +    /// The supported basal rates up to the maximum basal rate.
 +    public let basalRates: [Double]
@@ -2824,14 +2861,14 @@ index 01e7a627..f42a4ef6 100644
      }
  }
 diff --git a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
-index 3650ef60..318dfb47 100644
+index 3650ef60..f489f188 100644
 --- a/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
 +++ b/LoopKit/LoopKitUI/ViewModels/TherapySettingsViewModel.swift
 @@ -16,11 +16,21 @@ public protocol TherapySettingsViewModelDelegate: AnyObject {
      func syncDeliveryLimits(deliveryLimits: DeliveryLimits, completion: @escaping (Result<DeliveryLimits, Error>) -> Void)
      func saveCompletion(therapySettings: TherapySettings)
      func pumpSupportedIncrements() -> PumpSupportedIncrements?
-+    /// Throws when settings edited from `therapySettings` can no longer be saved, for example because the active
++    /// Throws when settings edited from `therapySettings` would overwrite a newer change, for example because the active
 +    /// profile or its schedules changed while the editor was open. Nothing is synced or saved then.
 +    func validateTherapySettingsEdit(from therapySettings: TherapySettings) throws
 +}
@@ -2967,6 +3004,34 @@ index 3650ef60..318dfb47 100644
 +                      ListFormatter.localizedString(byJoining: names))
 +    }
 +}
+diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/BasalRateScheduleEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/BasalRateScheduleEditor.swift
+index 18dd9762..d0365094 100644
+--- a/LoopKit/LoopKitUI/Views/Settings Editors/BasalRateScheduleEditor.swift	
++++ b/LoopKit/LoopKitUI/Views/Settings Editors/BasalRateScheduleEditor.swift	
+@@ -39,22 +39,12 @@ public struct BasalRateScheduleEditor: View {
+             )!
+         }
+ 
+-        if let maxBasal = maximumBasalRate {
+-            let partitioningIndex = supportedBasalRates.partitioningIndex(where: { $0 > maxBasal })
+-            self.supportedBasalRates = Array(supportedBasalRates[..<partitioningIndex])
+-        } else {
+-            self.supportedBasalRates = supportedBasalRates
+-        }
+-
++        self.supportedBasalRates = Guardrail.selectableBasalRates(supportedBasalRates: supportedBasalRates, maximumBasalRate: maximumBasalRate)
+         self.guardrail = Guardrail.basalRate(supportedBasalRates: supportedBasalRates)
+         self.maximumScheduleEntryCount = maximumScheduleEntryCount
+         self.syncBasalRateSchedule = syncBasalRateSchedule
+         self.save = save
+         self.mode = mode
+-        
+-        self.supportedBasalRates.removeAll(where: {
+-            !self.guardrail.absoluteBounds.contains(HKQuantity(unit: .internationalUnitsPerHour, doubleValue: $0))
+-        })
+     }
+     
+     public init(
 diff --git a/LoopKit/LoopKitUI/Views/Settings Editors/DeliveryLimitsEditor.swift b/LoopKit/LoopKitUI/Views/Settings Editors/DeliveryLimitsEditor.swift
 index aa3c100c..5e42ccdc 100644
 --- a/LoopKit/LoopKitUI/Views/Settings Editors/DeliveryLimitsEditor.swift	
@@ -4729,10 +4794,10 @@ index 69f7a26..6ca9431 100644
  				A99A115E29AA28EE007919CE /* RemoteCommandSourceV1.swift in Sources */,
 diff --git a/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
 new file mode 100644
-index 0000000..5d74259
+index 0000000..febb2d5
 --- /dev/null
 +++ b/NightscoutService/NightscoutServiceKit/Extensions/NightscoutService+TherapyProfiles.swift
-@@ -0,0 +1,1149 @@
+@@ -0,0 +1,1156 @@
 +//
 +//  NightscoutService+TherapyProfiles.swift
 +//  NightscoutServiceKit
@@ -5272,7 +5337,10 @@ index 0000000..5d74259
 +            skippedProfiles.append(.init(name: liveName, reason: String(format: reason, error.localizedDescription)))
 +        }
 +
-+        let suspendThreshold = settings?.minimumBGGuard.map { GlucoseThreshold(unit: settingsGlucoseUnit, value: $0) }
++        // A glucose safety limit outside the guardrail, such as a mg/dL value read as mmol/L, is left out.
++        let suspendThreshold = settings?.minimumBGGuard
++            .map { GlucoseThreshold(unit: settingsGlucoseUnit, value: $0) }
++            .flatMap { Guardrail.suspendThreshold.absoluteBounds.contains($0.quantity) ? $0 : nil }
 +
 +        // The active profile becomes the live settings, so it passes the same checks as every other profile or
 +        // nothing is imported.
@@ -5302,7 +5370,11 @@ index 0000000..5d74259
 +                try TherapyProfileValidator.validateValues(of: storedProfile, suspendThreshold: suspendThreshold)
 +                profiles.append(storedProfile)
 +            } catch {
-+                skippedProfiles.append(.init(name: name, reason: error.localizedDescription))
++                var reason = error.localizedDescription
++                if name == TherapyProfile.defaultName {
++                    reason += " " + String(format: "%1$@ gets the values of %2$@.", TherapyProfile.defaultName, activeName)
++                }
++                skippedProfiles.append(.init(name: name, reason: reason))
 +            }
 +        }
 +        let therapyProfiles = TherapyProfiles.resolved(profiles, activeProfileName: activeName, live: activeProfile)

@@ -21,7 +21,7 @@ This is not medical advice. Switching a profile changes the settings Loop doses 
 
 ## Moving from the earlier Profiles customization
 
-The earlier version saved profiles as files on the phone. The first time the new version runs, it moves those profiles into Loop's settings, and once settings that hold them are saved, it deletes the files. Nothing needs to be done by hand.
+The earlier version saved profiles as files on the phone. The first time the new version runs, it moves those profiles into Loop's settings, and once settings that hold them are saved, it deletes the files. Nothing needs to be done by hand. Loop keeps at most 20 profiles, Default included; profiles beyond that are not moved, and Loop names them in an alert.
 
 - Names that the new rules do not allow are adjusted: spaces at the start or end are removed, a `.` becomes `,`, a leading `$` is removed, and a profile named Default becomes "Saved Default". If two names end up the same, a number is added.
 - The profile that was loaded last stays active only when its values equal the settings Loop doses with. Otherwise Default, holding the current settings, is active. No settings Loop doses with are changed by the move.
@@ -56,4 +56,4 @@ The patches are built from the pull request branches and arranged so they apply 
 - Strings are English only and the tests of the pull request are not included.
 - On `dev`, LoopDataManager holds the settings, so the profile code keeps the active profile in step with the live schedules before each read and change. SettingsView gets a Profiles row next to Therapy Settings that opens the profiles in the settings navigation, because basal_lock changes the settings sheets.
 
-Checked on 2026-11-22: each patch applies before and after every other customization for its branch and reverses cleanly, and with all of them together (remote_carb_edit and remote_window, high_carb_limit and low_carb_limit, and meal_days and meal_week, do not apply together with each other, with or without this one; `nextdev_remote_window.patch` does not apply to the current next-dev on its own). Both branches build. Remote switching works from LoopFollow 8.0.0 and from LoopFollow dev with profile editing.
+Checked on 2026-11-23: each patch applies before and after every other customization for its branch and reverses cleanly, and with all of them together (remote_carb_edit and remote_window, high_carb_limit and low_carb_limit, and meal_days and meal_week, do not apply together with each other, with or without this one; `nextdev_remote_window.patch` does not apply to the current next-dev on its own). Both branches build. Remote switching works from LoopFollow 8.0.0 and from LoopFollow dev with profile editing.
